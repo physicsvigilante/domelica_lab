@@ -1,0 +1,58 @@
+[
+  {
+    "id": "groove-slide",
+    "prefix": "m4_groove_slide",
+    "title": "Q31 · Slide along a diagonal groove",
+    "description": "Release the block from rest and watch gravity carry it along the 5 m groove. The plane tilts 30°; the groove is 30° to the horizontal cross-slope edge. Playback ends at O. No impact or stop is modeled.",
+    "model": "DomelicaLab.Examples.GrooveSlide3D",
+    "camera": {
+      "yaw": -1.1,
+      "pitch": 0.3
+    },
+    "series": [
+      {
+        "name": "displacement",
+        "label": "Distance along the groove",
+        "unit": "m"
+      },
+      {
+        "name": "speed",
+        "label": "Speed toward O",
+        "unit": "m/s"
+      }
+    ]
+  },
+  {
+    "id": "two-spring",
+    "prefix": "m4_two_spring",
+    "title": "Q90 · A block between two springs",
+    "description": "A 4 kg block is released with both springs unstretched. The upper 100 N/m spring stretches while the lower 300 N/m spring compresses. With ideal springs and no damping, the motion repeats. Spring lengths and body dimensions are stated display choices.",
+    "model": "DomelicaLab.Examples.TwoSpringOscillator3D",
+    "camera": {
+      "yaw": 0.24,
+      "pitch": 0.12
+    },
+    "series": [
+      {
+        "name": "displacement",
+        "label": "Downward displacement",
+        "unit": "m"
+      },
+      {
+        "name": "speed",
+        "label": "Downward velocity",
+        "unit": "m/s"
+      },
+      {
+        "name": "upperForce",
+        "label": "Upper spring upward force",
+        "unit": "N"
+      },
+      {
+        "name": "lowerForce",
+        "label": "Lower spring upward force",
+        "unit": "N"
+      }
+    ]
+  }
+]

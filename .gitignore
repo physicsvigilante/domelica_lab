@@ -2,6 +2,10 @@
 /m0_*
 /m1_*
 /m2_*
+/m4_*
+/m4-toolchain.txt
+/m4-native-toolchain.txt
+/m4-native-run.log
 /native-toolchain.txt
 
 # Python
@@ -14,3 +18,4 @@ results/
 artifacts/
 site-output/
 node_modules/
+node_modules

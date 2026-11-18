@@ -5,3 +5,5 @@ ControlledThermalArm3D
 ControlledArmHeavyLoad
 ControlledArmRetuned
 ControlledArmReducedCooling
+GrooveSlide3D
+TwoSpringOscillator3D

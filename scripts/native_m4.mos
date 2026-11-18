@@ -1,0 +1,59 @@
+// Run from repository root after scripts/install_msl.mos.
+print("DOMELICA_M4_START\n");
+print("Compiler: " + getVersion() + "\n");
+for prefix in {"m4_groove_slide", "m4_two_spring"} loop
+  for suffix in {"_res.mat", "_res.csv", "_visual.xml", ".log"} loop
+    if regularFileExists(prefix + suffix) then
+      if not deleteFile(prefix + suffix) then
+        print("ERROR: cannot remove stale output " + prefix + suffix + "\n");
+        exit(1);
+      end if;
+    end if;
+  end for;
+end for;
+if not setCommandLineOptions("+d=visxml") then
+  print("ERROR: cannot enable native visualization export.\n");
+  exit(1);
+end if;
+if not loadModel(Modelica, {"4.1.0"}) then
+  print("ERROR: cannot load MSL 4.1.0.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+if not loadFile("DomelicaLab/package.mo") then
+  print("ERROR: cannot load DomelicaLab/package.mo.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+writeFile("m4-native-toolchain.txt", "compiler=" + getVersion() + "\nmslVersion=" + getVersion(Modelica) + "\nmslSource=" + getSourceFile(Modelica) + "\n");
+
+print("CHECKING Q31 inclined groove:\n");
+print(checkModel(DomelicaLab.Examples.GrooveSlide3D) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.GrooveSlide3D,
+  startTime=0, stopTime=2, numberOfIntervals=400, tolerance=1e-9,
+  method="dassl", outputFormat="mat", fileNamePrefix="m4_groove_slide");
+print(getErrorString());
+if system("python3 scripts/verify_m4.py --completion-only m4_groove_slide 2 401") <> 0 then
+  print("ERROR: Q31 native simulation did not complete.\n");
+  exit(1);
+end if;
+
+print("CHECKING Q90 opposed springs:\n");
+print(checkModel(DomelicaLab.Examples.TwoSpringOscillator3D) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.TwoSpringOscillator3D,
+  startTime=0, stopTime=6, numberOfIntervals=1200, tolerance=1e-9,
+  method="dassl", outputFormat="mat", fileNamePrefix="m4_two_spring");
+print(getErrorString());
+if system("python3 scripts/verify_m4.py --completion-only m4_two_spring 6 1201") <> 0 then
+  print("ERROR: Q90 native simulation did not complete.\n");
+  exit(1);
+end if;
+for prefix in {"m4_groove_slide", "m4_two_spring"} loop
+  if not regularFileExists(prefix + "_visual.xml") then
+    print("ERROR: native scene missing for " + prefix + "\n");
+    exit(1);
+  end if;
+end for;
+print("DOMELICA_M4_COMPLETE\n");
