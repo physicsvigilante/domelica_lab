@@ -1,17 +1,32 @@
 # Domelica Lab
 
-A **Modelica-first multiphysics laboratory** for exploring how reusable components can be composed into complex, physically verified, visualized systems.
+A **Modelica-first multiphysics laboratory** for composing physical systems, running native simulations, and exploring their geometry and signals in an offline browser viewer.
+
+## What is here
+
+| Experiment | What it explores |
+| --- | --- |
+| **ThermalGearedArm3D** | A motor, 5:1 gearbox, two perpendicular joint axes, passive elbow, winding heat capacity, cooling, and resistance that changes with temperature |
+| **MotorizedPendulum3D** | Electrical armature dynamics coupled to a gravitational rigid body and rotational damper |
+| **HeatedBody** | A thermal network checked against an independent analytical solution |
+| **MSL DoublePendulum** | An unchanged standard-library example using the same native scene pipeline |
+
+The armature is reusable Modelica code. `ThermalArmatureDrive` extends it by exposing the standard resistor's heat port; the original component is unchanged. The browser reads native geometry and transforms and has no physics solver or model-specific pendulum drawing.
+
+## Open the results
+
+From a successful [Native Modelica Lab workflow run](https://github.com/physicsvigilante/domelica_lab/actions/workflows/native-modelica.yml), download **modelica-lab-results**, extract the ZIP, and open **artifacts/browser-preview.html**. The file works offline, without OpenModelica or a web server.
+
+Choose a scene, play or scrub time, drag to orbit, switch to XY, and select native objects to inspect their transforms. The **modelica-browser-checks** artifact contains the browser test report and screenshots for that same HTML file.
+
+Development is proposed in [draft PR #1](https://github.com/physicsvigilante/domelica_lab/pull/1). Check the run attached to the exact revision before treating a result as verified.
 
 ## Principles
 
-- **Modelica is the physics authority.** Prefer Modelica Standard Library components and native equations over custom solvers.
-- **Composition over case-specific code.** New arrangements should be authored by connecting reusable components.
-- **Simulation before visualization.** Animate native simulation results; never substitute hand-written visual physics.
-- **Evidence over claims.** Separate static checks, native compilation/simulation, and graphical inspection.
-- **Keep experiments reproducible.** Record OpenModelica/MSL versions, parameters, outputs, and limitations.
+- **Modelica defines physics and geometry.** Standard-library components supply the physical laws.
+- **New arrangements are compositions.** Add models and connections without teaching the renderer a new mechanism.
+- **Playback follows native results.** No replacement JavaScript dynamics or guessed dimensions.
+- **Verification has a stated scope.** Component balances, native scene alignment, browser interaction, and actual OMEdit GUI inspection are distinct forms of evidence.
+- **Outputs carry provenance.** Artifacts include native results, scene XML, source/result hashes, compiler details, and revision/run identifiers.
 
-## First milestone
-
-Establish a native MultiBody animation baseline and an authored electric-to-mechanical 3D model, with repeatable checks and a path to a richer viewer. Development is performed in ChatGPT and proposed changes are reviewed through pull requests.
-
-Project status: M0 native and independent numeric gates qualified in [draft PR #1](https://github.com/physicsvigilante/domelica_lab/pull/1). Full native 3D visual inspection and unfamiliar topology composition remain pending. The PR also contains a self-contained browser preview generated from Modelica results.
+See [the experiments and reproduction guide](docs/EXPERIMENTS.md) and [the native scene format](docs/NATIVE_SCENES.md).

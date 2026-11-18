@@ -1,11 +1,54 @@
-"""Synthetic geometry contract checks; these are not native simulation evidence."""
+"""Synthetic geometry checks, plus optional comparisons with real native results.
+
+Run with --native after simulation to require all three mechanical result pairs.
+The synthetic fixtures themselves are not native simulation evidence.
+"""
 
 import csv
 from pathlib import Path
 import tempfile
 import unittest
+import sys
 
 from native_scene import SceneExportError, export_scene
+
+
+def verify_native_endpoints(root):
+    """Compare rendered box endpoints with separately exported physical frames.
+
+    These named fixtures use BodyBox's default length=norm(r), r_shape=0. They
+    exercise the generic exporter; no fixture names are embedded in that code.
+    """
+    fixtures = {
+        "m0_motorized_pendulum": ["arm"],
+        "m0_msl_double_pendulum": ["boxBody1", "boxBody2"],
+        "m1_thermal_geared_arm": ["upperArm", "forearm"],
+    }
+    for prefix, bodies in fixtures.items():
+        csv_path = root / f"{prefix}_res.csv"
+        scene = export_scene(root / f"{prefix}_visual.xml", csv_path)
+        objects = {shape["id"]: shape for shape in scene["objects"]}
+        with csv_path.open(newline="", encoding="utf-8-sig") as stream:
+            rows = list(csv.DictReader(stream))
+        max_error = 0.0
+        for body in bodies:
+            shape = objects[f"{body}.frameTranslation.shape"]
+            if shape["type"] != "box":
+                raise AssertionError(f"{prefix}: {body} is no longer the box geometry fixture")
+            frames = shape["frames"]
+            for index, row in enumerate(rows):
+                frame = frames[0] if len(frames) == 1 else frames[index]
+                origin, tip = frame[9:12], [frame[9 + j] + frame[j] for j in range(3)]
+                native_a = [float(row[f"{body}.frame_a.r_0[{j}]"]) for j in (1, 2, 3)]
+                native_b = [float(row[f"{body}.frame_b.r_0[{j}]"]) for j in (1, 2, 3)]
+                error = max(abs(x - y) for a, b in ((origin, native_a), (tip, native_b))
+                            for x, y in zip(a, b))
+                max_error = max(max_error, error)
+                if error > 1e-8:
+                    raise AssertionError(f"{prefix}: {body} scene/physical frame error {error:g} m "
+                                         f"at native t={row['time']}")
+        print(f"PASS native scene endpoints: {prefix}, {len(bodies)} boxes, "
+              f"{len(rows)} samples, max coordinate error {max_error:.3g} m")
 
 
 class NativeSceneContractTests(unittest.TestCase):
@@ -60,4 +103,11 @@ class NativeSceneContractTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    check_native = "--native" in sys.argv
+    if check_native:
+        sys.argv.remove("--native")
+    result = unittest.main(exit=False).result
+    if not result.wasSuccessful():
+        raise SystemExit(1)
+    if check_native:
+        verify_native_endpoints(Path(__file__).resolve().parent.parent)

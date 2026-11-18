@@ -19,8 +19,8 @@ import math
 from pathlib import Path
 
 
-def _query(session, expression):
-    value = session.sendExpression(expression)
+def _query(session, expression, *, parsed=True):
+    value = session.sendExpression(expression, parsed=parsed)
     if value is None or value is False:
         raise ValueError(f"Native result query failed: {expression}\n{session.sendExpression('getErrorString()')}")
     return value
@@ -30,13 +30,29 @@ def _read_columns(session, mat_path, names, sample_count=None):
     # Names come from OMC's result inventory, in its native Modelica syntax.
     # readSimulationResult takes VariableNames, not string literals.
     expression = f"readSimulationResult({json.dumps(str(mat_path))}, {{{','.join(names)}}}, 0)"
-    matrix = _query(session, expression)
+    raw = _query(session, expression, parsed=False)
+    # This API returns only a Real matrix. Reading its numeric syntax with the
+    # standard JSON parser avoids OMPython's general grammar parser overhead on
+    # millions of numbers. Braces are the only syntax difference. No eval is used.
+    if not isinstance(raw, str):
+        raise ValueError(f"{mat_path.name}: native matrix response is not text")
+    def reject_constant(value):
+        raise ValueError(f"non-finite native numeric constant {value}")
+    try:
+        matrix = json.loads(raw.translate(str.maketrans({"{": "[", "}": "]"})),
+                            parse_constant=reject_constant)
+    except (ValueError, TypeError) as error:
+        raise ValueError(f"{mat_path.name}: invalid native numeric matrix response for "
+                         f"{names[:3]!r}: {raw[:180]!r}; "
+                         f"{session.sendExpression('getErrorString()')}") from error
     if not isinstance(matrix, (tuple, list)) or len(matrix) != len(names):
         raise ValueError(f"{mat_path.name}: native result returned the wrong number of columns for {names!r}")
     columns = []
     for name, source_column in zip(names, matrix):
         if not isinstance(source_column, (tuple, list)):
             raise ValueError(f"{mat_path.name}: native {name!r} is not a sampled numeric column")
+        if not all(type(value) in (int, float) for value in source_column):
+            raise ValueError(f"{mat_path.name}: nonnumeric data in native {name!r}")
         column = [float(value) for value in source_column]
         if sample_count is not None and len(column) != sample_count:
             raise ValueError(f"{mat_path.name}: {name!r} has {len(column)} samples; expected {sample_count}")
@@ -81,7 +97,7 @@ def export_native_csv(session, prefix: Path) -> Path:
             temporary.unlink()
     _query(session, "closeSimulationResultFile()")
     print(f"PASS native MAT to CSV: {csv_path.name}; {len(times)} original samples, "
-          f"{len(names)} columns including parameters and aliases")
+          f"{len(names)} columns including parameters and aliases", flush=True)
     return csv_path
 
 
@@ -93,7 +109,7 @@ def main():
     from OMPython import OMCSessionZMQ
 
     session = OMCSessionZMQ()
-    print(f"Reading native results with {_query(session, 'getVersion()')}")
+    print(f"Reading native results with {_query(session, 'getVersion()')}", flush=True)
     try:
         for prefix in args.prefixes:
             export_native_csv(session, prefix)

@@ -24,7 +24,7 @@ jobs:
       - name: Verify physical output independently
         run: python3 scripts/verify_csv.py
       - name: Check native transform convention and explicit rejection
-        run: python3 scripts/test_native_scene.py
+        run: python3 scripts/test_native_scene.py --native
       - name: Build offline browser playback from native data
         run: python3 scripts/build_preview.py
       - name: Preserve native results
@@ -45,3 +45,30 @@ jobs:
             artifacts/browser-preview.html
             artifacts/provenance.json
             native-toolchain.txt
+
+  browser-playback:
+    needs: native-smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: modelica-lab-results
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare pinned browser checker
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise actual offline native playback
+        run: node scripts/check_viewer.cjs artifacts/browser-preview.html
+      - name: Preserve browser screenshots and checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: modelica-browser-checks
+          if-no-files-found: warn
+          path: artifacts/browser-checks/
