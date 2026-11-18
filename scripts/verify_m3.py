@@ -98,7 +98,7 @@ def verify_case(case):
         names += ("bypassPipe.port_a.m_flow", "bypassPipe.port_b.m_flow",
                   "bypassPipe.port_a.p", "bypassPipe.port_b.p", "bypassPipe.length", "bypassPipe.diameter")
     rows = read_csv(ROOT / f"{prefix}_res.csv", names)
-    coverage(rows, 300, 0.2, prefix)
+    coverage(rows, 300, 0.1, prefix)
     first, last = rows[0], rows[-1]
     expected_mass = RHO*(AREA*1.4+0.001)
     for key, value in {"tankALevel": case["initialLevelA"], "tankBLevel": case["initialLevelB"],
@@ -243,7 +243,7 @@ def verify_case(case):
     for start, stop, target in PLATEAUS:
         selected = [r for r in rows if stop-20 <= r["time"] < stop-1e-7
                     or (stop == 300 and abs(r["time"]-stop) < 1e-7)]
-        if len(selected) < 99:
+        if len(selected) < 199:
             raise AssertionError(f"{prefix}: missing final-window samples for plateau ending {stop}")
         worst = max(abs(r["tankBLevel"]-target) for r in selected)
         if worst > TRACKING_BAND:

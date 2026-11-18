@@ -23,12 +23,14 @@ model TwoTankLoopPlant
 
   Modelica.Fluid.Vessels.OpenTank tankA(
     redeclare package Medium=Medium, nPorts=4, use_portsData=false,
+    level(stateSelect=StateSelect.always),
     crossArea=crossArea, height=tankHeight, level_start=initialLevelA,
     T_start=initialTemperature,
     massDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial,
     energyDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial);
   Modelica.Fluid.Vessels.OpenTank tankB(
     redeclare package Medium=Medium, nPorts=4, use_portsData=false,
+    level(stateSelect=StateSelect.always),
     crossArea=crossArea, height=tankHeight, level_start=initialLevelB,
     T_start=initialTemperature,
     massDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial,

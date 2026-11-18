@@ -30,7 +30,8 @@ model ControlledTankLoop
     wp=1, Ni=0.9, initType=Modelica.Blocks.Types.Init.InitialState,
     xi_start=0.1, withFeedForward=false, strict=false);
   Modelica.Blocks.Continuous.FirstOrder speedResponse(
-    T=2, initType=Modelica.Blocks.Types.Init.InitialState, y_start=0.3);
+    T=2, initType=Modelica.Blocks.Types.Init.InitialState, y_start=0.3,
+    y(stateSelect=StateSelect.always));
   Modelica.Blocks.Math.Gain rpmScale(k=1200);
   Modelica.Blocks.Continuous.Integrator shaftEnergy(k=1, y_start=0);
   Modelica.Blocks.Continuous.Integrator netTransfer(k=1, y_start=0);
@@ -51,9 +52,10 @@ model ControlledTankLoop
   Modelica.Units.SI.Energy pumpEnergy=shaftEnergy.y;
   Real valveOpening=plant.returnValve.opening;
   Modelica.Units.SI.Height targetLevel=target.y;
-  Modelica.Units.SI.Height levelError=target.y-plant.tankB.level;
+  Real levelError(unit="m")=target.y-plant.tankB.level
+    "Signed level error; height's nonnegative bound does not apply";
   Modelica.Units.SI.Mass totalMass=plant.tankA.m+plant.tankB.m+plant.pump.m;
-  Modelica.Units.SI.Mass massResidual=totalMass-
+  Real massResidual(unit="kg")=totalMass-
     995.586*(crossArea*(initialLevelA+initialLevelB)+0.001);
   Modelica.Units.SI.Energy totalInternalEnergy=
     plant.tankA.U+plant.tankB.U+plant.pump.U
@@ -64,7 +66,7 @@ model ControlledTankLoop
   Real tankBLevelDerivative(unit="m/s")=der(plant.tankB.level);
   Modelica.Units.SI.Power internalEnergyDerivative=
     der(plant.tankA.U)+der(plant.tankB.U)+der(plant.pump.U);
-  Modelica.Units.SI.Mass transferredMass=netTransfer.y
+  Real transferredMass(unit="kg")=netTransfer.y
     "Net mass entering tank B, integrated by a native Modelica block";
   Real controllerRaw=controller.gainPID.y;
   Real controllerIntegral=controller.I.y;
@@ -82,6 +84,6 @@ equation
   connect(openingScale.y, plant.commandedOpening);
   shaftEnergy.u=pumpPower;
   netTransfer.u=supplyFlow-returnFlow-bypassFlow;
-  annotation(experiment(StopTime=300, Interval=0.2, Tolerance=1e-7),
+  annotation(experiment(StopTime=300, Interval=0.1, Tolerance=1e-9),
     Documentation(info="<html><p>A native MSL PI block regulates tank B level by setting pump speed. The desired level changes at 100 and 200 seconds; the return valve changes at 140 and 240 seconds. Pump speed includes a 2 second first-order actuator response and a nonzero minimum speed. Anti-windup is supplied by LimPID. Outputs are aliases and diagnostic derivatives of the native components, plus native integration blocks. The illustrative schematic layout is not solver-defined 3D geometry.</p></html>"));
 end ControlledTankLoop;

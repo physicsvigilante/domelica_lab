@@ -81,11 +81,21 @@ browser does not change these physical parameters.
 | `m3-initial` | `ControlledTankInitialLevels` | Exchange initial tank levels: A = 0.5 m, B = 0.9 m; preserve total water |
 | `m3-parallel` | `ControlledTankParallelReturn` | Add the separate parallel return pipe |
 
-Each simulation covers 300 s with a 0.2 s regular output interval and solver
-tolerance 1e-7. Additional native event samples are preserved, including repeated
+Each simulation covers 300 s with a 0.1 s regular output interval and solver
+tolerance 1e-9. Additional native event samples are preserved, including repeated
 timestamps. The target is 0.8 m initially, 0.9 m at 100 s, and 0.78 m at 200 s.
 The main return valve opening is 0.65 initially, 1 at 140 s, and 0.45 at 240 s,
 multiplied by the case's `valveScale`.
+
+The tank levels and pump-speed response are explicitly selected as native
+continuous states. The first native trial, using automatic state selection and
+solver tolerance 1e-7, completed and met the tracking criterion but failed the
+predeclared mass and internal-energy checks because conserved mass drifted by
+up to approximately 0.0016 kg. Selecting the physical states and tightening
+solver accuracy addresses that numerical representation issue without changing
+the network equations. The output interval was also refined from 0.2 s to 0.1 s
+to resolve the initial shaft-power transient in independent sampled quadrature.
+All physical acceptance tolerances remain unchanged.
 
 `supplyFlow` is positive from A through the pump to B. `returnFlow` and
 `bypassFlow` are positive from B to A. These are signed mass flow rates in kg/s;

@@ -48,7 +48,7 @@ print("CHECKING authored reusable hydraulic plant and control:\n");
 print(checkModel(DomelicaLab.Examples.ControlledTankLoop) + "\n");
 print(getErrorString());
 simulate(DomelicaLab.Examples.ControlledTankLoop,
-  stopTime=300, numberOfIntervals=1500, tolerance=1e-7,
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-9,
   outputFormat="mat", fileNamePrefix="m3_tanks_nominal");
 print(getErrorString());
 if not regularFileExists("m3_tanks_nominal_res.mat") then
@@ -58,7 +58,7 @@ end if;
 print("PASS M3 nominal controlled tanks\n");
 
 simulate(DomelicaLab.Examples.ControlledTankRestrictedValve,
-  stopTime=300, numberOfIntervals=1500, tolerance=1e-7,
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-9,
   outputFormat="mat", fileNamePrefix="m3_tanks_restricted");
 print(getErrorString());
 if not regularFileExists("m3_tanks_restricted_res.mat") then
@@ -68,7 +68,7 @@ end if;
 print("PASS M3 restricted-valve controlled tanks\n");
 
 simulate(DomelicaLab.Examples.ControlledTankInitialLevels,
-  stopTime=300, numberOfIntervals=1500, tolerance=1e-7,
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-9,
   outputFormat="mat", fileNamePrefix="m3_tanks_initial");
 print(getErrorString());
 if not regularFileExists("m3_tanks_initial_res.mat") then
@@ -81,7 +81,7 @@ print("CHECKING new physical return-branch composition:\n");
 print(checkModel(DomelicaLab.Examples.ControlledTankParallelReturn) + "\n");
 print(getErrorString());
 simulate(DomelicaLab.Examples.ControlledTankParallelReturn,
-  stopTime=300, numberOfIntervals=1500, tolerance=1e-7,
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-9,
   outputFormat="mat", fileNamePrefix="m3_tanks_parallel");
 print(getErrorString());
 if not regularFileExists("m3_tanks_parallel_res.mat") then

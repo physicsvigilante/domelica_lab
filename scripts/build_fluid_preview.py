@@ -155,7 +155,7 @@ def main():
         inputs[toolchain_path.name] = digest(toolchain_path)
     sources = sorted((ROOT / "DomelicaLab").rglob("*.mo"))
     sources += sorted((ROOT / "DomelicaLab").rglob("package.order"))
-    sources += [ROOT / name for name in ("scripts/native_m3.mos", "scripts/export_native_csv.py", "scripts/verify_csv.py",
+    sources += [ROOT / name for name in ("scripts/native_m3.mos", "scripts/export_native_csv.py", "scripts/export_fluid_csv.py", "scripts/verify_csv.py",
                 "scripts/verify_m3.py", "scripts/build_fluid_preview.py", "scripts/check_fluid.cjs",
                 "viewer/fluid.template.html", "viewer/fluid-experiments.json")]
     provenance = {
@@ -172,6 +172,7 @@ def main():
             "Offline native-sample playback; selecting a scenario does not run a new simulation.",
             "Tank fill shows native level divided by native tank height; any out-of-range level is reported.",
             "Arrows show the sign of native mass flow; arrow length is not a flow-magnitude scale.",
+            "Native CSV dynamic variables are serialized with 15 significant digits; original native times are retained and the raw MAT result remains the primary full-precision output.",
             "MSL version is requested; its package-manager maintenance revision is not locked.",
         ],
     }

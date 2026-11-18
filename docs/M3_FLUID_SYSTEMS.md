@@ -23,7 +23,7 @@ The parallel case adds an actual `StaticPipe` instance and connections; it is no
 
 ## Authored experiment
 
-Each authored run lasts 300 s with a regular 0.2 s output interval and native event samples. Both tank bases share an elevation; each has 0.25 m² cross-sectional area and 1.2 m height. Nominal initial levels are 0.9 m in A and 0.5 m in B. The pump has 0.001 m³ storage, an illustrative quadratic head curve, and constant 80% efficiency. The water medium is MSL `ConstantPropertyLiquidWater`.
+Each authored run lasts 300 s with a regular 0.1 s output interval, native event samples, and solver tolerance 1e-9. Physical tank levels and the pump-speed response are explicitly selected as continuous states. Both tank bases share an elevation; each has 0.25 m² cross-sectional area and 1.2 m height. Nominal initial levels are 0.9 m in A and 0.5 m in B. The pump has 0.001 m³ storage, an illustrative quadratic head curve, and constant 80% efficiency. The water medium is MSL `ConstantPropertyLiquidWater`.
 
 The tank B target is 0.8 m for 0–100 s, 0.9 m for 100–200 s, and 0.78 m for 200–300 s. The nominal return-valve opening is 0.65 until 140 s, 1 until 240 s, then 0.45. Changes in opening act on the Modelica valve.
 
@@ -51,6 +51,8 @@ Failed criteria remain failures until the cause is resolved or the unsuccessful 
 
 ## Visualization and evidence
 
+`scripts/export_fluid_csv.py` uses OpenModelica's native `filterSimulationResults` with `numberOfIntervals=0` for dynamic variables, including compiler-generated names that are not valid Modelica source references. The filter's CSV path cannot export parameters, so the adapter obtains those through the accepted native `readSimulationResult` helper. It checks exact column coverage, native row count, row-by-row time binding, and representative public signals through both native reader paths. It preserves original native timestamps and all repeated event samples. Dynamic CSV values have 15 significant digits; raw MAT remains the primary full-precision result. No custom MAT parser or replacement solver is used. The M1/M2 exporter remains unchanged.
+
 `scripts/build_fluid_preview.py` binds the verified native CSV/MAT results and metrics to `viewer/fluid-experiments.json` and `viewer/fluid.template.html`.
 
 - Tank fill is native level divided by native tank height.
@@ -76,7 +78,7 @@ After the existing native baseline steps, run:
 
 ```sh
 omc scripts/native_m3.mos
-python3 scripts/export_native_csv.py m3_msl_pumping m3_msl_empty m3_tanks_nominal m3_tanks_restricted m3_tanks_initial m3_tanks_parallel
+python3 scripts/export_fluid_csv.py m3_msl_pumping m3_msl_empty m3_tanks_nominal m3_tanks_restricted m3_tanks_initial m3_tanks_parallel
 python3 scripts/verify_m3.py
 python3 scripts/build_fluid_preview.py
 node scripts/check_fluid.cjs artifacts/fluid-preview.html
