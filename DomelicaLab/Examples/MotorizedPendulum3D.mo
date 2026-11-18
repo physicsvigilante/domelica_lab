@@ -20,7 +20,6 @@ model MotorizedPendulum3D
     color={40,140,220});
   DomelicaLab.Components.ArmatureDrive drive(R=2,L=0.05,k=2);
   Modelica.Mechanics.Rotational.Components.Damper damper(d=0.15);
-  Modelica.Mechanics.Rotational.Components.Fixed bearing;
   Modelica.Blocks.Sources.Step command(height=18,startTime=0.5);
 
   Modelica.Units.SI.Angle angle = hinge.phi
@@ -32,8 +31,7 @@ equation
   connect(hinge.frame_b, arm.frame_a);
   connect(hinge.axis, drive.shaft);
   connect(hinge.axis, damper.flange_b);
-  connect(hinge.support, bearing.flange);
-  connect(damper.flange_a, bearing.flange);
+  connect(damper.flange_a, hinge.support);
   connect(command.y, drive.commandedVoltage);
   annotation(
     experiment(StartTime=0, StopTime=4, Interval=0.01, Tolerance=1e-6),
