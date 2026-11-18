@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Domelica Lab | Native simulation playback</title>
+<style>
+:root{color-scheme:dark;--bg:#09111d;--panel:#111e30;--panel2:#14253b;--line:#2a3e54;--ink:#e8f3fc;--muted:#9eb2c7;--aqua:#5adbd2;--blue:#65abf5;--amber:#f7b267}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 15% 1%,#1c3751 0%,transparent 44%),var(--bg);font:14px/1.48 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);min-height:100vh}
+main{max-width:1320px;margin:0 auto;padding:28px 24px 45px}
+header{display:flex;gap:24px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-bottom:19px;border-bottom:1px solid var(--line)}
+h1{font-size:28px;letter-spacing:-.8px;margin:2px 0 4px;line-height:1.15}
+h2{font-size:16px;letter-spacing:-.2px;font-weight:700;margin:0}
+p{margin:4px 0;color:var(--muted)}
+.eyebrow{font-size:11px;font-weight:750;letter-spacing:2.5px;color:var(--aqua)}
+.subtitle{max-width:550px}
+.badge{border:1px solid #386d71;border-radius:99px;padding:7px 12px;background:#123537;color:#a0eee6;font-weight:650;font-size:11px;letter-spacing:.4px}
+.dash{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,1fr);gap:17px;margin-top:21px}
+.panel{border:1px solid var(--line);border-radius:16px;background:linear-gradient(160deg,rgba(24,45,68,.98),var(--panel));box-shadow:0 10px 35px #020a13aa;overflow:hidden}
+.panelhead{padding:18px 20px 5px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.panelhead small{color:var(--muted)}
+.scene{width:100%;height:auto;max-height:510px;display:block}
+.controls{display:flex;align-items:center;gap:10px;padding:0 19px 19px;flex-wrap:wrap}
+button,select{font:inherit;color:var(--ink);border:1px solid #3a5267;border-radius:9px;background:#1d3952;padding:7px 13px;cursor:pointer}
+button:hover,select:hover{border-color:var(--aqua)}
+button{font-weight:750;min-width:84px}
+input[type=range]{accent-color:var(--aqua);flex:1;min-width:150px}
+.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.readouts{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.readout{padding:16px 10px 18px;text-align:center;border-right:1px solid var(--line)}
+.readout:last-child{border-right:0}
+.readout .value{font-size:clamp(19px,3vw,26px);font-weight:700;letter-spacing:-1px;color:var(--ink)}
+.readout .name{font-size:11px;color:var(--muted);margin-top:3px}
+.plotwrap{padding:10px 18px 20px}
+.plotblock{margin-top:13px}
+.plotlabel{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;margin:0 2px 7px}
+.plotlabel b{font-size:13px;color:var(--ink)}
+canvas{display:block;width:100%;height:155px;border:1px solid #29435a;border-radius:10px;background:#0c1b2b}
+.foot{padding:18px 20px;margin-top:18px;border:1px solid var(--line);border-radius:14px;background:#0b1a2a}
+.foot strong{color:var(--ink)}
+.foot p{line-height:1.6}
+@media(max-width:850px){.dash{grid-template-columns:1fr}.scene{max-height:410px}main{padding:20px 13px}.panelhead{padding:15px 15px 3px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><div class="eyebrow">DOMELICA / EXPERIMENT M0</div><h1>Physics in motion</h1><p class="subtitle">A connected electromechanical system, played back from actual OpenModelica simulation results.</p></div>
+<div class="badge">NATIVE RESULTS · OFFLINE PREVIEW</div>
+</header>
+<section class="dash">
+<div class="panel">
+<div class="panelhead"><div><h2>Motorized pendulum</h2><small>XY projection of the 3D Modelica BodyBox + revolute joint</small></div><small class="mono" id="state">t = 0.00 s</small></div>
+<svg id="scene" class="scene" viewBox="0 0 620 440" role="img" aria-label="A joint-driven pendulum whose angle is controlled by native simulation results">
+<defs>
+<pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M 26 0 L 0 0 0 26" fill="none" stroke="#29445a" stroke-width=".7"/></pattern>
+<linearGradient id="metal" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#3778a4"/><stop offset=".5" stop-color="#71c3e6"/><stop offset="1" stop-color="#2c6998"/></linearGradient>
+<radialGradient id="hub"><stop stop-color="#a0f3e7"/><stop offset=".6" stop-color="#388ca4"/><stop offset="1" stop-color="#154365"/></radialGradient>
+</defs>
+<rect width="620" height="440" fill="#0b1b2b"/>
+<rect width="620" height="440" fill="url(#grid)" opacity=".85"/>
+<path d="M 62 102 L 558 102" stroke="#44627a" stroke-width="2" stroke-dasharray="7 6"/>
+<path d="M 310 102 V 396" stroke="#406078" stroke-width="1.5" stroke-dasharray="3 7"/>
+<path d="M 310 102 m -270 0 a 270 270 0 1 0 540 0" fill="none" stroke="#2b7087" stroke-width="1" stroke-dasharray="5 10" opacity=".8"/>
+<g id="arm" transform="translate(310 102) rotate(0)">
+<polygon points="-14,0 -14,256 -25,244 -25,-10" fill="#1b5272"/>
+<polygon points="-14,256 14,256 2,245 -25,244" fill="#205071"/>
+<rect x="-14" y="0" width="28" height="256" rx="5" fill="url(#metal)" stroke="#9ad8f0" stroke-width="1"/>
+<path d="M 0 21 V 230" stroke="#b5ebfb" stroke-width="1" stroke-dasharray="4 13" opacity=".45"/>
+<circle cx="0" cy="246" r="13" fill="#173e55" stroke="#8cc9df" stroke-width="2"/>
+<circle cx="0" cy="246" r="4" fill="#a8e9f5"/>
+</g>
+<rect x="264" y="55" width="92" height="14" rx="3" fill="#45677e" stroke="#8bafc3"/>
+<path d="M 280 56 V 42 M 310 56 V 42 M 340 56 V 42" stroke="#a4c1d5" stroke-width="3"/>
+<circle cx="310" cy="102" r="34" fill="#132f46" stroke="#4da9bc" stroke-width="5"/>
+<circle cx="310" cy="102" r="20" fill="url(#hub)" stroke="#b4f2eb" stroke-width="2"/>
+<circle cx="310" cy="102" r="7" fill="#133b50"/>
+<text x="25" y="38" fill="#7fa9c3" font-size="12" font-weight="650">WORLD FRAME / GRAVITY ↓</text>
+<text x="25" y="414" fill="#87adc3" font-size="12">Arm length 0.70 m · joint axis Z</text>
+<text x="500" y="414" fill="#87adc3" font-size="12">XY VIEW</text>
+</svg>
+<div class="controls">
+<button id="play" type="button">Pause</button>
+<input id="scrub" aria-label="Simulation playback time" type="range" min="0" max="400" step="1" value="0"/>
+<label for="speed" style="color:var(--muted)">Speed</label>
+<select id="speed" aria-label="Playback speed"><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+</div>
+<div class="readouts">
+<div class="readout"><div id="angle" class="value mono">0.00°</div><div class="name">JOINT ANGLE</div></div>
+<div class="readout"><div id="velocity" class="value mono">0.00</div><div class="name">ANGULAR SPEED (rad/s)</div></div>
+<div class="readout"><div id="current" class="value mono">0.00 A</div><div class="name">ARMATURE CURRENT</div></div>
+</div>
+</div>
+<div class="panel">
+<div class="panelhead"><div><h2>Simulation traces</h2><small>Native solver CSV, synchronized with playback</small></div></div>
+<div class="plotwrap">
+<div class="plotblock"><div class="plotlabel"><b>Joint angle</b><span>radians</span></div><canvas id="angleChart"></canvas></div>
+<div class="plotblock"><div class="plotlabel"><b>Electrical current</b><span>amperes</span></div><canvas id="currentChart"></canvas></div>
+<div class="plotblock"><div class="plotlabel"><b>Thermal experiment</b><span>temperature · kelvin · separate 0–5 s run</span></div><canvas id="thermalChart"></canvas></div>
+</div>
+</div>
+</section>
+<div class="foot"><strong>Provenance and limitations</strong><p>All animated joint angles and graphed measurements come from OpenModelica-generated CSV data embedded in this file. The arm's fixed geometry matches the authored M0 Modelica source and is shown as an XY projection, not as OMEdit's full 3D visualization. This preview cannot infer new physics or arbitrary Modelica scene geometry. For genuine native 3D MultiBody animation, open the model in OMEdit and select Simulate with Animation.</p></div>
+</main>
+<script>
+"use strict";
+const D = __NATIVE_MODEL_DATA__;
+if (D.kind !== "DomelicaLab-M0-native-result-playback" || !D.pendulum.length) throw Error("Missing native trace payload");
+const P=D.pendulum,T=D.thermal,N=P.length;
+const el=id=>document.getElementById(id);
+const scrub=el("scrub"), play=el("play"),speed=el("speed");
+scrub.max=String(N-1);
+let cursor=0, playing=!matchMedia("(prefers-reduced-motion: reduce)").matches,last=0;
+function indexFor(t){let lo=0,hi=N-1;while(lo<hi){const m=(lo+hi+1)>>1;if(P[m][0]<=t)lo=m;else hi=m-1;}return lo;}
+function setPlayback(i){
+ cursor=Math.max(0,Math.min(N-1,i));const p=P[cursor],deg=p[1]*180/Math.PI;
+ el("arm").setAttribute("transform","translate(310 102) rotate("+(-deg)+")");
+ el("angle").textContent=deg.toFixed(1)+"°";el("velocity").textContent=p[2].toFixed(2);
+ el("current").textContent=p[3].toFixed(2)+" A";el("state").textContent="t = "+p[0].toFixed(2)+" s";
+ scrub.value=String(cursor);
+ drawGraphs();
+}
+function chart(id,arr,timeColumn,valueColumn,color,playhead){
+ const node=el(id),rect=node.getBoundingClientRect(),w=Math.max(120,rect.width),h=Math.max(80,rect.height);
+ const dpr=Math.min(2,window.devicePixelRatio||1);
+ node.width=Math.round(w*dpr);node.height=Math.round(h*dpr);
+ const c=node.getContext("2d");c.scale(dpr,dpr);
+ const left=49,right=w-14,top=15,bottom=h-30;
+ const vals=arr.map(row=>row[valueColumn]),times=arr.map(row=>row[timeColumn]);
+ const min0=Math.min(...vals),max0=Math.max(...vals),pad=Math.max((max0-min0)*.11,1e-4);
+ const low=min0-pad,high=max0+pad,tmin=times[0],tmax=times[times.length-1];
+ const X=t=>left+(t-tmin)/(tmax-tmin)*(right-left),Y=v=>bottom-(v-low)/(high-low)*(bottom-top);
+ c.font="11px system-ui";c.textBaseline="middle";
+ for(let k=0;k<=3;k++){const y=top+(bottom-top)*k/3;c.strokeStyle="#254055";c.lineWidth=1;c.beginPath();c.moveTo(left,y);c.lineTo(right,y);c.stroke();c.textAlign="right";c.fillStyle="#93abc0";c.fillText((high-(high-low)*k/3).toFixed(2),left-8,y);}
+ c.textAlign="center";c.fillStyle="#94aec2";c.fillText(tmin.toFixed(1)+"s",left,bottom+16);c.fillText(tmax.toFixed(1)+"s",right-12,bottom+16);
+ c.strokeStyle=color;c.lineWidth=2;c.beginPath();
+ for(let i=0;i<arr.length;i++){const x=X(times[i]),y=Y(vals[i]);if(i===0)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();
+ if(playhead!==null){const t=P[playhead][0],x=X(Math.min(t,tmax));c.strokeStyle="#ebfafb99";c.lineWidth=1;c.beginPath();c.moveTo(x,top);c.lineTo(x,bottom);c.stroke();const cur=arr[Math.min(playhead,arr.length-1)];c.beginPath();c.arc(x,Y(cur[valueColumn]),4,0,Math.PI*2);c.fillStyle=color;c.fill();}
+}
+function drawGraphs(){chart("angleChart",P,0,1,"#5adbd2",cursor);chart("currentChart",P,0,3,"#f7b267",cursor);chart("thermalChart",T,0,1,"#65abf5",null);}
+function toggle(){playing=!playing;play.textContent=playing?"Pause":"Play";last=0;}
+play.addEventListener("click",toggle);
+scrub.addEventListener("input",()=>{playing=false;play.textContent="Play";setPlayback(Number(scrub.value));});
+window.addEventListener("resize",drawGraphs);
+function frame(ts){if(playing&&last){const target=P[cursor][0]+Math.min(.1,(ts-last)/1000)*Number(speed.value);const idx=indexFor(target);if(idx===cursor&&cursor<N-1){/* keep same sample until enough time has elapsed */}else setPlayback(idx);if(cursor===N-1){playing=false;play.textContent="Replay";}}last=ts;requestAnimationFrame(frame);}
+if(!playing)play.textContent="Play";
+setPlayback(0);requestAnimationFrame(frame);
+</script>
+</body>
+</html>
