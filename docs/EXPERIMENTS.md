@@ -43,7 +43,7 @@ omc scripts/install_msl.mos
 omc scripts/native_smoke.mos
 python3 scripts/export_native_csv.py m0_motorized_pendulum m0_thermal_step m0_msl_double_pendulum m1_thermal_geared_arm
 python3 scripts/verify_csv.py
-python3 scripts/test_native_scene.py
+python3 scripts/test_native_scene.py --native
 python3 scripts/build_preview.py
 ```
 

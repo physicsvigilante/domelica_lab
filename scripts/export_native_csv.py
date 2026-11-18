@@ -17,6 +17,7 @@ import csv
 import json
 import math
 from pathlib import Path
+import time
 
 
 def _query(session, expression, *, parsed=True):
@@ -69,21 +70,27 @@ def export_native_csv(session, prefix: Path) -> Path:
     csv_path = Path(str(prefix) + "_res.csv").resolve()
     if not mat_path.is_file():
         raise FileNotFoundError(f"Native MAT result is missing: {mat_path}")
+    started = time.monotonic()
+    print(f"READ {prefix.name}: native variable inventory", flush=True)
     names = _query(session, f"readSimulationResultVars({json.dumps(str(mat_path))}, true, false)")
     if (not isinstance(names, (tuple, list)) or not names
             or not all(isinstance(name, str) and name for name in names)
             or len(names) != len(set(names)) or "time" not in names):
         raise ValueError(f"{mat_path.name}: invalid native variable inventory")
     names = ["time", *(name for name in names if name != "time")]
+    print(f"READ {prefix.name}: time column ({len(names)} total columns)", flush=True)
     times = _read_columns(session, mat_path, ["time"])[0]
     if (len(times) < 2 or times[-1] <= times[0]
             or any(b < a for a, b in zip(times, times[1:]))):
         raise ValueError(f"{mat_path.name}: invalid native sample times")
+    print(f"READ {prefix.name}: native sample count", flush=True)
     native_count = _query(session, f"readSimulationResultSize({json.dumps(str(mat_path))})")
     if native_count != len(times):
         raise ValueError(f"{mat_path.name}: time column does not match native sample count")
     columns = [times]
     for start in range(1, len(names), 64):
+        print(f"READ {prefix.name}: columns {start + 1}..{min(start + 64, len(names))} "
+              f"of {len(names)} ({time.monotonic() - started:.1f}s)", flush=True)
         columns.extend(_read_columns(session, mat_path, names[start:start + 64], len(times)))
     temporary = csv_path.with_suffix(".csv.tmp")
     try:
@@ -95,6 +102,7 @@ def export_native_csv(session, prefix: Path) -> Path:
     finally:
         if temporary.exists():
             temporary.unlink()
+    print(f"CLOSE {prefix.name}: native result reader", flush=True)
     _query(session, "closeSimulationResultFile()")
     print(f"PASS native MAT to CSV: {csv_path.name}; {len(times)} original samples, "
           f"{len(names)} columns including parameters and aliases", flush=True)
@@ -108,13 +116,17 @@ def main():
     args = parser.parse_args()
     from OMPython import OMCSessionZMQ
 
+    print("START native OMPython session", flush=True)
     session = OMCSessionZMQ()
+    print("SESSION started; reading compiler version", flush=True)
     print(f"Reading native results with {_query(session, 'getVersion()')}", flush=True)
     try:
         for prefix in args.prefixes:
             export_native_csv(session, prefix)
     finally:
+        print("QUIT native OMPython session", flush=True)
         session.sendExpression("quit()")
+        print("Native result export session closed", flush=True)
 
 
 if __name__ == "__main__":
