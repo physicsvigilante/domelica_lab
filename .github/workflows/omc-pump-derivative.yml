@@ -85,3 +85,43 @@ jobs:
             probe_*.csv
             probe-report.json
             diagnostics/omc-pump-derivative/
+
+  nightly:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install newest available nightly OpenModelica from signed official APT
+        run: |
+          set -eu
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ca-certificates curl gnupg
+          curl -fsSL https://build.openmodelica.org/apt/openmodelica.asc | sudo gpg --dearmor -o /usr/share/keyrings/openmodelica-keyring.gpg
+          echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/openmodelica-keyring.gpg] https://build.openmodelica.org/apt noble nightly' | sudo tee /etc/apt/sources.list.d/openmodelica.list
+          sudo apt-get update -qq
+          apt-cache policy omc | tee apt-policy.txt
+          sudo apt-get install -y --no-install-recommends omc
+          omc --version | tee version.txt
+      - name: Prepare library and run standalone probes
+        run: |
+          omc scripts/install_msl.mos
+          omc diagnostics/omc-pump-derivative/probe.mos > omc-probe.log 2>&1
+      - name: Independent numerical verification
+        run: |
+          export OMC_VERSION="$(head -1 version.txt)"
+          export OMC_IMAGE='apt:noble-nightly'
+          python3 diagnostics/omc-pump-derivative/check.py
+      - name: Retain complete diagnostic evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omc-pump-probe-nightly
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            apt-policy.txt
+            version.txt
+            omc-probe.log
+            probe_*.csv
+            probe-report.json
+            diagnostics/omc-pump-derivative/

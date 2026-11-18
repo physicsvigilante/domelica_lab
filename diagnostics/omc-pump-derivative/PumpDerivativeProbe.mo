@@ -9,6 +9,30 @@ package PumpDerivativeProbe
       else 10 - 250*q - 125000*q*q;
   end explicitHead;
 
+  partial model ScalarBase
+    "A single prescribed flow rate: no hydraulic network and no nonlinear solver"
+    Modelica.Units.SI.VolumeFlowRate q(start=0.002, fixed=true);
+    Real qD(unit="m3/s2")=0.0002;
+    Modelica.Units.SI.Height head;
+    Real headD(unit="m/s");
+  equation
+    der(q)=qD;
+    headD=der(head);
+  end ScalarBase;
+
+  model ScalarMSL
+    extends ScalarBase;
+  equation
+    head=Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(
+      q, {0,0.004,0.008}, {10,7,0});
+  end ScalarMSL;
+
+  model ScalarExplicit
+    extends ScalarBase;
+  equation
+    head=explicitHead(q);
+  end ScalarExplicit;
+
   partial model DirectBase
     Modelica.Units.SI.VolumeFlowRate q(start=0.0015, fixed=true);
     Real ratio(start=0.9, fixed=true);
