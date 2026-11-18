@@ -8,15 +8,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     container:
-      image: openmodelica/openmodelica:v1.27.1-ompython
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
       - name: Prepare Modelica Standard Library
         run: omc scripts/install_msl.mos
       - name: Build and simulate native models
         run: omc scripts/native_smoke.mos
+      - name: Export complete native results including geometry parameters
+        run: python3 scripts/export_native_csv.py m0_motorized_pendulum m0_thermal_step m0_msl_double_pendulum m1_thermal_geared_arm
       - name: Verify physical output independently
         run: python3 scripts/verify_csv.py
+      - name: Check native transform convention and explicit rejection
+        run: python3 scripts/test_native_scene.py
       - name: Build offline browser playback from native data
         run: python3 scripts/build_preview.py
       - name: Preserve native results
@@ -27,9 +35,13 @@ jobs:
           if-no-files-found: warn
           path: |
             m0_*_res.csv
+            m0_*_res.mat
             m0_*.log
             m0_*_visual.xml
             m1_*_res.csv
+            m1_*_res.mat
             m1_*.log
             m1_*_visual.xml
             artifacts/browser-preview.html
+            artifacts/provenance.json
+            native-toolchain.txt

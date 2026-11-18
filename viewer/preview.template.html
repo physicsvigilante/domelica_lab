@@ -3,150 +3,186 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Domelica Lab | Native simulation playback</title>
+<title>Domelica Lab · Native scene playback</title>
 <style>
-:root{color-scheme:dark;--bg:#09111d;--panel:#111e30;--panel2:#14253b;--line:#2a3e54;--ink:#e8f3fc;--muted:#9eb2c7;--aqua:#5adbd2;--blue:#65abf5;--amber:#f7b267}
-*{box-sizing:border-box}
-body{margin:0;background:radial-gradient(ellipse at 15% 1%,#1c3751 0%,transparent 44%),var(--bg);font:14px/1.48 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);min-height:100vh}
-main{max-width:1320px;margin:0 auto;padding:28px 24px 45px}
-header{display:flex;gap:24px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-bottom:19px;border-bottom:1px solid var(--line)}
-h1{font-size:28px;letter-spacing:-.8px;margin:2px 0 4px;line-height:1.15}
-h2{font-size:16px;letter-spacing:-.2px;font-weight:700;margin:0}
-p{margin:4px 0;color:var(--muted)}
-.eyebrow{font-size:11px;font-weight:750;letter-spacing:2.5px;color:var(--aqua)}
-.subtitle{max-width:550px}
-.badge{border:1px solid #386d71;border-radius:99px;padding:7px 12px;background:#123537;color:#a0eee6;font-weight:650;font-size:11px;letter-spacing:.4px}
-.dash{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,1fr);gap:17px;margin-top:21px}
-.panel{border:1px solid var(--line);border-radius:16px;background:linear-gradient(160deg,rgba(24,45,68,.98),var(--panel));box-shadow:0 10px 35px #020a13aa;overflow:hidden}
-.panelhead{padding:18px 20px 5px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.panelhead small{color:var(--muted)}
-.scene{width:100%;height:auto;max-height:510px;display:block}
-.controls{display:flex;align-items:center;gap:10px;padding:0 19px 19px;flex-wrap:wrap}
-button,select{font:inherit;color:var(--ink);border:1px solid #3a5267;border-radius:9px;background:#1d3952;padding:7px 13px;cursor:pointer}
-button:hover,select:hover{border-color:var(--aqua)}
-button{font-weight:750;min-width:84px}
-input[type=range]{accent-color:var(--aqua);flex:1;min-width:150px}
-.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
-.readouts{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
-.readout{padding:16px 10px 18px;text-align:center;border-right:1px solid var(--line)}
-.readout:last-child{border-right:0}
-.readout .value{font-size:clamp(19px,3vw,26px);font-weight:700;letter-spacing:-1px;color:var(--ink)}
-.readout .name{font-size:11px;color:var(--muted);margin-top:3px}
-.plotwrap{padding:10px 18px 20px}
-.plotblock{margin-top:13px}
-.plotlabel{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;margin:0 2px 7px}
-.plotlabel b{font-size:13px;color:var(--ink)}
-canvas{display:block;width:100%;height:155px;border:1px solid #29435a;border-radius:10px;background:#0c1b2b}
-.foot{padding:18px 20px;margin-top:18px;border:1px solid var(--line);border-radius:14px;background:#0b1a2a}
-.foot strong{color:var(--ink)}
-.foot p{line-height:1.6}
-@media(max-width:850px){.dash{grid-template-columns:1fr}.scene{max-height:410px}main{padding:20px 13px}.panelhead{padding:15px 15px 3px}}
+:root{color-scheme:dark;--bg:#08121d;--panel:#101f2e;--line:#263b4c;--ink:#ecf5f8;--muted:#92aab9;--mint:#79e5cb;--blue:#75baf4;--amber:#f4b87a;--rose:#e797b7;--mono:ui-monospace,SFMono-Regular,Consolas,monospace}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#173447 0%,transparent 48%),var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}button,select,input{font:inherit}button,select{color:var(--ink)}button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,canvas:focus-visible{outline:2px solid var(--mint);outline-offset:4px}button,select{border:1px solid #395162;background:#162b3b;border-radius:9px}button:hover,select:hover{border-color:#77c9bc}button:disabled{opacity:.45;cursor:default}main{max-width:1460px;margin:auto;padding:25px 32px 30px}.masthead{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-bottom:22px;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px}.mark{display:grid;place-items:center;width:43px;height:43px;border:1px solid #4f9b92;border-radius:13px;color:var(--mint);background:#163731}.wordmark{font-weight:760;font-size:19px;letter-spacing:-.7px}.wordmark span{font-weight:400;color:var(--muted)}.brand small{display:block;font-size:10px;letter-spacing:2.1px;color:var(--muted);margin-top:2px}.status{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.8px;font-weight:650;color:#b1e9dc;border:1px solid #315b57;background:#122d2c;border-radius:50px;padding:8px 13px}.status i{width:6px;height:6px;background:var(--mint);border-radius:100%}.intro{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin:25px 0 20px}.eyebrow{font-size:10px;letter-spacing:2px;font-weight:750;color:var(--mint);margin-bottom:6px}h1{font-size:clamp(25px,3.1vw,37px);line-height:1.16;font-weight:670;letter-spacing:-1.1px;margin:0 0 8px}.description{font-size:13px;color:var(--muted);max-width:780px;margin:0}.experiment-number{font:11px var(--mono);color:#7892a4;white-space:nowrap;margin-bottom:3px}.scene-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}.scene-tab{padding:10px 15px;background:#102332;font-size:12px;color:var(--muted);text-align:left}.scene-tab[aria-pressed=true]{background:#183c3b;border-color:#558c80;color:#c6fff0}.scene-tab .tab-number{font:10px var(--mono);color:#6e928e;margin-right:9px}.scene-tab[aria-pressed=true] .tab-number{color:var(--mint)}.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(310px,1fr);gap:18px;align-items:start}.panel{border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,#122535,#0f1e2c);overflow:hidden;box-shadow:0 12px 32px #030b1344}.panel-title{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px 18px;border-bottom:1px solid var(--line)}h2{font-size:13px;letter-spacing:-.1px;font-weight:670;margin:0}.subtle{font-size:11px;color:var(--muted)}.scene-tools{display:flex;gap:5px}.scene-tools button{padding:5px 9px;font-size:10px;min-width:34px;background:#122736;border-color:#2b4556}.scene-tools button.active{background:#254746;border-color:#497e72;color:#c1ffec}.stage{position:relative;background:radial-gradient(ellipse at 55% 30%,#173447,#0b1b28 78%)}#scene{display:block;width:100%;height:clamp(390px,38vw,520px);touch-action:none;cursor:grab}#scene:active{cursor:grabbing}.scene-meta{position:absolute;top:16px;left:18px;max-width:calc(100% - 100px);overflow-wrap:anywhere;pointer-events:none;font-size:10px;color:#86a6b9;letter-spacing:.3px}.scene-meta strong{display:block;font:12px var(--mono);color:#bed4df;margin-bottom:3px}.orbit-hint{position:absolute;bottom:13px;left:18px;pointer-events:none;color:#7f9dac;font-size:10px}.camera-label{position:absolute;bottom:13px;right:18px;pointer-events:none;color:#7192a6;font:9px var(--mono);letter-spacing:.5px}.timeline{padding:14px 18px 16px;border-top:1px solid var(--line);background:#102231}.time-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.time-row .current{font:18px var(--mono);letter-spacing:-.7px}.time-row .current span{font-size:11px;color:var(--muted);letter-spacing:0}.playback-state{font-size:10px;font-weight:650;letter-spacing:1.2px;color:var(--mint)}.controls{display:flex;align-items:center;gap:11px}.play-button{min-width:82px;padding:8px 12px;background:#81e3c9;border-color:#81e3c9;color:#09261e;font-size:12px;font-weight:750}.play-button:hover{background:#a1f5df;border-color:#b9ffeb}.range-wrap{display:flex;flex:1;min-width:70px;align-items:center}input[type=range]{margin:0;width:100%;accent-color:var(--mint);cursor:pointer;min-height:24px}.speed{padding:7px 8px;font:11px var(--mono);background:#142e3e}.objects{border-top:1px solid var(--line);background:#0e202e}summary{padding:13px 18px;cursor:pointer;font-size:11px;color:#adc3cf;list-style:none}summary::-webkit-details-marker{display:none}summary::before{content:'+';font:15px var(--mono);color:var(--mint);margin-right:9px}.objects[open] summary::before{content:'−'}.object-body{padding:0 18px 17px}.object-list{display:flex;flex-wrap:wrap;gap:5px;max-height:130px;overflow:auto;padding:2px 3px 7px}.object-button{font:10px var(--mono);padding:6px 8px;color:#afc8d4;background:#132e3e;border-color:#2b495b;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.object-button.selected{border-color:var(--mint);background:#234b45;color:#d0ffef}.inspector{font:10px/1.7 var(--mono);color:#8baaba;padding-top:8px;overflow-wrap:anywhere}.inspector strong{color:#bceada;font-weight:500}.signals .panel-title{padding-bottom:14px}.plot-list{padding:4px 15px 8px}.plot-block{padding:12px 0 11px;border-bottom:1px solid #213949}.plot-block:last-child{border-bottom:0}.plot-label{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:0 2px 5px}.plot-label .name{font-size:11px;color:#b2c7d2;display:flex;gap:7px;align-items:center}.signal-dot{width:5px;height:5px;flex:none;border-radius:50%}.plot-value{font:13px var(--mono);font-weight:500;white-space:nowrap}.plot-value .unit{font:10px system-ui;color:#7f9baa;margin-left:4px}.plot{display:block;width:100%;height:112px}.signal-footnote{padding:1px 17px 15px;font-size:10px;color:#6f8b9c}.provenance{margin-top:19px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;padding:17px 2px 0;border-top:1px solid var(--line)}.provenance h2{font-size:11px;color:#a7c0cc;margin-bottom:5px}.provenance p{font-size:11px;line-height:1.65;margin:0;color:#7392a5;max-width:900px}.build{font:10px/1.8 var(--mono);color:#81a2b4;text-align:right;max-width:250px;overflow-wrap:anywhere}.build b{font-weight:400;color:#b3ccd8}.error{margin:25px 0;padding:20px;background:#462b2b;border:1px solid #9c6262;border-radius:12px;color:#ffd2cc}.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.empty-note{padding:25px 15px;color:var(--muted);font-size:12px}
+@media(min-width:1450px){#scene{height:525px}}@media(max-width:1050px){main{padding:22px}.layout{grid-template-columns:minmax(0,1.2fr) minmax(290px,1fr)}#scene{height:445px}.plot{height:95px}.plot-list{padding:3px 12px 7px}.experiment-number{display:none}}@media(max-width:780px){main{padding:18px 14px 25px}.masthead{padding-bottom:17px}.status{font-size:9px;padding:7px 9px}.brand small{font-size:8px;letter-spacing:1.4px}.wordmark{font-size:17px}.mark{width:37px;height:37px}.intro{margin:23px 0 18px}.layout{grid-template-columns:1fr;gap:16px}.scene-tabs{gap:6px;margin-bottom:16px}.scene-tab{padding:9px 10px;font-size:11px}.scene-tab .tab-number{margin-right:6px}#scene{height:425px}.plot-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;padding:4px 14px}.plot-block:nth-last-child(2){border-bottom:0}.plot{height:114px}.provenance{grid-template-columns:1fr;gap:10px}.build{text-align:left;max-width:100%}.build span{display:inline;margin-right:14px}}@media(max-width:450px){main{padding:14px 11px 22px}.status{max-width:118px;text-align:center;line-height:1.4;font-size:8px}.status i{display:none}h1{font-size:27px}.description{font-size:12px}.panel-title{padding:13px 14px}.scene-tools button{padding:5px 7px}.scene-meta{left:14px;font-size:9px}.scene-meta strong{font-size:10px}.orbit-hint{left:14px;font-size:9px;max-width:190px}.camera-label{right:14px;font-size:8px}#scene{height:360px}.timeline{padding:13px 14px 15px}.plot-list{grid-template-columns:1fr;gap:0;padding:4px 14px}.plot{height:114px}.plot-block:nth-last-child(2){border-bottom:1px solid #213949}.scene-tab{flex:1}.scene-tab .tab-number{display:block;margin:0 0 2px}.controls{gap:9px}.play-button{min-width:73px}.plot-value{font-size:14px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <main>
-<header>
-<div><div class="eyebrow">DOMELICA / EXPERIMENT M0</div><h1>Physics in motion</h1><p class="subtitle">A connected electromechanical system, played back from actual OpenModelica simulation results.</p></div>
-<div class="badge">NATIVE RESULTS · OFFLINE PREVIEW</div>
+<header class="masthead">
+<div class="brand"><div class="mark" aria-hidden="true"><svg width="27" height="27" viewBox="0 0 27 27" fill="none"><path d="m4 18 9.5-12L23 18l-9.5 5L4 18Z" stroke="currentColor" stroke-width="1.2"/><path d="M13.5 6v17M4 18h19" stroke="currentColor" stroke-width="1.2"/><circle cx="13.5" cy="6" r="2" fill="currentColor"/><circle cx="4" cy="18" r="2" fill="currentColor"/><circle cx="23" cy="18" r="2" fill="currentColor"/></svg></div><div><div class="wordmark">domelica <span>lab</span></div><small>COMPOSABLE PHYSICAL SYSTEMS</small></div></div>
+<div class="status"><i></i>NATIVE SCENE PLAYBACK</div>
 </header>
-<section class="dash">
+<div id="error" class="error" role="alert" hidden></div>
+<section class="intro"><div><div class="eyebrow">THE SYSTEMS LABORATORY</div><h1 id="title">Explore the native scene</h1><p class="description" id="description">Geometry, motion, and signals exported from OpenModelica.</p></div><div class="experiment-number" id="experimentNumber"></div></section>
+<nav class="scene-tabs" id="sceneTabs" aria-label="Choose simulation"></nav>
+<section class="layout">
 <div class="panel">
-<div class="panelhead"><div><h2>Motorized pendulum</h2><small>XY projection of the 3D Modelica BodyBox + revolute joint</small></div><small class="mono" id="state">t = 0.00 s</small></div>
-<svg id="scene" class="scene" viewBox="0 0 620 440" role="img" aria-label="A joint-driven pendulum whose angle is controlled by native simulation results">
-<defs>
-<pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M 26 0 L 0 0 0 26" fill="none" stroke="#29445a" stroke-width=".7"/></pattern>
-<linearGradient id="metal" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#3778a4"/><stop offset=".5" stop-color="#71c3e6"/><stop offset="1" stop-color="#2c6998"/></linearGradient>
-<radialGradient id="hub"><stop stop-color="#a0f3e7"/><stop offset=".6" stop-color="#388ca4"/><stop offset="1" stop-color="#154365"/></radialGradient>
-</defs>
-<rect width="620" height="440" fill="#0b1b2b"/>
-<rect width="620" height="440" fill="url(#grid)" opacity=".85"/>
-<path d="M 62 102 L 558 102" stroke="#44627a" stroke-width="2" stroke-dasharray="7 6"/>
-<path d="M 310 102 V 396" stroke="#406078" stroke-width="1.5" stroke-dasharray="3 7"/>
-<path d="M 310 102 m -270 0 a 270 270 0 1 0 540 0" fill="none" stroke="#2b7087" stroke-width="1" stroke-dasharray="5 10" opacity=".8"/>
-<g id="arm" transform="translate(310 102) rotate(0)">
-<polygon points="-14,0 -14,256 -25,244 -25,-10" fill="#1b5272"/>
-<polygon points="-14,256 14,256 2,245 -25,244" fill="#205071"/>
-<rect x="-14" y="0" width="28" height="256" rx="5" fill="url(#metal)" stroke="#9ad8f0" stroke-width="1"/>
-<path d="M 0 21 V 230" stroke="#b5ebfb" stroke-width="1" stroke-dasharray="4 13" opacity=".45"/>
-<circle cx="0" cy="246" r="13" fill="#173e55" stroke="#8cc9df" stroke-width="2"/>
-<circle cx="0" cy="246" r="4" fill="#a8e9f5"/>
-</g>
-<rect x="264" y="55" width="92" height="14" rx="3" fill="#45677e" stroke="#8bafc3"/>
-<path d="M 280 56 V 42 M 310 56 V 42 M 340 56 V 42" stroke="#a4c1d5" stroke-width="3"/>
-<circle cx="310" cy="102" r="34" fill="#132f46" stroke="#4da9bc" stroke-width="5"/>
-<circle cx="310" cy="102" r="20" fill="url(#hub)" stroke="#b4f2eb" stroke-width="2"/>
-<circle cx="310" cy="102" r="7" fill="#133b50"/>
-<text x="25" y="38" fill="#7fa9c3" font-size="12" font-weight="650">WORLD FRAME / GRAVITY ↓</text>
-<text x="25" y="414" fill="#87adc3" font-size="12">Arm length 0.70 m · joint axis Z</text>
-<text x="500" y="414" fill="#87adc3" font-size="12">XY VIEW</text>
-</svg>
-<div class="controls">
-<button id="play" type="button">Pause</button>
-<input id="scrub" aria-label="Simulation playback time" type="range" min="0" max="400" step="1" value="0"/>
-<label for="speed" style="color:var(--muted)">Speed</label>
-<select id="speed" aria-label="Playback speed"><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+<div class="panel-title"><div><h2>Spatial view</h2><span class="subtle">Orbit the model. Inspect its parts.</span></div><div class="scene-tools" aria-label="Camera presets"><button type="button" id="view3d" class="active" title="Three-dimensional camera">3D</button><button type="button" id="viewxy" title="View along the Z axis">XY</button><button type="button" id="fit" title="Fit the full trajectory">Fit</button></div></div>
+<div class="stage"><canvas id="scene" tabindex="0" role="img" aria-label="Native 3D Modelica scene. Drag to orbit, use arrow keys to rotate, plus or minus to zoom, and F to fit."></canvas><div class="scene-meta"><strong id="objectCount"></strong><span id="sceneModel"></span></div><div class="orbit-hint">Drag to orbit · scroll to zoom · click a part</div><div class="camera-label">ORTHOGRAPHIC CAMERA</div></div>
+<div class="timeline"><div class="time-row"><div class="current"><span>t</span> <output id="time">0.00</output> <span>/ <span id="duration">0.00</span> s</span></div><span id="playbackState" class="playback-state">PAUSED</span></div><div class="controls"><button type="button" id="play" class="play-button">Play</button><div class="range-wrap"><input type="range" id="scrub" min="0" max="1" step="1" value="0" aria-label="Simulation playback time"></div><label class="visually-hidden" for="speed">Playback speed</label><select id="speed" class="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></div></div>
+<details class="objects" id="objects"><summary>Native scene objects <span class="subtle" id="objectSummary"></span></summary><div class="object-body"><div class="object-list" id="objectList" aria-label="Select a native object"></div><div class="inspector" id="inspector">Select a part to inspect its native transform.</div></div></details>
 </div>
-<div class="readouts">
-<div class="readout"><div id="angle" class="value mono">0.00°</div><div class="name">JOINT ANGLE</div></div>
-<div class="readout"><div id="velocity" class="value mono">0.00</div><div class="name">ANGULAR SPEED (rad/s)</div></div>
-<div class="readout"><div id="current" class="value mono">0.00 A</div><div class="name">ARMATURE CURRENT</div></div>
-</div>
-</div>
-<div class="panel">
-<div class="panelhead"><div><h2>Simulation traces</h2><small>Native solver CSV, synchronized with playback</small></div></div>
-<div class="plotwrap">
-<div class="plotblock"><div class="plotlabel"><b>Joint angle</b><span>radians</span></div><canvas id="angleChart"></canvas></div>
-<div class="plotblock"><div class="plotlabel"><b>Electrical current</b><span>amperes</span></div><canvas id="currentChart"></canvas></div>
-<div class="plotblock"><div class="plotlabel"><b>Thermal experiment</b><span>temperature · kelvin · separate 0–5 s run</span></div><canvas id="thermalChart"></canvas></div>
-</div>
-</div>
+<aside class="panel signals"><div class="panel-title"><div><h2>Signals, in sync</h2><span class="subtle">Measurements from the same native run</span></div><span class="subtle" id="sampleCount"></span></div><div id="plots" class="plot-list"></div><div class="signal-footnote">The playhead follows recorded solver samples.</div></aside>
 </section>
-<div class="foot"><strong>Provenance and limitations</strong><p>All animated joint angles and graphed measurements come from OpenModelica-generated CSV data embedded in this file. The arm's fixed geometry matches the authored M0 Modelica source and is shown as an XY projection, not as OMEdit's full 3D visualization. This preview cannot infer new physics or arbitrary Modelica scene geometry. For genuine native 3D MultiBody animation, open the model in OMEdit and select Simulate with Animation.</p></div>
+<footer class="provenance"><div><h2>Modelica defines the physics and geometry.</h2><p>This file replays exported scene transforms and native simulation signals. The browser contains no physics solver. Its primitive renderer supports boxes, cylinders, cones, and spheres; shading and the camera grid are viewing aids. Use OMEdit for the full native visualization feature set.</p></div><div class="build"><span id="compiler"></span><br><span id="revision"></span><br><span>SELF-CONTAINED · OFFLINE</span></div></footer>
 </main>
 <script>
 "use strict";
 const D = __NATIVE_MODEL_DATA__;
-if (D.kind !== "DomelicaLab-M0-native-result-playback" || !D.pendulum.length) throw Error("Missing native trace payload");
-const P=D.pendulum,T=D.thermal,N=P.length;
+(() => {
 const el=id=>document.getElementById(id);
-const scrub=el("scrub"), play=el("play"),speed=el("speed");
-scrub.max=String(N-1);
-let cursor=0, playing=!matchMedia("(prefers-reduced-motion: reduce)").matches,last=0,playTime=P[0][0];
-function indexFor(t){let lo=0,hi=N-1;while(lo<hi){const m=(lo+hi+1)>>1;if(P[m][0]<=t)lo=m;else hi=m-1;}return lo;}
-function setPlayback(i){
- cursor=Math.max(0,Math.min(N-1,i));const p=P[cursor],deg=p[1]*180/Math.PI;
- el("arm").setAttribute("transform","translate(310 102) rotate("+(-deg)+")");
- el("angle").textContent=deg.toFixed(1)+"°";el("velocity").textContent=p[2].toFixed(2);
- el("current").textContent=p[3].toFixed(2)+" A";el("state").textContent="t = "+p[0].toFixed(2)+" s";
- scrub.value=String(cursor);
- drawGraphs();
-}
-function chart(id,arr,timeColumn,valueColumn,color,playhead){
- const node=el(id),rect=node.getBoundingClientRect(),w=Math.max(120,rect.width),h=Math.max(80,rect.height);
- const dpr=Math.min(2,window.devicePixelRatio||1);
- node.width=Math.round(w*dpr);node.height=Math.round(h*dpr);
- const c=node.getContext("2d");c.scale(dpr,dpr);
- const left=49,right=w-14,top=15,bottom=h-30;
- const vals=arr.map(row=>row[valueColumn]),times=arr.map(row=>row[timeColumn]);
- const min0=Math.min(...vals),max0=Math.max(...vals),pad=Math.max((max0-min0)*.11,1e-4);
- const low=min0-pad,high=max0+pad,tmin=times[0],tmax=times[times.length-1];
- const X=t=>left+(t-tmin)/(tmax-tmin)*(right-left),Y=v=>bottom-(v-low)/(high-low)*(bottom-top);
- c.font="11px system-ui";c.textBaseline="middle";
- for(let k=0;k<=3;k++){const y=top+(bottom-top)*k/3;c.strokeStyle="#254055";c.lineWidth=1;c.beginPath();c.moveTo(left,y);c.lineTo(right,y);c.stroke();c.textAlign="right";c.fillStyle="#93abc0";c.fillText((high-(high-low)*k/3).toFixed(2),left-8,y);}
- c.textAlign="center";c.fillStyle="#94aec2";c.fillText(tmin.toFixed(1)+"s",left,bottom+16);c.fillText(tmax.toFixed(1)+"s",right-12,bottom+16);
- c.strokeStyle=color;c.lineWidth=2;c.beginPath();
- for(let i=0;i<arr.length;i++){const x=X(times[i]),y=Y(vals[i]);if(i===0)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();
- if(playhead!==null){const t=P[playhead][0],x=X(Math.min(t,tmax));c.strokeStyle="#ebfafb99";c.lineWidth=1;c.beginPath();c.moveTo(x,top);c.lineTo(x,bottom);c.stroke();const cur=arr[Math.min(playhead,arr.length-1)];c.beginPath();c.arc(x,Y(cur[valueColumn]),4,0,Math.PI*2);c.fillStyle=color;c.fill();}
-}
-function drawGraphs(){chart("angleChart",P,0,1,"#5adbd2",cursor);chart("currentChart",P,0,3,"#f7b267",cursor);chart("thermalChart",T,0,1,"#65abf5",null);}
-function toggle(){if(!playing&&cursor===N-1){playTime=P[0][0];setPlayback(0);}playing=!playing;play.textContent=playing?"Pause":"Play";last=0;}
-play.addEventListener("click",toggle);
-scrub.addEventListener("input",()=>{playing=false;play.textContent="Play";setPlayback(Number(scrub.value));playTime=P[cursor][0];});
-window.addEventListener("resize",drawGraphs);
-function frame(ts){if(playing&&last){playTime=Math.min(P[N-1][0],playTime+Math.min(.1,(ts-last)/1000)*Number(speed.value));const idx=indexFor(playTime);if(idx!==cursor)setPlayback(idx);if(cursor===N-1){playing=false;play.textContent="Replay";}}last=ts;requestAnimationFrame(frame);}
-if(!playing)play.textContent="Play";
-setPlayback(0);requestAnimationFrame(frame);
+try {
+ if(D.schema!=="domelica.native-scene.v1"||!Array.isArray(D.scenes)||!D.scenes.length)throw new Error("Missing native scene payload");
+ const C=el("scene"),ctx=C.getContext("2d"),palette=["#79e5cb","#75baf4","#f4b87a","#e797b7"];
+ const reduced=matchMedia("(prefers-reduced-motion: reduce)");
+ let scene,index=0,playTime=0,playing=!reduced.matches,last=0,selected=null,plots=[],faces=[],width=0,height=0,dpr=1;
+ let camera={yaw:.48,pitch:.24,zoom:1,center:[0,0,0],radius:1};
+ let pointer=null,dragged=false;
+ const add=(a,b)=>a.map((x,i)=>x+b[i]),sub=(a,b)=>a.map((x,i)=>x-b[i]);
+ const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+ const norm=a=>Math.hypot(...a),unit=a=>{const n=norm(a);return n?a.map(v=>v/n):[0,0,0];};
+ const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+ const world=(v,f)=>[0,1,2].map(k=>f[9+k]+v[0]*f[k]+v[1]*f[3+k]+v[2]*f[6+k]);
+ function fmt(v,digits=3){if(v===0)return "0.000";if(Math.abs(v)>=1e4||Math.abs(v)<1e-4)return v.toExponential(2);return v.toFixed(Math.abs(v)>=100?2:digits);}
+ function timeLabel(t){return t.toFixed(2);}
+ function make(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
+ function unitMesh(type){
+  const vertices=[],polys=[];
+  if(type==="box")return {vertices:[[0,-.5,-.5],[1,-.5,-.5],[1,.5,-.5],[0,.5,-.5],[0,-.5,.5],[1,-.5,.5],[1,.5,.5],[0,.5,.5]],polys:[[0,3,2,1],[4,5,6,7],[0,1,5,4],[3,7,6,2],[0,4,7,3],[1,2,6,5]]};
+  const n=24;
+  if(type==="cylinder"||type==="cone"){
+   for(let ring=0;ring<(type==="cone"?1:2);ring++)for(let i=0;i<n;i++){const a=i/n*Math.PI*2;vertices.push([ring,.5*Math.cos(a),.5*Math.sin(a)]);}
+   polys.push(Array.from({length:n},(_,i)=>n-1-i));
+   if(type==="cone"){const tip=vertices.push([1,0,0])-1;for(let i=0;i<n;i++)polys.push([i,(i+1)%n,tip]);}
+   else{polys.push(Array.from({length:n},(_,i)=>n+i));for(let i=0;i<n;i++)polys.push([i,(i+1)%n,n+(i+1)%n,n+i]);}
+   return {vertices,polys};
+  }
+  if(type==="sphere"){
+   const rings=12;
+   for(let j=0;j<=rings;j++)for(let i=0;i<n;i++){const p=j/rings*Math.PI,a=i/n*Math.PI*2;vertices.push([.5+.5*Math.cos(p),.5*Math.sin(p)*Math.cos(a),.5*Math.sin(p)*Math.sin(a)]);}
+   for(let j=0;j<rings;j++)for(let i=0;i<n;i++){if(j===0)polys.push([i,n+(i+1)%n,n+i]);else if(j===rings-1)polys.push([j*n+i,j*n+(i+1)%n,(j+1)*n+i]);else polys.push([j*n+i,j*n+(i+1)%n,(j+1)*n+(i+1)%n,(j+1)*n+i]);}
+   return {vertices,polys};
+  }
+  throw new Error("Unsupported native primitive: "+type);
+ }
+ const meshes=Object.fromEntries(["box","cylinder","cone","sphere"].map(type=>[type,unitMesh(type)]));
+ function viewBasis(){const y=camera.yaw,p=camera.pitch;return {right:[Math.cos(y),0,-Math.sin(y)],up:[-Math.sin(y)*Math.sin(p),Math.cos(p),-Math.cos(y)*Math.sin(p)],toward:[Math.sin(y)*Math.cos(p),Math.sin(p),Math.cos(y)*Math.cos(p)]};}
+ function projection(){const b=viewBasis(),scale=Math.min(width,height)*.405/camera.radius*camera.zoom;return p=>{const v=sub(p,camera.center);return [width/2+dot(v,b.right)*scale,height/2-dot(v,b.up)*scale,dot(v,b.toward)];};}
+ function drawGuide(project){
+  const r=camera.radius,center=camera.center,y=scene.bounds.min[1]-.035*r,step=Math.pow(10,Math.floor(Math.log10(r/3))),extent=Math.ceil(r/step)*step;
+  ctx.save();ctx.lineWidth=.7;
+  for(let i=-10;i<=10;i++){
+   const offset=i*extent/10;
+   const segments=[[[center[0]-extent,y,center[2]+offset],[center[0]+extent,y,center[2]+offset]],[[center[0]+offset,y,center[2]-extent],[center[0]+offset,y,center[2]+extent]]];
+   ctx.strokeStyle=i===0?"#35516388":"#26425370";
+   for(const [a,b]of segments){const x=project(a),z=project(b);ctx.beginPath();ctx.moveTo(x[0],x[1]);ctx.lineTo(z[0],z[1]);ctx.stroke();}
+  }
+  ctx.restore();
+ }
+ function drawAxis(){
+  const b=viewBasis(),base=[width-42,48],colors=["#df8c91","#8ccb9d","#79aef0"],labels=["X","Y","Z"];
+  ctx.font="9px system-ui";ctx.textBaseline="middle";ctx.textAlign="center";
+  for(let k=0;k<3;k++){const end=[base[0]+b.right[k]*20,base[1]-b.up[k]*20];ctx.strokeStyle=colors[k];ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(...base);ctx.lineTo(...end);ctx.stroke();ctx.fillStyle=colors[k];ctx.fillText(labels[k],base[0]+b.right[k]*29,base[1]-b.up[k]*29);}
+ }
+ function frameOf(obj){return obj.frames[obj.frames.length===1?0:index];}
+ function drawScene(){
+  if(!scene||!width||!height)return;
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);const project=projection();drawGuide(project);faces=[];
+  const light=unit([.3,.8,1]);
+  for(const obj of scene.objects){
+   const mesh=meshes[obj.type],f=frameOf(obj),verts=mesh.vertices.map(v=>world(v,f)),screen=verts.map(project),color=obj.colors?obj.colors[obj.colors.length===1?0:index]:obj.color;
+   for(const poly of mesh.polys){
+    const points=poly.map(i=>screen[i]),normal=unit(cross(sub(verts[poly[1]],verts[poly[0]]),sub(verts[poly[2]],verts[poly[0]])));
+    if(norm(normal)<1e-12)continue;
+    // Two-sided lighting also handles native signed dimension conventions.
+    const shade=.48+.52*Math.abs(dot(normal,light)),rgb=color.map(v=>Math.round(clamp(v*shade,0,255)));
+    faces.push({id:obj.id,points,depth:points.reduce((s,p)=>s+p[2],0)/points.length,fill:`rgb(${rgb.join(",")})`,selected:obj.id===selected,type:obj.type});
+   }
+  }
+  faces.sort((a,b)=>a.depth-b.depth);
+  for(const face of faces){
+   ctx.beginPath();face.points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=face.fill;ctx.fill();
+   if(face.selected){ctx.strokeStyle="#d2ffea";ctx.lineWidth=1.2;ctx.stroke();}
+   else if(face.type==="box"){ctx.strokeStyle="#06132155";ctx.lineWidth=.7;ctx.stroke();}
+  }
+  drawAxis();
+ }
+ function fit(resetOrientation=false){
+  if(resetOrientation){camera.yaw=.48;camera.pitch=.24;}
+  camera.center=scene.bounds.min.map((v,i)=>(v+scene.bounds.max[i])/2);
+  camera.radius=Math.max(.01,norm(sub(scene.bounds.max,scene.bounds.min))/2);camera.zoom=1;
+  updateCameraButtons();drawScene();
+ }
+ function updateCameraButtons(){el("viewxy").classList.toggle("active",Math.abs(camera.yaw)<1e-9&&Math.abs(camera.pitch)<1e-9);el("view3d").classList.toggle("active",Math.abs(camera.yaw)>1e-9||Math.abs(camera.pitch)>1e-9);}
+ function indexFor(t){let lo=0,hi=scene.times.length-1;while(lo<hi){const m=(lo+hi+1)>>1;if(scene.times[m]<=t)lo=m;else hi=m-1;}return lo;}
+ function updatePlayButton(){const ended=index===scene.times.length-1;el("play").textContent=playing?"Pause":ended?"Replay":"Play";el("playbackState").textContent=playing?"PLAYING NATIVE DATA":ended?"RUN COMPLETE":"PAUSED";}
+ function toggle(){if(!playing&&index===scene.times.length-1){index=0;playTime=scene.times[0];updateFrame();}playing=!playing;last=0;updatePlayButton();}
+ function seek(i){playing=false;index=clamp(Math.round(i),0,scene.times.length-1);playTime=scene.times[index];last=0;updateFrame();updatePlayButton();}
+ function updateFrame(){el("time").textContent=timeLabel(scene.times[index]);el("scrub").value=String(index);el("scrub").setAttribute("aria-valuetext",timeLabel(scene.times[index])+" seconds");drawScene();drawCharts();updateInspector();}
+ function selectObject(id){selected=id;for(const b of el("objectList").children){const active=b.dataset.id===id;b.classList.toggle("selected",active);b.setAttribute("aria-pressed",String(active));}updateInspector();drawScene();}
+ function updateInspector(){
+  const box=el("inspector");box.replaceChildren();
+  if(!selected){box.textContent="Select a part to inspect its native transform.";return;}
+  const obj=scene.objects.find(o=>o.id===selected),f=frameOf(obj),dimensions=[norm(f.slice(0,3)),norm(f.slice(3,6)),norm(f.slice(6,9))];
+  box.append(make("strong",null,obj.id),make("br"));box.append(document.createTextNode(obj.type+" · axis scales "+dimensions.map(v=>fmt(v)).join(" / ")+" m"),make("br"));box.append(document.createTextNode("origin ("+f.slice(9,12).map(v=>fmt(v)).join(", ")+") m"));
+ }
+ function graphNumber(v,span){if(Math.abs(v)>=1e4)return v.toExponential(1);return v.toFixed(span<.01?4:span<1?2:span<100?1:0);}
+ function prepareChart(p){
+  const rect=p.canvas.getBoundingClientRect(),w=Math.max(120,rect.width),h=Math.max(80,rect.height),pixel=Math.min(window.devicePixelRatio||1,2);
+  p.canvas.width=Math.round(w*pixel);p.canvas.height=Math.round(h*pixel);p.pixel=pixel;p.w=w;p.h=h;p.base=document.createElement("canvas");p.base.width=p.canvas.width;p.base.height=p.canvas.height;
+  const c=p.base.getContext("2d");c.scale(pixel,pixel);const vals=p.series.values;let low=Infinity,high=-Infinity;for(const v of vals){low=Math.min(low,v);high=Math.max(high,v);}
+  const raw=high-low,pad=Math.max(raw*.12,Math.abs(high)*1e-6,1e-5);low-=pad;high+=pad;
+  const left=45,right=w-11,top=10,bottom=h-22,tmin=scene.times[0],tmax=scene.times.at(-1);
+  p.X=t=>left+(t-tmin)/Math.max(tmax-tmin,1e-9)*(right-left);p.Y=v=>bottom-(v-low)/(high-low)*(bottom-top);p.top=top;p.bottom=bottom;
+  c.font="9px system-ui";c.textBaseline="middle";
+  for(let k=0;k<=2;k++){const y=top+(bottom-top)*k/2;c.strokeStyle="#2a435355";c.lineWidth=.8;c.beginPath();c.moveTo(left,y);c.lineTo(right,y);c.stroke();c.textAlign="right";c.fillStyle="#6f8c9f";c.fillText(graphNumber(high-(high-low)*k/2,raw),left-7,y);}
+  c.textAlign="left";c.fillStyle="#6f8c9f";c.fillText(tmin.toFixed(1)+" s",left,bottom+14);c.textAlign="right";c.fillText(tmax.toFixed(1)+" s",right,bottom+14);
+  c.beginPath();for(let i=0;i<vals.length;i++){const x=p.X(scene.times[i]),y=p.Y(vals[i]);i?c.lineTo(x,y):c.moveTo(x,y);}c.strokeStyle=p.color;c.lineWidth=1.65;c.lineJoin="round";c.stroke();
+  p.context=p.canvas.getContext("2d");
+ }
+ function drawCharts(){for(const p of plots){p.value.textContent=fmt(p.series.values[index]);if(!p.base)continue;const c=p.context;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,p.canvas.width,p.canvas.height);c.drawImage(p.base,0,0);c.setTransform(p.pixel,0,0,p.pixel,0,0);const x=p.X(scene.times[index]),y=p.Y(p.series.values[index]);c.strokeStyle="#b9d7df66";c.lineWidth=.8;c.beginPath();c.moveTo(x,p.top);c.lineTo(x,p.bottom);c.stroke();c.beginPath();c.arc(x,y,3.3,0,Math.PI*2);c.fillStyle=p.color;c.fill();c.strokeStyle="#0e202e";c.lineWidth=1;c.stroke();}}
+ function makePlots(){
+  const holder=el("plots");holder.replaceChildren();plots=[];
+  for(const [i,s]of(scene.series||[]).entries()){
+   const color=s.color||palette[i%palette.length],block=make("div","plot-block"),label=make("div","plot-label"),name=make("span","name"),dotEl=make("i","signal-dot"),valueBox=make("span","plot-value"),value=make("span"),unitEl=make("span","unit",s.unit||"");
+   dotEl.style.background=color;valueBox.style.color=color;name.append(dotEl,document.createTextNode(s.label||s.name));valueBox.append(value,unitEl);label.append(name,valueBox);
+   const canvas=make("canvas","plot");canvas.setAttribute("role","img");canvas.setAttribute("aria-label",(s.label||s.name)+" recorded over time in "+s.unit);block.append(label,canvas);holder.append(block);plots.push({series:s,color,canvas,value});
+  }
+  if(!plots.length)holder.append(make("p","empty-note","No signal series included for this scene."));
+ }
+ function changeScene(id){
+  const next=D.scenes.find(s=>s.id===id);if(!next)throw new Error("Unknown native scene: "+id);scene=next;index=0;playTime=scene.times[0];last=0;selected=null;
+  if(!scene.times.length||!scene.objects.length||!scene.bounds)throw new Error("Incomplete native scene: "+id);
+  for(const obj of scene.objects)if(!meshes[obj.type]||(obj.frames.length!==1&&obj.frames.length!==scene.times.length))throw new Error("Invalid native object: "+obj.id);
+  for(const s of scene.series||[])if(s.values.length!==scene.times.length)throw new Error("Mismatched native signal: "+s.name);
+  el("title").textContent=scene.title;el("description").textContent=scene.description;el("sceneModel").textContent=scene.model;el("objectCount").textContent=scene.objects.length+" native primitives";el("objectSummary").textContent="· "+scene.objects.length;el("duration").textContent=timeLabel(scene.times.at(-1));el("sampleCount").textContent=scene.times.length+" samples";el("experimentNumber").textContent="SCENE "+String(D.scenes.indexOf(scene)+1).padStart(2,"0")+" / "+String(D.scenes.length).padStart(2,"0");el("scrub").max=String(scene.times.length-1);
+  for(const b of el("sceneTabs").children)b.setAttribute("aria-pressed",String(b.dataset.id===id));
+  el("objectList").replaceChildren();for(const obj of scene.objects){const b=make("button","object-button",obj.id);b.type="button";b.dataset.id=obj.id;b.title=obj.type+" · "+obj.id;b.setAttribute("aria-pressed","false");b.addEventListener("click",()=>selectObject(selected===obj.id?null:obj.id));el("objectList").append(b);}
+  makePlots();fit(true);resize();updateFrame();updatePlayButton();
+ }
+ function resize(){const rect=C.getBoundingClientRect();width=rect.width;height=rect.height;dpr=Math.min(window.devicePixelRatio||1,2);C.width=Math.round(width*dpr);C.height=Math.round(height*dpr);for(const p of plots)prepareChart(p);drawScene();drawCharts();}
+ function pick(x,y){for(let k=faces.length-1;k>=0;k--){const f=faces[k];let inside=false;for(let i=0,j=f.points.length-1;i<f.points.length;j=i++){const a=f.points[i],b=f.points[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))inside=!inside;}if(inside)return f.id;}return null;}
+ C.addEventListener("pointerdown",e=>{if(e.button!==0)return;pointer={id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};dragged=false;C.setPointerCapture(e.pointerId);});
+ C.addEventListener("pointermove",e=>{if(!pointer||pointer.id!==e.pointerId)return;const dx=e.clientX-pointer.x,dy=e.clientY-pointer.y;if(Math.hypot(e.clientX-pointer.startX,e.clientY-pointer.startY)>3)dragged=true;camera.yaw-=dx*.008;camera.pitch=clamp(camera.pitch+dy*.008,-1.45,1.45);pointer.x=e.clientX;pointer.y=e.clientY;updateCameraButtons();drawScene();});
+ C.addEventListener("pointerup",e=>{if(!pointer||pointer.id!==e.pointerId)return;if(!dragged){const rect=C.getBoundingClientRect(),id=pick(e.clientX-rect.left,e.clientY-rect.top);selectObject(id===selected?null:id);if(id)el("objects").open=true;}pointer=null;});
+ C.addEventListener("pointercancel",()=>{pointer=null;});
+ C.addEventListener("wheel",e=>{e.preventDefault();camera.zoom=clamp(camera.zoom*Math.exp(-e.deltaY*.001),.35,6);drawScene();},{passive:false});
+ C.addEventListener("keydown",e=>{let handled=true;switch(e.key){case"ArrowLeft":camera.yaw-=.12;break;case"ArrowRight":camera.yaw+=.12;break;case"ArrowUp":camera.pitch=clamp(camera.pitch+.12,-1.45,1.45);break;case"ArrowDown":camera.pitch=clamp(camera.pitch-.12,-1.45,1.45);break;case"+":case"=":camera.zoom=clamp(camera.zoom*1.15,.35,6);break;case"-":camera.zoom=clamp(camera.zoom/1.15,.35,6);break;case"f":case"F":fit();break;case" ":toggle();break;default:handled=false;}if(handled){e.preventDefault();updateCameraButtons();drawScene();}});
+ el("play").addEventListener("click",toggle);el("scrub").addEventListener("input",()=>seek(Number(el("scrub").value)));
+ el("fit").addEventListener("click",()=>fit());el("view3d").addEventListener("click",()=>fit(true));el("viewxy").addEventListener("click",()=>{camera.yaw=0;camera.pitch=0;fit();});
+ for(const [i,s]of D.scenes.entries()){const b=make("button","scene-tab");b.type="button";b.dataset.id=s.id;b.append(make("span","tab-number",String(i+1).padStart(2,"0")),document.createTextNode(s.title));b.addEventListener("click",()=>changeScene(s.id));el("sceneTabs").append(b);}
+ const provenance=D.provenance||{};el("compiler").textContent=provenance.compiler||"Native OpenModelica results";el("revision").textContent=provenance.revision?"revision "+String(provenance.revision).slice(0,12):"Source provenance embedded in file";
+ window.addEventListener("resize",resize);document.addEventListener("visibilitychange",()=>{last=0;});reduced.addEventListener("change",e=>{if(e.matches){playing=false;updatePlayButton();}});
+ function tick(now){if(playing&&last&&!document.hidden){playTime=Math.min(scene.times.at(-1),playTime+Math.min(.1,(now-last)/1000)*Number(el("speed").value));const next=indexFor(playTime);if(next!==index){index=next;updateFrame();}if(playTime>=scene.times.at(-1)){playing=false;updatePlayButton();}}last=now;requestAnimationFrame(tick);}
+ window.__domelica={getState:()=>({sceneId:scene.id,time:scene.times[index],playTime,index,playing,objectCount:scene.objects.length,selected,camera:JSON.parse(JSON.stringify(camera))}),fit,draw:()=>{drawScene();drawCharts();},toggle,seek,changeScene};
+ changeScene(D.scenes[0].id);requestAnimationFrame(tick);
+} catch(error){el("error").hidden=false;el("error").textContent="Cannot display native playback: "+error.message;throw error;}
+})();
 </script>
 </body>
 </html>

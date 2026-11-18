@@ -1,28 +1,14 @@
-# OpenModelica generated models, binaries and simulation results
-*.exe
-*.o
-*.so
-*.dll
-*_res.csv
-*_res.mat
-*_init.xml
-*_info.json
-*_prof.json
-*.makefile
-*.c
-*.h
-*.log
-*.libs
-*.json
-!docs/*.json
+# Native experiment outputs; ordinary source and JSON files remain visible.
+/m0_*
+/m1_*
+/native-toolchain.txt
 
 # Python
 __pycache__/
 *.pyc
 
-# Local run artifacts
+# Generated artifacts and local dependencies
 .artifacts/
 results/
-
-# Generated browser playback (CI artifact)
 artifacts/
+node_modules/

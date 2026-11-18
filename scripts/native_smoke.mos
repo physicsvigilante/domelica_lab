@@ -3,7 +3,7 @@ print("DOMELICA_NATIVE_SMOKE_START\n");
 print("Compiler: " + getVersion() + "\n");
 // Remove only this suite's previous outputs. A failed rerun must not reuse them.
 for prefix in {"m0_motorized_pendulum", "m0_thermal_step", "m0_msl_double_pendulum", "m1_thermal_geared_arm"} loop
-  for suffix in {"_res.csv", "_visual.xml"} loop
+  for suffix in {"_res.mat", "_res.csv", "_visual.xml"} loop
     if regularFileExists(prefix + suffix) then
       if not deleteFile(prefix + suffix) then
         print("ERROR: cannot remove stale output " + prefix + suffix + "\n");
@@ -26,6 +26,7 @@ if not loadFile("DomelicaLab/package.mo") then
   print(getErrorString());
   exit(1);
 end if;
+writeFile("native-toolchain.txt", "compiler=" + getVersion() + "\nmslVersion=" + getVersion(Modelica) + "\nmslSource=" + getSourceFile(Modelica) + "\n");
 print("CHECKING authored 3D electromechanical model:\n");
 print(checkModel(DomelicaLab.Examples.MotorizedPendulum3D) + "\n");
 print(getErrorString());
@@ -34,15 +35,15 @@ simulate(
   stopTime=4,
   numberOfIntervals=400,
   tolerance=1e-6,
-  outputFormat="csv",
+  outputFormat="mat",
   fileNamePrefix="m0_motorized_pendulum");
 print(getErrorString());
-if not regularFileExists("m0_motorized_pendulum_res.csv") then
+if not regularFileExists("m0_motorized_pendulum_res.mat") then
   print("ERROR: authored pendulum simulation failed.\n");
   print(getErrorString());
   exit(1);
 end if;
-print("PASS pendulum: m0_motorized_pendulum_res.csv\n");
+print("PASS pendulum: m0_motorized_pendulum_res.mat\n");
 
 print("CHECKING authored thermal model:\n");
 print(checkModel(DomelicaLab.Examples.HeatedBody) + "\n");
@@ -52,15 +53,15 @@ simulate(
   stopTime=5,
   numberOfIntervals=500,
   tolerance=1e-7,
-  outputFormat="csv",
+  outputFormat="mat",
   fileNamePrefix="m0_thermal_step");
 print(getErrorString());
-if not regularFileExists("m0_thermal_step_res.csv") then
+if not regularFileExists("m0_thermal_step_res.mat") then
   print("ERROR: thermal simulation failed.\n");
   print(getErrorString());
   exit(1);
 end if;
-print("PASS thermal: m0_thermal_step_res.csv\n");
+print("PASS thermal: m0_thermal_step_res.mat\n");
 
 print("CHECKING unchanged MSL multibody baseline:\n");
 simulate(
@@ -68,15 +69,15 @@ simulate(
   stopTime=1,
   numberOfIntervals=200,
   tolerance=1e-6,
-  outputFormat="csv",
+  outputFormat="mat",
   fileNamePrefix="m0_msl_double_pendulum");
 print(getErrorString());
-if not regularFileExists("m0_msl_double_pendulum_res.csv") then
+if not regularFileExists("m0_msl_double_pendulum_res.mat") then
   print("ERROR: MSL baseline simulation failed.\n");
   print(getErrorString());
   exit(1);
 end if;
-print("PASS MSL baseline: m0_msl_double_pendulum_res.csv\n");
+print("PASS MSL baseline: m0_msl_double_pendulum_res.mat\n");
 
 print("CHECKING coupled thermal geared spatial arm:\n");
 print(checkModel(DomelicaLab.Examples.ThermalGearedArm3D) + "\n");
@@ -86,10 +87,10 @@ simulate(
   stopTime=8,
   numberOfIntervals=800,
   tolerance=1e-7,
-  outputFormat="csv",
+  outputFormat="mat",
   fileNamePrefix="m1_thermal_geared_arm");
 print(getErrorString());
-if not regularFileExists("m1_thermal_geared_arm_res.csv") then
+if not regularFileExists("m1_thermal_geared_arm_res.mat") then
   print("ERROR: thermal geared arm simulation failed.\n");
   exit(1);
 end if;
