@@ -1,0 +1,37 @@
+{
+  "title": "One machine. Four controlled experiments.",
+  "description": "Compare native Modelica feedback-control runs on a shared physical timeline. Change one side to isolate load, controller settings, or cooling.",
+  "sceneIds": [
+    "m2-nominal",
+    "m2-heavy",
+    "m2-retuned",
+    "m2-reduced-cooling"
+  ],
+  "defaultPair": [
+    "m2-nominal",
+    "m2-heavy"
+  ],
+  "signals": [
+    {
+      "name": "shoulderAngle",
+      "label": "Shoulder position",
+      "unit": "rad",
+      "reference": "desiredAngle"
+    },
+    {
+      "name": "trackingError",
+      "label": "Tracking error",
+      "unit": "rad"
+    },
+    {
+      "name": "motorCurrent",
+      "label": "Armature current",
+      "unit": "A"
+    },
+    {
+      "name": "windingTemperature",
+      "label": "Winding temperature",
+      "unit": "K"
+    }
+  ]
+}

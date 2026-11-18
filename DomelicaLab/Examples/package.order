@@ -1,3 +1,7 @@
 MotorizedPendulum3D
 HeatedBody
 ThermalGearedArm3D
+ControlledThermalArm3D
+ControlledArmHeavyLoad
+ControlledArmRetuned
+ControlledArmReducedCooling

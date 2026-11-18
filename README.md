@@ -10,6 +10,7 @@ A **Modelica-first multiphysics laboratory** for composing physical systems, run
 | **MotorizedPendulum3D** | Electrical armature dynamics coupled to a gravitational rigid body and rotational damper |
 | **HeatedBody** | A thermal network checked against an independent analytical solution |
 | **MSL DoublePendulum** | An unchanged standard-library example using the same native scene pipeline |
+| **Controlled thermal arm (M2)** | Native PID feedback, voltage limits and anti-windup; four experiments isolate forearm load, controller settings and cooling |
 
 The armature is reusable Modelica code. `ThermalArmatureDrive` extends it by exposing the standard resistor's heat port; the original component is unchanged. The browser reads native geometry and transforms and has no physics solver or model-specific pendulum drawing.
 
@@ -20,6 +21,12 @@ From a successful [Native Modelica Lab workflow run](https://github.com/physicsv
 Choose a scene, play or scrub time, drag to orbit, switch to XY, and click a visible object to inspect its transform. Three.js renders the native geometry with lighting, a depth buffer, and surface picking. It is bundled inside the HTML; viewing requires a browser with WebGL2, with no installation or network connection. The **modelica-browser-checks** artifact contains the browser test report and screenshots for that same HTML file.
 
 Development is proposed in [draft PR #1](https://github.com/physicsvigilante/domelica_lab/pull/1). Check the run attached to the exact revision before treating a result as verified.
+
+### Compare controlled experiments
+
+The M2 build also produces **artifacts/comparison.html**. It places two native runs side by side, with one physical-time clock and common-scale signal plots. Choose nominal load, heavier load, different controller settings, or weaker cooling independently on either side. Each side reuses the accepted Three.js viewer and maps the shared time to its own recorded samples.
+
+See [the M2 experiment and acceptance scope](docs/M2_CONTROLLED_ARM.md). M2 is developed from the accepted M1 revision; its source preservation check enforces reuse of the original models, result reader, scene exporter, and renderer.
 
 ## Principles
 

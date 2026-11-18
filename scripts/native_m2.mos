@@ -1,0 +1,77 @@
+// Run from repository root after installing MSL: omc scripts/native_m2.mos
+print("DOMELICA_M2_START\n");
+print("Compiler: " + getVersion() + "\n");
+for prefix in {"m2_controlled_nominal", "m2_controlled_heavy", "m2_controlled_retuned", "m2_controlled_cooling"} loop
+  for suffix in {"_res.mat", "_res.csv", "_visual.xml"} loop
+    if regularFileExists(prefix + suffix) then
+      if not deleteFile(prefix + suffix) then
+        print("ERROR: cannot remove stale output " + prefix + suffix + "\n");
+        exit(1);
+      end if;
+    end if;
+  end for;
+end for;
+if not setCommandLineOptions("+d=visxml") then
+  print("ERROR: cannot enable native visualization export.\n");
+  exit(1);
+end if;
+if not loadModel(Modelica, {"4.1.0"}) then
+  print("ERROR: cannot load MSL 4.1.0.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+if not loadFile("DomelicaLab/package.mo") then
+  print("ERROR: cannot load DomelicaLab/package.mo.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+
+print("CHECKING nominal closed-loop arm:\n");
+print(checkModel(DomelicaLab.Examples.ControlledThermalArm3D) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.ControlledThermalArm3D,
+  stopTime=30, numberOfIntervals=1500, tolerance=1e-7,
+  outputFormat="mat", fileNamePrefix="m2_controlled_nominal");
+print(getErrorString());
+if not regularFileExists("m2_controlled_nominal_res.mat") then
+  print("ERROR: nominal closed-loop arm simulation failed.\n");
+  exit(1);
+end if;
+print("PASS M2 nominal native simulation\n");
+
+simulate(DomelicaLab.Examples.ControlledArmHeavyLoad,
+  stopTime=30, numberOfIntervals=1500, tolerance=1e-7,
+  outputFormat="mat", fileNamePrefix="m2_controlled_heavy");
+print(getErrorString());
+if not regularFileExists("m2_controlled_heavy_res.mat") then
+  print("ERROR: heavy closed-loop arm simulation failed.\n");
+  exit(1);
+end if;
+print("PASS M2 heavy native simulation\n");
+
+simulate(DomelicaLab.Examples.ControlledArmRetuned,
+  stopTime=30, numberOfIntervals=1500, tolerance=1e-7,
+  outputFormat="mat", fileNamePrefix="m2_controlled_retuned");
+print(getErrorString());
+if not regularFileExists("m2_controlled_retuned_res.mat") then
+  print("ERROR: retuned closed-loop arm simulation failed.\n");
+  exit(1);
+end if;
+print("PASS M2 retuned native simulation\n");
+
+simulate(DomelicaLab.Examples.ControlledArmReducedCooling,
+  stopTime=30, numberOfIntervals=1500, tolerance=1e-7,
+  outputFormat="mat", fileNamePrefix="m2_controlled_cooling");
+print(getErrorString());
+if not regularFileExists("m2_controlled_cooling_res.mat") then
+  print("ERROR: reduced-cooling closed-loop arm simulation failed.\n");
+  exit(1);
+end if;
+for prefix in {"m2_controlled_nominal", "m2_controlled_heavy", "m2_controlled_retuned", "m2_controlled_cooling"} loop
+  if not regularFileExists(prefix + "_visual.xml") then
+    print("ERROR: native scene missing for " + prefix + "\n");
+    exit(1);
+  end if;
+end for;
+print("PASS M2 reduced cooling and all native scene exports\n");
+print("DOMELICA_M2_COMPLETE\n");
