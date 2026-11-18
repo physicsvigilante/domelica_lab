@@ -1,4 +1,4 @@
-name: Native Modelica M0
+name: Native Modelica Lab
 on:
   pull_request:
   workflow_dispatch:
@@ -23,9 +23,13 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: modelica-m0-results
+          name: modelica-lab-results
           if-no-files-found: warn
           path: |
             m0_*_res.csv
             m0_*.log
+            m0_*_visual.xml
+            m1_*_res.csv
+            m1_*.log
+            m1_*_visual.xml
             artifacts/browser-preview.html
