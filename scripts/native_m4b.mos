@@ -1,0 +1,59 @@
+// Run from repository root after scripts/install_msl.mos.
+print("DOMELICA_M4B_START\n");
+print("Compiler: " + getVersion() + "\n");
+for prefix in {"m4b_moving_wedge", "m4b_spring_wedge"} loop
+  for suffix in {"_res.mat", "_res.csv", "_visual.xml", ".log"} loop
+    if regularFileExists(prefix + suffix) then
+      if not deleteFile(prefix + suffix) then
+        print("ERROR: cannot remove stale output " + prefix + suffix + "\n");
+        exit(1);
+      end if;
+    end if;
+  end for;
+end for;
+if not setCommandLineOptions("+d=visxml") then
+  print("ERROR: cannot enable native visualization export.\n");
+  exit(1);
+end if;
+if not loadModel(Modelica, {"4.1.0"}) then
+  print("ERROR: cannot load MSL 4.1.0.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+if not loadFile("DomelicaLab/package.mo") then
+  print("ERROR: cannot load DomelicaLab/package.mo.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+writeFile("m4b-native-toolchain.txt", "compiler=" + getVersion() + "\nmslVersion=" + getVersion(Modelica) + "\nmslSource=" + getSourceFile(Modelica) + "\n");
+
+print("CHECKING Q106 moving wedge:\n");
+print(checkModel(DomelicaLab.Examples.MovingWedge3D) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.MovingWedge3D,
+  startTime=0, stopTime=1, numberOfIntervals=400, tolerance=1e-9,
+  method="dassl", outputFormat="mat", fileNamePrefix="m4b_moving_wedge");
+print(getErrorString());
+if system("python3 scripts/verify_m4b.py --completion-only m4b_moving_wedge 1 401") <> 0 then
+  print("ERROR: moving wedge native simulation did not complete.\n");
+  exit(1);
+end if;
+
+print("CHECKING independently authored internal spring composition:\n");
+print(checkModel(DomelicaLab.Examples.SpringWedge3D) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.SpringWedge3D,
+  startTime=0, stopTime=6, numberOfIntervals=1200, tolerance=1e-9,
+  method="dassl", outputFormat="mat", fileNamePrefix="m4b_spring_wedge");
+print(getErrorString());
+if system("python3 scripts/verify_m4b.py --completion-only m4b_spring_wedge 6 1201") <> 0 then
+  print("ERROR: spring wedge native simulation did not complete.\n");
+  exit(1);
+end if;
+for prefix in {"m4b_moving_wedge", "m4b_spring_wedge"} loop
+  if not regularFileExists(prefix + "_visual.xml") then
+    print("ERROR: native scene missing for " + prefix + "\n");
+    exit(1);
+  end if;
+end for;
+print("DOMELICA_M4B_COMPLETE\n");

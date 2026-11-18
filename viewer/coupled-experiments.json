@@ -1,0 +1,52 @@
+[
+  {
+    "id": "moving-wedge",
+    "prefix": "m4b_moving_wedge",
+    "title": "Q106 · A block on a movable wedge",
+    "description": "Release a 1 kg block on a 30° incline and watch the 2 kg wedge recoil. Both surfaces are frictionless. These masses, dimensions and g = 10 m/s² are illustrative choices. The recording ends before the block leaves the support.",
+    "model": "DomelicaLab.Examples.MovingWedge3D",
+    "camera": {"yaw": 0.2, "pitch": 0.16},
+    "series": [
+      {"name": "displacement", "label": "Block travel down the wedge", "unit": "m"},
+      {"name": "wedgeDisplacement", "label": "Wedge displacement to the right", "unit": "m"},
+      {"name": "speed", "label": "Block speed relative to wedge", "unit": "m/s"},
+      {"name": "wedgeSpeed", "label": "Wedge velocity to the right", "unit": "m/s"}
+    ],
+    "observations": {
+      "bodies": [
+        {"role": "block", "object": "massBody.frameTranslation.shape", "position": "blockPosition", "minimumTravel": 1.0},
+        {"role": "wedge", "object": "wedgeBody.frameTranslation.shape", "position": "wedgePosition", "minimumTravel": 0.5}
+      ],
+      "rigidGroup": ["wedgeBody.frameTranslation.shape", "deck.vis", "lowerSupport.vis", "upperSupport.vis"],
+      "fixedObjects": ["ground.vis"],
+      "springs": [],
+      "screenshotTime": 0.65
+    }
+  },
+  {
+    "id": "spring-wedge",
+    "prefix": "m4b_spring_wedge",
+    "title": "A spring couples the block and wedge",
+    "description": "A 10 N/m spring joins the block to the moving wedge. Released unstretched, it pulls the block back up the incline as the wedge reverses with it. The spring is ideal and undamped; both bodies remain constrained to their guides.",
+    "model": "DomelicaLab.Examples.SpringWedge3D",
+    "camera": {"yaw": 0.2, "pitch": 0.16},
+    "series": [
+      {"name": "displacement", "label": "Block travel down the wedge", "unit": "m"},
+      {"name": "wedgeDisplacement", "label": "Wedge displacement to the right", "unit": "m"},
+      {"name": "speed", "label": "Block velocity relative to wedge", "unit": "m/s"},
+      {"name": "springForce", "label": "Spring tension", "unit": "N"}
+    ],
+    "observations": {
+      "bodies": [
+        {"role": "block", "object": "massBody.frameTranslation.shape", "position": "blockPosition", "minimumTravel": 0.4},
+        {"role": "wedge", "object": "wedgeBody.frameTranslation.shape", "position": "wedgePosition", "minimumTravel": 0.2}
+      ],
+      "rigidGroup": ["wedgeBody.frameTranslation.shape", "deck.vis", "lowerSupport.vis", "upperSupport.vis", "anchorMount.vis"],
+      "fixedObjects": ["ground.vis"],
+      "springs": [
+        {"object": "internalSpring.lineForce.lineShape", "frameA": "internalSpring.frame_a.r_0", "frameB": "internalSpring.frame_b.r_0", "minimumLengthChange": 0.9}
+      ],
+      "screenshotTime": 0.75
+    }
+  }
+]
