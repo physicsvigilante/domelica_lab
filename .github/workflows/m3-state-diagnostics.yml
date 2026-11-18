@@ -1,0 +1,55 @@
+name: M3 native state diagnostics
+
+on:
+  push:
+    branches:
+      - diagnostic/m3-native-states
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-state-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        candidate: [hybrid, speed_a, speed_b, prefer_dummy, kinsol, dae_ida, curve_derivative]
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      M3_DIAGNOSTIC_CANDIDATE: ${{ matrix.candidate }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Modelica Standard Library
+        timeout-minutes: 7
+        run: omc scripts/install_msl.mos
+      - name: Compile, simulate, check completion and export candidate
+        run: python3 -u scripts/run_m3_state_diagnostics.py "${{ matrix.candidate }}"
+      - name: Evaluate unchanged acceptance and independent speed diagnostics
+        if: always()
+        run: python3 -u scripts/verify_m3_diagnostic.py "${{ matrix.candidate }}"
+      - name: Preserve candidate evidence, including failures and partial results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-state-diagnostic-${{ matrix.candidate }}
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            M3Diagnostic.mo
+            m3_state_diagnostic.mos
+            m3_tanks_initial_res.mat
+            m3_tanks_initial_res.csv
+            m3_tanks_initial.log
+            m3_tanks_initial_init.xml
+            m3_tanks_initial_info.json
+            m3_tanks_initial_*_info.json
+            diagnostic_stdout.log
+            artifacts/m3-state-diagnostics/
