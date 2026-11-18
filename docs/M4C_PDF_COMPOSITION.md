@@ -52,6 +52,34 @@ Initialization is specified on the FreeMotion coordinates and velocities.
 The BodyBox mass comes from its density and dimensions. Its `frame_a` is placed
 at the center of mass by an explicit half-length shape offset.
 
+### Orientation coordinates and observed export boundary
+
+The first M4C CI attempt used FreeMotion's default quaternion coordinates.
+Both new models compiled and completed native simulation without Modelica
+warnings; the spring chain produced 802 native samples. The subsequent CSV
+inventory read failed on the unquoted generated variable name
+`$STATESET1.A[1,1]`. This is an observed limitation of the repository's current
+export reader handling those generated names. The native simulation had
+completed, and this observation does not establish an OpenModelica compiler
+bug.
+
+The chain now sets the existing MSL option `useQuaternions=false` on each
+FreeMotion joint. This selects Cardan-angle coordinates while preserving all
+six degrees of freedom per body, the same initial physical state, and the same
+force laws and geometry. The exporter, library and compiler remain unchanged.
+The nominal bodies remain at zero rotation, far from the Cardan-coordinate
+singularity; the existing native orientation and angular-velocity checks
+qualify this domain. This coordinate choice is not a general recommendation
+for arbitrary tumbling motion.
+
+The official FreeMotion source fixes `w_rel_b` from `w_rel_a_start` when
+`w_rel_a_fixed=true`. In its Cardan branch it computes `w_rel_b` from the angle
+derivatives through `Frames.axesRotations` and `Frames.angularVelocity2`.
+At the specified zero initial angles, that mapping is nonsingular, so the
+fixed zero angular velocity correctly initializes all three angle rates to
+zero. The unchanged translational initial conditions initialize the remaining
+three velocities.
+
 No custom physical component, spring law, motion equation, compiler patch,
 exporter patch, or viewer reconstruction is introduced. The Modelica bindings
 outside the stock component declarations are read-only physical observations

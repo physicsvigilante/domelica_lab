@@ -26,20 +26,22 @@ model ReleasedSpringChain3D
 
   inner Modelica.Mechanics.MultiBody.World world(
     g=g, n={0,-1,0}, animateWorld=false, animateGravity=false);
+  // Stock Cardan-angle coordinates are nonsingular for this nonrotating run.
+  // FreeMotion still permits all six degrees of freedom of each body.
   Modelica.Mechanics.MultiBody.Joints.FreeMotion topFree(
-    animation=false, enforceStates=true,
+    animation=false, enforceStates=true, useQuaternions=false,
     r_rel_a(start={0,topInitialHeight,0}, each fixed=true),
     v_rel_a(start={0,0,0}, each fixed=true),
     angles_fixed=true, angles_start={0,0,0},
     w_rel_a_fixed=true, w_rel_a_start={0,0,0});
   Modelica.Mechanics.MultiBody.Joints.FreeMotion middleFree(
-    animation=false, enforceStates=true,
+    animation=false, enforceStates=true, useQuaternions=false,
     r_rel_a(start={0,middleInitialHeight,0}, each fixed=true),
     v_rel_a(start={0,0,0}, each fixed=true),
     angles_fixed=true, angles_start={0,0,0},
     w_rel_a_fixed=true, w_rel_a_start={0,0,0});
   Modelica.Mechanics.MultiBody.Joints.FreeMotion bottomFree(
-    animation=false, enforceStates=true,
+    animation=false, enforceStates=true, useQuaternions=false,
     r_rel_a(start={0,bottomInitialHeight,0}, each fixed=true),
     v_rel_a(start={0,0,0}, each fixed=true),
     angles_fixed=true, angles_start={0,0,0},
