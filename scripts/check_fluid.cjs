@@ -201,7 +201,21 @@ async function main() {
     await page.locator("#play").click(); await checkNative();
     record("Play, Pause, speed changes and scrubbing share one coherent native-sample clock");
 
-    await page.locator('[data-node="valve"]').click();
+    async function clickComponent(id, blankArea = false) {
+      const component = page.locator(`[data-node="${id}"]`);
+      // Use ordinary scrolling to put the full target below the sticky clock.
+      // The following click still has Playwright's normal hit-target checks.
+      await component.evaluate(node => node.scrollIntoView({ block: "center", inline: "nearest" }));
+      if (blankArea) {
+        await component.locator(".node-hit").click({ position: { x: 8, y: 8 } });
+      } else {
+        await component.click();
+      }
+      assert.equal((await checkNative()).selectedNode, id);
+    }
+    for (const id of ["tankA", "pump", "tankB", "valve"]) await clickComponent(id);
+    await clickComponent("tankA");
+    await clickComponent("valve", true);
     current = await checkNative(); assert.equal(current.selectedNode, "valve");
     assert.match(await page.locator("#inspectValues").textContent(), /valveOpening/);
     await page.locator('[data-node="pump"]').focus();
@@ -263,6 +277,9 @@ async function main() {
     await page.evaluate(() => window.__domelicaFluid.seek(120));
     await page.waitForFunction(() => window.__domelicaFluid.getState().layout === "mobile");
     current = await checkNative(); assert.equal(current.layout, "mobile");
+    for (const id of ["tankA", "pump", "tankB", "valve"]) await clickComponent(id);
+    await clickComponent("tankA");
+    await clickComponent("valve", true);
     const mobile = await framing();
     await screenshot("04-mobile-fluid-network.png");
     record("390 px mobile topology retains native bindings, full component framing and readable plots", { mobile });
