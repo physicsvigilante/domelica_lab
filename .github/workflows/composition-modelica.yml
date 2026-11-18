@@ -1,0 +1,108 @@
+name: Native Composition Motion Lab
+
+on:
+  push:
+    branches: [main, 'experiment/m4c-*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-composition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify reuse of accepted physics and renderers
+        run: |
+          python3 scripts/check_m1_baseline.py
+          python3 scripts/check_m4b_reuse.py
+          python3 scripts/check_m4c_reuse.py
+      - name: Prepare Modelica Standard Library
+        run: omc scripts/install_msl.mos
+      - name: Build and simulate composition models
+        shell: bash
+        run: |
+          set -o pipefail
+          omc scripts/native_m4c.mos | tee m4c-native-run.log
+      - name: Preserve primary native inputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: composition-native-inputs
+          if-no-files-found: error
+          path: |
+            m4c_*_res.mat
+            m4c_*_visual.xml
+            m4c_*.log
+            m4c-native-run.log
+            m4c-native-toolchain.txt
+            artifacts/m4c_*-completion.json
+      - name: Export all native samples and parameters
+        timeout-minutes: 5
+        run: timeout 240s python3 -u scripts/export_native_csv.py m4c_cart_pendulum m4c_pdf_composition
+      - name: Verify independent trajectories and physical balances
+        run: python3 scripts/verify_m4c.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build offline composition-motion viewer
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:runtime
+          python3 scripts/build_composition_preview.py
+      - name: Preserve composition results and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: composition-lab-results
+          if-no-files-found: warn
+          path: |
+            m4c_*_res.mat
+            m4c_*_res.csv
+            m4c_*_visual.xml
+            m4c_*.log
+            m4c-native-run.log
+            m4c-native-toolchain.txt
+            artifacts/m4c-metrics.json
+            artifacts/m4c_*-completion.json
+            artifacts/composition-preview.html
+            artifacts/composition-scenes.json
+            artifacts/composition-provenance.json
+            artifacts/three-runtime.js
+            artifacts/three-runtime.json
+            artifacts/three.LICENSE.txt
+
+  browser-composition:
+    needs: native-composition
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: composition-lab-results
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser checks
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Exercise translation, rotation, and released-chain motion
+        run: node scripts/check_composition.cjs artifacts/composition-preview.html
+      - name: Preserve browser report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: composition-browser-checks
+          if-no-files-found: warn
+          path: artifacts/composition-checks/

@@ -13,6 +13,7 @@ A **Modelica-first multiphysics laboratory** for composing physical systems, run
 | **Controlled thermal arm (M2)** | Native PID feedback, voltage limits and anti-windup; four experiments isolate forearm load, controller settings and cooling |
 | **Visible motion (M4)** | A block sliding through a diagonal groove on an incline, and a block oscillating between two fixed springs, composed from existing MSL components |
 | **Coupled motion (M4B)** | A block on a freely translating wedge, followed by a spring carried by that wedge; two interacting bodies reuse the existing native viewer |
+| **Further compositions (M4C)** | A carriage, pendulum and wall spring couple translation to rotation; three free bodies connected by two springs fall after support removal |
 
 The armature is reusable Modelica code. `ThermalArmatureDrive` extends it by exposing the standard resistor's heat port; the original component is unchanged. The browser reads native geometry and transforms and has no physics solver or model-specific pendulum drawing.
 
@@ -45,6 +46,12 @@ See [the motion experiments and reproduction guide](docs/M4_MOTION.md). The orig
 The **Native Coupled Motion Lab** workflow runs `MovingWedge3D` (the arrangement in Q106, PDF page 14) and `SpringWedge3D` (a separately authored variation). A freely translating support responds to the block's motion. In the second model, a spring fixed to that moving support returns the block uphill.
 
 The **coupled-lab-results** artifact contains `artifacts/coupled-preview.html`, native results, independent momentum/energy/trajectory checks, and provenance. Both models reuse the accepted motion viewer and native scene exporters unchanged. See [the coupled-motion scope and reproduction guide](docs/M4B_COUPLED_MOTION.md).
+
+### Rotation, translation and release
+
+The **Native Composition Motion Lab** workflow adds `CartPendulumSpring3D` and `ReleasedSpringChain3D` (the arrangement in Q192, PDF page 26). Both assemble existing standard-library components. The cart and pendulum exchange motion while the wall spring acts; the released chain's center of mass falls while its internal springs oscillate.
+
+The **composition-lab-results** artifact contains the single offline `artifacts/composition-preview.html`, native results, independent trajectory/force/energy checks and provenance. The existing native scene exporters and complete motion viewer remain unchanged. See [the composition scope and reproduction guide](docs/M4C_COMPOSITIONS.md).
 
 ## Principles
 

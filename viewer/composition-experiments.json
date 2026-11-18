@@ -1,0 +1,70 @@
+[
+  {
+    "id": "cart-pendulum-spring",
+    "prefix": "m4c_cart_pendulum",
+    "title": "A pendulum moves its spring-mounted cart",
+    "description": "Release a 1 kg pendulum bob from 35° on a 2 kg sliding cart attached to a 20 N/m wall spring. The cart translates while the unactuated hinge rotates. A massless rigid rod joins the pivot to the point mass; its sphere shows position and adds no rotational inertia. The six-second recording uses ideal joints and an undamped spring.",
+    "model": "DomelicaLab.Examples.CartPendulumSpring3D",
+    "camera": {"yaw": 0.2, "pitch": 0.16},
+    "series": [
+      {"name": "cartDisplacement", "label": "Cart displacement", "unit": "m"},
+      {"name": "pendulumAngle", "label": "Pendulum angle from downward", "unit": "rad"},
+      {"name": "springForce", "label": "Signed spring extension force", "unit": "N"},
+      {"name": "bobPosition[2]", "label": "Bob height", "unit": "m"}
+    ],
+    "observations": {
+      "bodies": [
+        {"role": "cart", "object": "cartBody.frameTranslation.shape", "position": "cartPosition", "localPoint": [0.5, 0, 0], "minimumTravel": 0.3},
+        {"role": "bob", "object": "bob.sphere", "position": "bobPosition", "localPoint": [0.5, 0, 0], "minimumTravel": 0.5}
+      ],
+      "segments": [
+        {"object": "rod.shape", "frameA": "rod.frame_a.r_0", "frameB": "rod.frame_b.r_0", "localPointA": [0, 0, 0], "localPointB": [1, 0, 0], "minimumRotation": 0.7, "minimumStartTravel": 0.3, "minimumEndTravel": 0.5}
+      ],
+      "relativeMotion": [
+        {"a": "bob", "b": "cart", "minimumTravel": 0.7}
+      ],
+      "rigidGroup": [],
+      "fixedObjects": ["wall.vis", "rail.vis", "railPost.vis", "floor.vis"],
+      "springs": [
+        {"object": "wallSpring.lineForce.lineShape", "frameA": "springAnchorPosition", "frameB": "springCartPosition", "minimumLengthChange": 0.5, "maximumFrameATravel": 1e-10, "minimumFrameBTravel": 0.3}
+      ],
+      "pick": {"object": "bob.sphere", "localPoint": [0.5, 0, 0]},
+      "checkTimes": [0, 0.8, 2, 4.7],
+      "screenshotTime": 0.8
+    }
+  },
+  {
+    "id": "released-spring-chain",
+    "prefix": "m4c_pdf_composition",
+    "title": "Q192 · Three blocks fall with two springs",
+    "description": "Watch three identical blocks after the top thread is cut. The springs retain their hanging-equilibrium stretch at release, so the blocks begin with different accelerations and the springs oscillate as the system falls. The 1 kg blocks, 100 N/m springs, dimensions and 0.8-second interval are illustrative choices. The support marker is a stationary visual reference; no support remains attached.",
+    "model": "DomelicaLab.Examples.ReleasedSpringChain3D",
+    "camera": {"yaw": 0.2, "pitch": 0.12},
+    "series": [
+      {"name": "topHeight", "label": "Top block height", "unit": "m"},
+      {"name": "bottomHeight", "label": "Bottom block height", "unit": "m"},
+      {"name": "upperTension", "label": "Upper spring signed tension", "unit": "N"},
+      {"name": "lowerTension", "label": "Lower spring signed tension", "unit": "N"}
+    ],
+    "observations": {
+      "bodies": [
+        {"role": "top", "object": "topBody.frameTranslation.shape", "position": "topPosition", "localPoint": [0.5, 0, 0], "minimumTravel": 1.5},
+        {"role": "middle", "object": "middleBody.frameTranslation.shape", "position": "middlePosition", "localPoint": [0.5, 0, 0], "minimumTravel": 1.5},
+        {"role": "bottom", "object": "bottomBody.frameTranslation.shape", "position": "bottomPosition", "localPoint": [0.5, 0, 0], "minimumTravel": 1.5}
+      ],
+      "segments": [],
+      "relativeMotion": [
+        {"a": "top", "b": "bottom", "minimumTravel": 0.3}
+      ],
+      "rigidGroup": [],
+      "fixedObjects": ["supportMarker.vis"],
+      "springs": [
+        {"object": "upperSpring.lineForce.lineShape", "frameA": "upperStart", "frameB": "upperEnd", "minimumLengthChange": 0.1, "minimumFrameATravel": 1.5, "minimumFrameBTravel": 1.5},
+        {"object": "lowerSpring.lineForce.lineShape", "frameA": "lowerStart", "frameB": "lowerEnd", "minimumLengthChange": 0.1, "minimumFrameATravel": 1.5, "minimumFrameBTravel": 1.5}
+      ],
+      "pick": {"object": "topBody.frameTranslation.shape", "localPoint": [0.5, 0, 0]},
+      "checkTimes": [0, 0.1, 0.3, 0.8],
+      "screenshotTime": 0.3
+    }
+  }
+]
