@@ -12,6 +12,7 @@ A **Modelica-first multiphysics laboratory** for composing physical systems, run
 | **MSL DoublePendulum** | An unchanged standard-library example using the same native scene pipeline |
 | **Controlled thermal arm (M2)** | Native PID feedback, voltage limits and anti-windup; four experiments isolate forearm load, controller settings and cooling |
 | **Visible motion (M4)** | A block sliding through a diagonal groove on an incline, and a block oscillating between two fixed springs, composed from existing MSL components |
+| **Coupled motion (M4B)** | A block on a freely translating wedge, followed by a spring carried by that wedge; two interacting bodies reuse the existing native viewer |
 
 The armature is reusable Modelica code. `ThermalArmatureDrive` extends it by exposing the standard resistor's heat port; the original component is unchanged. The browser reads native geometry and transforms and has no physics solver or model-specific pendulum drawing.
 
@@ -38,6 +39,12 @@ The **Native Motion Lab** workflow runs `GrooveSlide3D` (Q31, PDF page 5) and `T
 The resulting **motion-lab-results** artifact includes `artifacts/motion-preview.html`, raw native MAT results, CSV exports, native animation XML, and verification reports. Open the HTML for offline 3D playback, time scrubbing, camera controls, object inspection, and synchronized signals. Spring coils are a generic rendering extension driven by native geometry; there is no browser physics solver.
 
 See [the motion experiments and reproduction guide](docs/M4_MOTION.md). The original mechanics viewer, native CSV reader, and its frozen source baseline are preserved. The motion models also provide standard MultiBody animation data for OMEdit; a browser playback check is separate from an OMEdit GUI inspection.
+
+### Coupled motion and a new spring composition
+
+The **Native Coupled Motion Lab** workflow runs `MovingWedge3D` (the arrangement in Q106, PDF page 14) and `SpringWedge3D` (a separately authored variation). A freely translating support responds to the block's motion. In the second model, a spring fixed to that moving support returns the block uphill.
+
+The **coupled-lab-results** artifact contains `artifacts/coupled-preview.html`, native results, independent momentum/energy/trajectory checks, and provenance. Both models reuse the accepted motion viewer and native scene exporters unchanged. See [the coupled-motion scope and reproduction guide](docs/M4B_COUPLED_MOTION.md).
 
 ## Principles
 
