@@ -42,7 +42,10 @@ The model uses an illustrative block mass of 1 kg and dimensions
 0.32 × 0.28 × 0.18 m. The source does not provide these dimensions or a mass.
 The box density is set from the chosen mass and volume, rather than being a
 claim about a particular material. The plane thickness, rail width and margins
-are presentation choices. They are declared in Modelica and exported natively.
+are presentation choices. The groove is shown as a 0.004 m thick guide strip
+above the plane so that its surfaces do not coincide with the plane surface.
+The block's height offset includes that thickness, placing its bottom exactly
+on the strip. These dimensions are declared in Modelica and exported natively.
 
 ### Coordinates and native motion
 
@@ -65,12 +68,15 @@ axis is −**d**. Its displacement q starts at zero, increases toward O, and
 is a native physical state. The block frame origin is its center of mass:
 
 \[
-\mathbf r_C(0)=5\mathbf d+0.09\mathbf n,\qquad
+\mathbf r_C(0)=5\mathbf d+0.094\mathbf n,\qquad
 \mathbf r_C(t)=\mathbf r_C(0)-q(t)\mathbf d.
 \]
 
-The normal offset places the bottom of the box on the plane. The block's
-orientation is fixed by the joint; it does not rotate. The fixed shapes and
+The normal offset is the 0.09 m block half-height plus the 0.004 m guide strip
+thickness. It places the bottom of the box on the strip. This constant normal
+translation changes the gravitational-energy reference value, while travel,
+speed and acceleration remain the same. The block's orientation is fixed by
+the joint; it does not rotate. The fixed shapes and
 rails carry no contact calculation. The prismatic joint supplies the ideal
 groove constraint, including the side reaction needed for a diagonal groove.
 

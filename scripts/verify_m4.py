@@ -128,10 +128,10 @@ def verify_groove():
     rows = read_case("m4_groove_slide", 2, 401, common_columns()+["normalReaction", "sideReaction", "reactionPower"])
     # Definition from Q31 and the declared visualization choices, independently
     # written here. No parameters or aliases are used to construct the oracle.
-    mass, gravity, alpha, beta, length, half_height = 1.0, 10.0, math.pi/6, math.pi/6, 5.0, 0.09
+    mass, gravity, alpha, beta, length, center_offset = 1.0, 10.0, math.pi/6, math.pi/6, 5.0, 0.094
     direction = [math.sin(beta)*math.cos(alpha), math.sin(beta)*math.sin(alpha), math.cos(beta)]
     normal = [-math.sin(alpha), math.cos(alpha), 0.0]
-    initial = [length*d+half_height*n for d,n in zip(direction,normal)]
+    initial = [length*d+center_offset*n for d,n in zip(direction,normal)]
     accel = gravity*math.sin(alpha)*math.sin(beta)
     reaction = [-mass*accel*direction[0], mass*(gravity-accel*direction[1]), -mass*accel*direction[2]]
     energy0 = mass*gravity*initial[1]

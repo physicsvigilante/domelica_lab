@@ -12,7 +12,7 @@ const output = path.join(path.dirname(input), "motion-checks");
 fs.mkdirSync(output, { recursive: true });
 const sha = value => createHash("sha256").update(value).digest("hex");
 const report = { passed: false, artifact: path.basename(input), artifactSha256: null,
-  browser: null, steps: [], screenshots: [], pageErrors: [], unexpectedRequests: [] };
+  browser: null, steps: [], screenshots: [], pageErrors: [], consoleErrors: [], unexpectedRequests: [] };
 const record = (name, detail = {}) => { report.steps.push({ name, passed: true, ...detail }); console.log("PASS", name); };
 const close = (a, b, tolerance = 1e-10) => assert.ok(Number.isFinite(a) && Math.abs(a - b) <= tolerance, `${a} differs from ${b}`);
 const frameAt = (object, i) => object.frames[object.frames.length === 1 ? 0 : i];
@@ -95,6 +95,7 @@ async function main() {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1060 }, reducedMotion: "reduce", offline: true });
     const page = await context.newPage();
     page.on("pageerror", error => report.pageErrors.push(String(error)));
+    page.on("console", message => { if (message.type() === "error") report.consoleErrors.push(message.text()); });
     page.on("request", request => { if (/^https?:/i.test(request.url())) report.unexpectedRequests.push(request.url()); });
     await page.goto(pathToFileURL(input).href);
     await page.waitForFunction(() => window.__domelica?.available === true);
@@ -188,7 +189,7 @@ async function main() {
     assert.equal(await fallback.locator("#play").isDisabled(), true);
     record("Clear WebGL-unavailable state");
     await noGl.close();
-    assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.unexpectedRequests, []);
+    assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []); assert.deepEqual(report.unexpectedRequests, []);
     record("No browser errors or network requests");
     report.passed = true;
   } finally {

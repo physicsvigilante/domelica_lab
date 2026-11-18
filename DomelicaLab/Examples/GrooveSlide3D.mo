@@ -16,6 +16,7 @@ model GrooveSlide3D
   parameter SI.Length blockWidth=0.28 "Illustrative block width";
   parameter SI.Length blockHeight=0.18 "Illustrative block thickness normal to plane";
   parameter SI.Length plateThickness=0.08 "Visual plate thickness";
+  parameter SI.Length grooveThickness=0.004 "Raised guide strip thickness for distinct native surfaces";
   parameter SI.Length margin=0.35 "Visual margin around the finite groove";
 
   final parameter Real uphill[3](each unit="1")={cos(planeAngle),sin(planeAngle),0};
@@ -26,7 +27,7 @@ model GrooveSlide3D
     "Unit vector O to A; groove lies in the inclined plane";
   final parameter Real grooveSide[3](each unit="1")=cross(planeNormal,grooveDirection);
   final parameter SI.Position startPosition[3]=
-    grooveLength*grooveDirection + blockHeight/2*planeNormal;
+    grooveLength*grooveDirection + (blockHeight/2+grooveThickness)*planeNormal;
   final parameter SI.Length plateLength=grooveLength*sin(grooveAngle)+2*margin;
   final parameter SI.Length plateWidth=grooveLength*cos(grooveAngle)+2*margin;
 
@@ -56,8 +57,8 @@ model GrooveSlide3D
     color={75,102,127});
   Modelica.Mechanics.MultiBody.Visualizers.FixedShape groove(
     shapeType="box", lengthDirection=grooveDirection, widthDirection=grooveSide,
-    r_shape=-0.004*planeNormal,
-    length=grooveLength, width=0.4, height=0.008,
+    r_shape=grooveThickness/2*planeNormal,
+    length=grooveLength, width=0.4, height=grooveThickness,
     color={36,49,63});
   Modelica.Mechanics.MultiBody.Visualizers.FixedShape railLeft(
     shapeType="box", lengthDirection=grooveDirection, widthDirection=grooveSide,
