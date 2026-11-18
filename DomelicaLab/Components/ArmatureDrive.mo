@@ -13,7 +13,7 @@ model ArmatureDrive
   Modelica.Electrical.Analog.Sources.SignalVoltage supply;
   Modelica.Electrical.Analog.Basic.Resistor resistor(R=R);
   Modelica.Electrical.Analog.Basic.Inductor inductor(L=L);
-  Modelica.Electrical.Analog.Basic.EMF emf(k=k);
+  Modelica.Electrical.Analog.Basic.RotationalEMF emf(k=k);
   Modelica.Electrical.Analog.Basic.Ground ground;
 
   Modelica.Units.SI.Current armatureCurrent = resistor.i
