@@ -11,6 +11,7 @@ A **Modelica-first multiphysics laboratory** for composing physical systems, run
 | **HeatedBody** | A thermal network checked against an independent analytical solution |
 | **MSL DoublePendulum** | An unchanged standard-library example using the same native scene pipeline |
 | **Controlled thermal arm (M2)** | Native PID feedback, voltage limits and anti-windup; four experiments isolate forearm load, controller settings and cooling |
+| **Controlled fluid loop (M3)** | Native pump-speed PI control of two tanks, valve changes, reversed flow, and an added parallel return pipe; stock MSL fluid examples qualify the toolchain |
 
 The armature is reusable Modelica code. `ThermalArmatureDrive` extends it by exposing the standard resistor's heat port; the original component is unchanged. The browser reads native geometry and transforms and has no physics solver or model-specific pendulum drawing.
 
@@ -30,9 +31,15 @@ The M2 build also produces **artifacts/comparison.html**. It places two native r
 
 See [the M2 experiment and acceptance scope](docs/M2_CONTROLLED_ARM.md). M2 is developed from the accepted M1 revision; its source preservation check enforces reuse of the original models, result reader, scene exporter, and renderer.
 
+### Explore fluid networks
+
+M3 produces **artifacts/fluid-preview.html**, an offline engineering schematic driven by native tank levels, signed mass flows, absolute pressures, pump speed, and valve opening. Four authored cases compare nominal circulation, a restricted valve, changed initial levels, and a real parallel return branch. Two unchanged MSL examples, `PumpingSystem` and `Tanks.EmptyTanks`, qualify the fluid toolchain separately.
+
+Schematic layout is authored presentation data, not solver-defined spatial geometry. Native Modelica equations supply every displayed physical value. See [the M3 experiment and acceptance scope](docs/M3_FLUID_SYSTEMS.md).
+
 ## Principles
 
-- **Modelica defines physics and geometry.** Standard-library components supply the physical laws.
+- **Modelica defines physics.** Standard-library components supply the physical laws. Mechanical scenes use native geometry; fluid schematics explicitly label their authored layout.
 - **New arrangements are compositions.** Add models and connections without teaching the renderer a new mechanism.
 - **Playback follows native results.** No replacement JavaScript dynamics or guessed dimensions.
 - **Verification has a stated scope.** Component balances, native scene alignment, browser interaction, and actual OMEdit GUI inspection are distinct forms of evidence.

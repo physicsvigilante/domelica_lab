@@ -1,0 +1,94 @@
+// Run from repository root after installing MSL: omc scripts/native_m3.mos
+print("DOMELICA_M3_START\n");
+print("Compiler: " + getVersion() + "\n");
+for prefix in {"m3_msl_pumping", "m3_msl_empty", "m3_tanks_nominal", "m3_tanks_restricted", "m3_tanks_initial", "m3_tanks_parallel"} loop
+  for suffix in {"_res.mat", "_res.csv", "_visual.xml", ".log"} loop
+    if regularFileExists(prefix + suffix) then
+      if not deleteFile(prefix + suffix) then
+        print("ERROR: cannot remove stale output " + prefix + suffix + "\n");
+        exit(1);
+      end if;
+    end if;
+  end for;
+end for;
+if not loadModel(Modelica, {"4.1.0"}) then
+  print("ERROR: cannot load MSL 4.1.0.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+if not loadFile("DomelicaLab/package.mo") then
+  print("ERROR: cannot load DomelicaLab/package.mo.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+
+// The helper checks the fresh native log and native result time/sample count.
+// A partially written MAT file is not evidence of a completed simulation.
+print("QUALIFYING unchanged MSL pumping system:\n");
+simulate(Modelica.Fluid.Examples.PumpingSystem,
+  stopTime=2000, numberOfIntervals=5000, tolerance=1e-6,
+  outputFormat="mat", fileNamePrefix="m3_msl_pumping");
+print(getErrorString());
+if system("python3 scripts/check_fluid_completion.py m3_msl_pumping 2000 5001") <> 0 then
+  print("ERROR: m3_msl_pumping native simulation did not complete.\n");
+  exit(1);
+end if;
+print("PASS M3 stock pumping native simulation\n");
+
+print("QUALIFYING unchanged MSL empty tanks example:\n");
+simulate(Modelica.Fluid.Examples.Tanks.EmptyTanks,
+  stopTime=50, numberOfIntervals=1000, tolerance=1e-7,
+  outputFormat="mat", fileNamePrefix="m3_msl_empty");
+print(getErrorString());
+if system("python3 scripts/check_fluid_completion.py m3_msl_empty 50 1001") <> 0 then
+  print("ERROR: m3_msl_empty native simulation did not complete.\n");
+  exit(1);
+end if;
+print("PASS M3 stock empty-tank native simulation\n");
+
+print("CHECKING authored reusable hydraulic plant and control:\n");
+print(checkModel(DomelicaLab.Examples.ControlledTankLoop) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.ControlledTankLoop,
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-10, method="dassl",
+  outputFormat="mat", fileNamePrefix="m3_tanks_nominal", simflags="-nls=hybrid");
+print(getErrorString());
+if system("python3 scripts/check_fluid_completion.py m3_tanks_nominal 300 3001") <> 0 then
+  print("ERROR: m3_tanks_nominal native simulation did not complete.\n");
+  exit(1);
+end if;
+print("PASS M3 nominal controlled tanks\n");
+
+simulate(DomelicaLab.Examples.ControlledTankRestrictedValve,
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-10, method="dassl",
+  outputFormat="mat", fileNamePrefix="m3_tanks_restricted", simflags="-nls=hybrid");
+print(getErrorString());
+if system("python3 scripts/check_fluid_completion.py m3_tanks_restricted 300 3001") <> 0 then
+  print("ERROR: m3_tanks_restricted native simulation did not complete.\n");
+  exit(1);
+end if;
+print("PASS M3 restricted-valve controlled tanks\n");
+
+simulate(DomelicaLab.Examples.ControlledTankInitialLevels,
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-10, method="dassl",
+  outputFormat="mat", fileNamePrefix="m3_tanks_initial", simflags="-nls=hybrid");
+print(getErrorString());
+if system("python3 scripts/check_fluid_completion.py m3_tanks_initial 300 3001") <> 0 then
+  print("ERROR: m3_tanks_initial native simulation did not complete.\n");
+  exit(1);
+end if;
+print("PASS M3 changed initial levels controlled tanks\n");
+
+print("CHECKING new physical return-branch composition:\n");
+print(checkModel(DomelicaLab.Examples.ControlledTankParallelReturn) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.ControlledTankParallelReturn,
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-10, method="dassl",
+  outputFormat="mat", fileNamePrefix="m3_tanks_parallel", simflags="-nls=hybrid");
+print(getErrorString());
+if system("python3 scripts/check_fluid_completion.py m3_tanks_parallel 300 3001") <> 0 then
+  print("ERROR: m3_tanks_parallel native simulation did not complete.\n");
+  exit(1);
+end if;
+print("PASS M3 parallel-return controlled tanks\n");
+print("DOMELICA_M3_COMPLETE\n");
