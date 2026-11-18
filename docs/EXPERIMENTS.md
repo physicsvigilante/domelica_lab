@@ -34,9 +34,9 @@ The applied voltage ramps from 0 to 6 V between 0.5 and 1 s, remains at 6 V unti
 
 ## Reproduce the native pipeline
 
-The CI container pins OpenModelica 1.27.1 by image digest and includes OMPython. The workflow requests MSL 4.1.0 through OpenModelica's package manager; its maintenance source revision is not locked. The install log records the revision actually used.
+The CI container pins OpenModelica 1.27.1 by image digest. The export and verification scripts use Python standard-library modules and native batch commands. The workflow requests MSL 4.1.0 through OpenModelica's package manager; its maintenance source revision is not locked. The install log records the revision actually used.
 
-Run at the repository root with `omc` and OMPython available:
+Run at the repository root with `omc` and Python 3 available:
 
 ```sh
 omc scripts/install_msl.mos
@@ -49,7 +49,7 @@ python3 scripts/build_preview.py
 
 The native script removes only this suite's previous result/scene files before simulating. A failed rerun cannot pass by finding an old CSV or MAT file. CI runs in a fresh workspace and preserves each run's artifact independently.
 
-The native simulation emits MAT results and visualization XML. OpenModelica's ordinary CSV writer omits parameters, including some geometry dimensions. `export_native_csv.py` reads complete values through OpenModelica's own result API and writes CSV including those parameters and signed aliases. It performs no simulation or parameter evaluation. The MAT remains in the artifact as the primary native result.
+The native simulation emits MAT results and visualization XML. OpenModelica's ordinary CSV writer omits parameters, including some geometry dimensions. `export_native_csv.py` reads complete values through OpenModelica's own batch result API and writes CSV including those parameters and signed aliases. It performs no simulation or parameter evaluation. The MAT remains in the artifact as the primary native result.
 
 ## What the numerical checks establish
 

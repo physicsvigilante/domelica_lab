@@ -3,7 +3,7 @@
 ## Pipeline
 
 1. `native_smoke.mos` enables `+d=visxml` and simulates with native MAT output.
-2. `export_native_csv.py` asks OpenModelica for the original result variables and sample arrays, including parameters and signed aliases. It serializes those values without interpolation.
+2. `export_native_csv.py` uses supported OpenModelica batch commands to read the original result variables and sample arrays, including parameters and signed aliases. It serializes those values without interpolation.
 3. `native_scene.export_scene()` reads each XML field as a constant or an exact reference into the corresponding CSV. Missing values and unsupported constructs fail explicitly.
 4. `build_preview.py` attaches selected native signals from `viewer/experiments.json` and embeds everything in one HTML file, with source/result hashes.
 5. The viewer projects the exported meshes and replays recorded samples. Camera operations change the view, not the system dynamics.
