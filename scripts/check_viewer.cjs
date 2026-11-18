@@ -406,38 +406,72 @@ async function main() {
     await graphicsPage.goto(fileURL, { waitUntil: "load" });
     await graphicsPage.waitForFunction(() => window.__domelica?.available === true);
     try {
-      const depthCases = [];
-      for (const frontFirst of [true, false]) {
-        await graphicsPage.evaluate(frontFirst => {
+      // Calibrate the visible front and back surfaces through this exact
+      // production camera, material, lighting and tone-mapping path. Raw native
+      // RGB is not an output-pixel oracle once physically based lighting is used.
+      const renderDepthCase = async mode => {
+        await graphicsPage.evaluate(mode => {
           const makeBox = (id, color, z) => ({ id, type: "box", color,
             frames: [[1.2, 0, 0, 0, 1.2, 0, 0, 0, 0.1, -0.6, 0, z]] });
           const front = makeBox("synthetic.front", [0, 255, 0], 0.35);
           const back = makeBox("synthetic.back", [255, 0, 0], -0.35);
-          const scene = { id: "synthetic-depth-" + frontFirst, title: "Synthetic depth-buffer regression",
+          const objects = mode === "front-only" ? [front] : mode === "back-only" ? [back]
+            : mode === "front-first" ? [front, back] : [back, front];
+          const scene = { id: "synthetic-depth-" + mode, title: "Synthetic depth-buffer regression",
             description: "Graphics fixture only; these boxes are not native simulation evidence.",
-            model: "synthetic.graphics.depth", times: [0, 1], objects: frontFirst ? [front, back] : [back, front],
+            model: "synthetic.graphics.depth", times: [0, 1], objects,
+            // Fixed bounds keep camera and bounds-derived lights identical for
+            // references and overlaps, including the isolated single-box cases.
             bounds: { min: [-1, -1, -1], max: [1, 1, 1] }, series: [] };
           D.scenes.push(scene);
           window.__domelica.changeScene(scene.id);
           document.querySelector("#viewxy").click();
-        }, frontFirst);
-        const pixel = await graphicsPage.evaluate(() => {
+        }, mode);
+        const result = await graphicsPage.evaluate(() => {
           window.__domelica.draw();
           const canvas = document.querySelector("#scene"), gl = canvas.getContext("webgl2");
           const rgba = new Uint8Array(4);
           gl.readPixels(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
-          return { rgba: Array.from(rgba), error: gl.getError() };
+          const camera = window.__domelica.getRenderDiagnostics();
+          return { rgba: Array.from(rgba), error: gl.getError(), selected: window.__domelica.getState().selected,
+            projectionMatrix: camera.projectionMatrix, matrixWorldInverse: camera.matrixWorldInverse };
         });
-        assert.equal(pixel.error, 0, "WebGL pixel readback failed");
-        assert.ok(pixel.rgba[1] > 30 && pixel.rgba[1] > 2 * pixel.rgba[0] && pixel.rgba[1] > 2 * pixel.rgba[2],
-          `Far red surface overwrote near green surface: ${JSON.stringify(pixel.rgba)}`);
+        assert.equal(result.error, 0, "WebGL pixel readback failed");
+        assert.equal(result.selected, null, "Reference and overlap must have identical unselected materials");
+        assert.equal(result.rgba[3], 255, "Depth fixture must paint an opaque surface at the sampled pixel");
+        return result;
+      };
+      const pixelDifference = (a, b) => Math.max(...a.map((value, i) => Math.abs(value - b[i])));
+      const frontReference = await renderDepthCase("front-only");
+      const backReference = await renderDepthCase("back-only");
+      assert.deepEqual(backReference.projectionMatrix, frontReference.projectionMatrix);
+      assert.deepEqual(backReference.matrixWorldInverse, frontReference.matrixWorldInverse);
+      // One 8-bit code value permits final readback rounding. The reference
+      // acceptance regions must be disjoint, so an invisible/frontless scene
+      // cannot pass merely because two arbitrarily similar colors were chosen.
+      const pixelTolerance = 1;
+      const referenceSeparation = pixelDifference(frontReference.rgba, backReference.rgba);
+      assert.ok(referenceSeparation > 2 * pixelTolerance,
+        `Front/back reference pixels are not distinguishable: ${JSON.stringify(frontReference.rgba)} / ${JSON.stringify(backReference.rgba)}`);
+      const depthCases = [];
+      for (const mode of ["front-first", "back-first"]) {
+        const pixel = await renderDepthCase(mode);
+        assert.deepEqual(pixel.projectionMatrix, frontReference.projectionMatrix);
+        assert.deepEqual(pixel.matrixWorldInverse, frontReference.matrixWorldInverse);
+        const frontDifference = pixelDifference(pixel.rgba, frontReference.rgba);
+        const backDifference = pixelDifference(pixel.rgba, backReference.rgba);
+        assert.ok(frontDifference <= pixelTolerance && backDifference > pixelTolerance,
+          `Overlap did not retain the isolated front surface (${mode}): pixel ${JSON.stringify(pixel.rgba)}, ` +
+          `front ${JSON.stringify(frontReference.rgba)}, back ${JSON.stringify(backReference.rgba)}`);
         const fixtureBox = await graphicsPage.locator("#scene").boundingBox();
         await graphicsPage.mouse.click(fixtureBox.x + fixtureBox.width / 2, fixtureBox.y + fixtureBox.height / 2);
         const selected = await graphicsPage.evaluate(() => window.__domelica.getState().selected);
         assert.equal(selected, "synthetic.front", "Picking must return the nearest intersected native-shaped mesh");
-        depthCases.push({ frontFirst, centerRGBA: pixel.rgba, selected });
+        depthCases.push({ mode, centerRGBA: pixel.rgba, frontDifference, backDifference, selected });
       }
-      record("synthetic opaque depth-buffer and nearest-surface picking regression", { cases: depthCases,
+      record("synthetic opaque depth-buffer and nearest-surface picking regression", {
+        frontReferenceRGBA: frontReference.rgba, backReferenceRGBA: backReference.rgba,
+        pixelTolerance, referenceSeparation, cases: depthCases,
         scope: "Graphics fixture only; separate from native physics evidence" });
 
       // The real demonstrations contain boxes/cylinders/cones. Exercise the
