@@ -119,8 +119,8 @@ def track(maxima, name, actual, expected, tolerance, time):
 
 def common_columns():
     return ["time", "displacement", "speed", "acceleration", "kineticEnergy",
-            "potentialEnergy", "totalEnergy", "block.m", "guide.s", "guide.v", "guide.a"] + [
-        f"{name}[{axis}]" for name in ("position", "velocity", "guideReaction", "block.frame_a.r_0", "block.v_0")
+            "potentialEnergy", "totalEnergy", "massBody.m", "guide.s", "guide.v", "guide.a"] + [
+        f"{name}[{axis}]" for name in ("position", "velocity", "guideReaction", "massBody.frame_a.r_0", "massBody.v_0")
         for axis in (1,2,3)]
 
 
@@ -142,15 +142,15 @@ def verify_groove():
         track(maxima,"displacementError_m",row["displacement"],q,5e-7,t)
         track(maxima,"speedError_m_s",row["speed"],v,5e-7,t)
         track(maxima,"accelerationError_m_s2",row["acceleration"],accel,5e-7,t)
-        require_close(row["block.m"],mass,1e-12,"Q31 declared body mass")
+        require_close(row["massBody.m"],mass,1e-12,"Q31 declared body mass")
         for alias, component in (("displacement","guide.s"),("speed","guide.v"),("acceleration","guide.a")):
             require_close(row[alias],row[component],1e-12,f"Q31 {alias} alias")
         for j in range(3):
             actual = row[f"position[{j+1}]"]
             track(maxima,"positionError_m",actual,initial[j]-direction[j]*q,5e-7,t)
-            require_close(actual,row[f"block.frame_a.r_0[{j+1}]"],1e-12,"Q31 native center")
+            require_close(actual,row[f"massBody.frame_a.r_0[{j+1}]"],1e-12,"Q31 native center")
             track(maxima,"velocityError_m_s",row[f"velocity[{j+1}]"],-direction[j]*v,5e-7,t)
-            require_close(row[f"velocity[{j+1}]"],row[f"block.v_0[{j+1}]"],1e-12,"Q31 native velocity")
+            require_close(row[f"velocity[{j+1}]"],row[f"massBody.v_0[{j+1}]"],1e-12,"Q31 native velocity")
             track(maxima,"reactionError_N",row[f"guideReaction[{j+1}]"],reaction[j],1e-6,t)
         require_close(row["normalReaction"],mass*gravity*math.cos(alpha),1e-6,"Q31 plane normal reaction")
         require_close(row["sideReaction"],mass*gravity*math.sin(alpha)*math.cos(beta),1e-6,"Q31 groove side reaction")
@@ -189,13 +189,13 @@ def verify_springs():
         track(maxima,"displacementError_m",row["displacement"],q,5e-7,t)
         track(maxima,"speedError_m_s",row["speed"],v,5e-6,t)
         track(maxima,"accelerationError_m_s2",row["acceleration"],a,5e-5,t)
-        require_close(row["block.m"],mass,1e-12,"Q90 declared body mass")
+        require_close(row["massBody.m"],mass,1e-12,"Q90 declared body mass")
         for alias, component in (("displacement","guide.s"),("speed","guide.v"),("acceleration","guide.a")):
             require_close(row[alias],row[component],1e-12,f"Q90 {alias} alias")
         for j, expected in enumerate((0,-q,0)):
             track(maxima,"positionError_m",row[f"position[{j+1}]"],expected,5e-7,t)
-            require_close(row[f"position[{j+1}]"],row[f"block.frame_a.r_0[{j+1}]"],1e-12,"Q90 native center")
-            require_close(row[f"velocity[{j+1}]"],row[f"block.v_0[{j+1}]"],1e-12,"Q90 native velocity")
+            require_close(row[f"position[{j+1}]"],row[f"massBody.frame_a.r_0[{j+1}]"],1e-12,"Q90 native center")
+            require_close(row[f"velocity[{j+1}]"],row[f"massBody.v_0[{j+1}]"],1e-12,"Q90 native velocity")
             require_close(row[f"guideReaction[{j+1}]"],0,1e-6,"Q90 unforced guide")
         track(maxima,"velocityError_m_s",row["velocity[2]"],-v,5e-6,t)
         actual_q = row["displacement"]

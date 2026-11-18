@@ -14,8 +14,8 @@ model TwoSpringOscillator3D
   parameter SI.Length blockHeight=0.2 "Illustrative vertical block dimension";
   parameter SI.Length blockWidth=0.3;
   parameter SI.Length blockDepth=0.24;
-  parameter SI.Length springWidth=0.14 "Native MSL spring visualization width parameter";
-  parameter SI.Length coilWidth=0.012 "Spring rendering coil width";
+  parameter SI.Length springWidth=0.08 "Native MSL spring visualization width parameter";
+  parameter SI.Length coilWidth=0.006 "Spring rendering coil width";
 
   inner Modelica.Mechanics.MultiBody.World world(
     g=g, n={0,-1,0}, animateWorld=false, animateGravity=false);
@@ -23,7 +23,7 @@ model TwoSpringOscillator3D
     n={0,-1,0}, animation=false,
     stateSelect=StateSelect.always,
     s(start=0, fixed=true), v(start=0, fixed=true));
-  Modelica.Mechanics.MultiBody.Parts.BodyBox block(
+  Modelica.Mechanics.MultiBody.Parts.BodyBox massBody(
     r={0,-blockHeight,0}, r_shape={0,blockHeight/2,0},
     lengthDirection={0,-1,0}, widthDirection={1,0,0},
     length=blockHeight, width=blockWidth, height=blockDepth,
@@ -57,8 +57,8 @@ model TwoSpringOscillator3D
   SI.Position displacement=guide.s "Downward travel from initial unstretched position";
   SI.Velocity speed=guide.v "Signed downward velocity";
   SI.Acceleration acceleration=guide.a "Signed downward acceleration";
-  SI.Position position[3]=block.frame_a.r_0 "Block center in world coordinates";
-  SI.Velocity velocity[3]=block.v_0;
+  SI.Position position[3]=massBody.frame_a.r_0 "Block center in world coordinates";
+  SI.Velocity velocity[3]=massBody.v_0;
   SI.Length upperExtension=upperSpring.length-upperFreeLength;
   SI.Length lowerExtension=lowerSpring.length-lowerFreeLength
     "Negative values mean compression";
@@ -67,8 +67,8 @@ model TwoSpringOscillator3D
   SI.Force lowerForce=-lowerSpring.frame_a.f[2]
     "Upward force exerted by lower spring on block";
   SI.Force guideReaction[3]=-guide.frame_b.f;
-  SI.Energy kineticEnergy=block.m*(velocity*velocity)/2;
-  SI.Energy gravitationalEnergy=block.m*g*position[2];
+  SI.Energy kineticEnergy=massBody.m*(velocity*velocity)/2;
+  SI.Energy gravitationalEnergy=massBody.m*g*position[2];
   SI.Energy elasticEnergy=kUpper*upperExtension^2/2+kLower*lowerExtension^2/2;
   SI.Energy potentialEnergy=gravitationalEnergy+elasticEnergy;
   SI.Energy totalEnergy=kineticEnergy+potentialEnergy;
@@ -80,9 +80,9 @@ initial equation
     "Choose free lengths that keep the nominal undamped motion away from anchor coincidence.");
 equation
   connect(world.frame_b, guide.frame_a);
-  connect(guide.frame_b, block.frame_a);
-  connect(block.frame_a, upperAttachment.frame_a);
-  connect(block.frame_a, lowerAttachment.frame_a);
+  connect(guide.frame_b, massBody.frame_a);
+  connect(massBody.frame_a, upperAttachment.frame_a);
+  connect(massBody.frame_a, lowerAttachment.frame_a);
   connect(upperAnchor.frame_b, upperSpring.frame_a);
   connect(upperSpring.frame_b, upperAttachment.frame_b);
   connect(lowerAttachment.frame_b, lowerSpring.frame_a);

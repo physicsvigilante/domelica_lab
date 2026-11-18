@@ -38,7 +38,7 @@ model GrooveSlide3D
     n=-grooveDirection, animation=false,
     stateSelect=StateSelect.always,
     s(start=0, fixed=true), v(start=0, fixed=true));
-  Modelica.Mechanics.MultiBody.Parts.BodyBox block(
+  Modelica.Mechanics.MultiBody.Parts.BodyBox massBody(
     r=blockLength*grooveDirection,
     r_shape=-blockLength/2*grooveDirection,
     lengthDirection=grooveDirection, widthDirection=grooveSide,
@@ -73,15 +73,15 @@ model GrooveSlide3D
   SI.Position displacement=guide.s "Travel from A toward O, positive downhill";
   SI.Velocity speed=guide.v "Signed velocity from A toward O";
   SI.Acceleration acceleration=guide.a;
-  SI.Position position[3]=block.frame_a.r_0 "Block center in world coordinates";
-  SI.Velocity velocity[3]=block.v_0;
+  SI.Position position[3]=massBody.frame_a.r_0 "Block center in world coordinates";
+  SI.Velocity velocity[3]=massBody.v_0;
   SI.Force guideReaction[3]=-guide.frame_b.f
     "Constraint force on the block, resolved in the world-parallel joint frame";
   SI.Force normalReaction=guideReaction*planeNormal;
   SI.Force sideReaction=guideReaction*grooveSide;
   SI.Power reactionPower=guideReaction*velocity;
-  SI.Energy kineticEnergy=block.m*(velocity*velocity)/2;
-  SI.Energy potentialEnergy=block.m*g*position[2]
+  SI.Energy kineticEnergy=massBody.m*(velocity*velocity)/2;
+  SI.Energy potentialEnergy=massBody.m*g*position[2]
     "Gravitational energy relative to world y=0";
   SI.Energy totalEnergy=kineticEnergy+potentialEnergy;
 
@@ -94,7 +94,7 @@ initial equation
     "Length, gravity and block mass must be positive.");
 equation
   connect(startFrame.frame_b, guide.frame_a);
-  connect(guide.frame_b, block.frame_a);
+  connect(guide.frame_b, massBody.frame_a);
   connect(world.frame_b, plane.frame_a);
   connect(world.frame_b, groove.frame_a);
   connect(world.frame_b, railLeft.frame_a);

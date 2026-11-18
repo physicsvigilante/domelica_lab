@@ -119,7 +119,7 @@ async function main() {
       await page.locator("#viewxy").click();
       const flat = await page.evaluate(() => window.__domelica.getState());
       close(flat.camera.yaw, 0); close(flat.camera.pitch, 0);
-      const block = scene.objects.find(o => o.id === "block.frameTranslation.shape");
+      const block = scene.objects.find(o => o.id === "massBody.frameTranslation.shape");
       assert.ok(block, "Native block graphics must exist");
       const world = point(frameAt(block, 0), [0.5, 0, 0]);
       const projected = await page.evaluate(p => window.__domelica.projectWorld(p), world);
@@ -173,7 +173,7 @@ async function main() {
       await page.locator("#viewxy").click();
       await screenshot(page, `${scene.id}-mobile.png`);
       await page.locator("#view3d").click();
-      const block = scene.objects.find(o => o.id === "block.frameTranslation.shape");
+      const block = scene.objects.find(o => o.id === "massBody.frameTranslation.shape");
       if (!(await page.locator("#objects").evaluate(node => node.open))) await page.locator("#objects summary").click();
       await page.locator(`.object-button[data-id="${block.id}"]`).click();
       assert.equal((await page.evaluate(() => window.__domelica.getState())).selected, block.id);
