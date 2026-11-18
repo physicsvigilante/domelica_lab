@@ -5,3 +5,7 @@ ControlledThermalArm3D
 ControlledArmHeavyLoad
 ControlledArmRetuned
 ControlledArmReducedCooling
+ControlledTankLoop
+ControlledTankRestrictedValve
+ControlledTankInitialLevels
+ControlledTankParallelReturn

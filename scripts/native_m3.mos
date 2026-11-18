@@ -1,0 +1,92 @@
+// Run from repository root after installing MSL: omc scripts/native_m3.mos
+print("DOMELICA_M3_START\n");
+print("Compiler: " + getVersion() + "\n");
+for prefix in {"m3_msl_pumping", "m3_msl_empty", "m3_tanks_nominal", "m3_tanks_restricted", "m3_tanks_initial", "m3_tanks_parallel"} loop
+  for suffix in {"_res.mat", "_res.csv", "_visual.xml"} loop
+    if regularFileExists(prefix + suffix) then
+      if not deleteFile(prefix + suffix) then
+        print("ERROR: cannot remove stale output " + prefix + suffix + "\n");
+        exit(1);
+      end if;
+    end if;
+  end for;
+end for;
+if not loadModel(Modelica, {"4.1.0"}) then
+  print("ERROR: cannot load MSL 4.1.0.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+if not loadFile("DomelicaLab/package.mo") then
+  print("ERROR: cannot load DomelicaLab/package.mo.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+
+print("QUALIFYING unchanged MSL pumping system:\n");
+simulate(Modelica.Fluid.Examples.PumpingSystem,
+  stopTime=2000, numberOfIntervals=5000, tolerance=1e-6,
+  outputFormat="mat", fileNamePrefix="m3_msl_pumping");
+print(getErrorString());
+if not regularFileExists("m3_msl_pumping_res.mat") then
+  print("ERROR: stock pumping system failed.\n");
+  exit(1);
+end if;
+print("PASS M3 stock pumping native simulation\n");
+
+print("QUALIFYING unchanged MSL empty tanks example:\n");
+simulate(Modelica.Fluid.Examples.Tanks.EmptyTanks,
+  stopTime=50, numberOfIntervals=1000, tolerance=1e-7,
+  outputFormat="mat", fileNamePrefix="m3_msl_empty");
+print(getErrorString());
+if not regularFileExists("m3_msl_empty_res.mat") then
+  print("ERROR: stock empty tanks example failed.\n");
+  exit(1);
+end if;
+print("PASS M3 stock empty-tank native simulation\n");
+
+print("CHECKING authored reusable hydraulic plant and control:\n");
+print(checkModel(DomelicaLab.Examples.ControlledTankLoop) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.ControlledTankLoop,
+  stopTime=300, numberOfIntervals=1500, tolerance=1e-7,
+  outputFormat="mat", fileNamePrefix="m3_tanks_nominal");
+print(getErrorString());
+if not regularFileExists("m3_tanks_nominal_res.mat") then
+  print("ERROR: nominal controlled tanks failed.\n");
+  exit(1);
+end if;
+print("PASS M3 nominal controlled tanks\n");
+
+simulate(DomelicaLab.Examples.ControlledTankRestrictedValve,
+  stopTime=300, numberOfIntervals=1500, tolerance=1e-7,
+  outputFormat="mat", fileNamePrefix="m3_tanks_restricted");
+print(getErrorString());
+if not regularFileExists("m3_tanks_restricted_res.mat") then
+  print("ERROR: restricted-valve controlled tanks failed.\n");
+  exit(1);
+end if;
+print("PASS M3 restricted-valve controlled tanks\n");
+
+simulate(DomelicaLab.Examples.ControlledTankInitialLevels,
+  stopTime=300, numberOfIntervals=1500, tolerance=1e-7,
+  outputFormat="mat", fileNamePrefix="m3_tanks_initial");
+print(getErrorString());
+if not regularFileExists("m3_tanks_initial_res.mat") then
+  print("ERROR: changed initial levels controlled tanks failed.\n");
+  exit(1);
+end if;
+print("PASS M3 changed initial levels controlled tanks\n");
+
+print("CHECKING new physical return-branch composition:\n");
+print(checkModel(DomelicaLab.Examples.ControlledTankParallelReturn) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.ControlledTankParallelReturn,
+  stopTime=300, numberOfIntervals=1500, tolerance=1e-7,
+  outputFormat="mat", fileNamePrefix="m3_tanks_parallel");
+print(getErrorString());
+if not regularFileExists("m3_tanks_parallel_res.mat") then
+  print("ERROR: parallel-return controlled tanks failed.\n");
+  exit(1);
+end if;
+print("PASS M3 parallel-return controlled tanks\n");
+print("DOMELICA_M3_COMPLETE\n");

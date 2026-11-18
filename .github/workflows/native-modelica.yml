@@ -6,7 +6,7 @@ on:
 jobs:
   native-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     container:
       image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
     env:
@@ -22,6 +22,7 @@ jobs:
           python3 scripts/check_m1_baseline.py
           omc scripts/native_smoke.mos
           omc scripts/native_m2.mos
+          omc scripts/native_m3.mos
       - name: Preserve primary native inputs before conversion
         uses: actions/upload-artifact@v4
         with:
@@ -30,17 +31,19 @@ jobs:
             m0_*_res.mat
             m1_*_res.mat
             m2_*_res.mat
+            m3_*_res.mat
             m0_*_visual.xml
             m1_*_visual.xml
             m2_*_visual.xml
             native-toolchain.txt
       - name: Export complete native results including geometry parameters
-        timeout-minutes: 4
-        run: timeout 180s python3 -u scripts/export_native_csv.py m0_motorized_pendulum m0_thermal_step m0_msl_double_pendulum m1_thermal_geared_arm m2_controlled_nominal m2_controlled_heavy m2_controlled_retuned m2_controlled_cooling
+        timeout-minutes: 7
+        run: timeout 360s python3 -u scripts/export_native_csv.py m0_motorized_pendulum m0_thermal_step m0_msl_double_pendulum m1_thermal_geared_arm m2_controlled_nominal m2_controlled_heavy m2_controlled_retuned m2_controlled_cooling m3_msl_pumping m3_msl_empty m3_tanks_nominal m3_tanks_restricted m3_tanks_initial m3_tanks_parallel
       - name: Verify physical output independently
         run: |
           python3 scripts/verify_csv.py
           python3 scripts/verify_m2.py
+          python3 scripts/verify_m3.py
       - name: Check native transform convention and explicit rejection
         run: python3 scripts/test_native_scene.py --native
       - uses: actions/setup-node@v4
@@ -54,6 +57,7 @@ jobs:
         run: |
           python3 scripts/build_preview.py
           python3 scripts/build_comparison.py
+          python3 scripts/build_fluid_preview.py
       - name: Preserve native results
         if: always()
         uses: actions/upload-artifact@v4
@@ -73,12 +77,19 @@ jobs:
             m2_*_res.mat
             m2_*.log
             m2_*_visual.xml
+            m3_*_res.csv
+            m3_*_res.mat
+            m3_*.log
             artifacts/browser-preview.html
             artifacts/provenance.json
             artifacts/comparison.html
             artifacts/comparison-provenance.json
             artifacts/native-scenes.json
             artifacts/m2-metrics.json
+            artifacts/fluid-preview.html
+            artifacts/fluid-scenes.json
+            artifacts/fluid-provenance.json
+            artifacts/m3-metrics.json
             artifacts/three-runtime.js
             artifacts/three-runtime.json
             artifacts/three.LICENSE.txt
@@ -105,6 +116,7 @@ jobs:
         run: |
           node scripts/check_viewer.cjs artifacts/browser-preview.html
           node scripts/check_comparison.cjs artifacts/comparison.html
+          node scripts/check_fluid.cjs artifacts/fluid-preview.html
       - name: Preserve browser screenshots and checks
         if: always()
         uses: actions/upload-artifact@v4
@@ -114,3 +126,4 @@ jobs:
           path: |
             artifacts/browser-checks/
             artifacts/comparison-checks/
+            artifacts/fluid-checks/

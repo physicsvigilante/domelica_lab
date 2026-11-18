@@ -1,0 +1,2355 @@
+{
+  "title": "Follow the water.",
+  "defaultScene": "m3-nominal",
+  "scenes": [
+    {
+      "id": "m3-nominal",
+      "prefix": "m3_tanks_nominal",
+      "model": "DomelicaLab.Examples.ControlledTankLoop",
+      "title": "Controlled tank loop",
+      "description": "One pump transfers water from A to B. A native level controller adjusts pump speed; a pipe and valve provide the return path.",
+      "kind": "AUTHORED MODELICA COMPOSITION",
+      "series": [
+        {
+          "name": "tankALevel",
+          "label": "Tank A",
+          "unit": "m",
+          "digits": 5
+        },
+        {
+          "name": "tankBLevel",
+          "label": "Tank B",
+          "unit": "m",
+          "digits": 5
+        },
+        {
+          "name": "tankHeight",
+          "label": "Tank height",
+          "unit": "m",
+          "digits": 2
+        },
+        {
+          "name": "targetLevel",
+          "label": "Target B",
+          "unit": "m",
+          "digits": 3,
+          "reference": true
+        },
+        {
+          "name": "tankAPressure",
+          "label": "Tank A port",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "tankBPressure",
+          "label": "Tank B port",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "supplyFlow",
+          "label": "Supply A \u2192 B",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "returnFlow",
+          "label": "Return B \u2192 A",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "bypassFlow",
+          "label": "Added branch B \u2192 A",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "pumpRPM",
+          "label": "Pump speed",
+          "unit": "rev/min",
+          "digits": 0
+        },
+        {
+          "name": "pumpPressureRise",
+          "label": "Pump pressure rise",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "pumpPower",
+          "label": "Pump shaft power",
+          "unit": "W",
+          "digits": 3
+        },
+        {
+          "name": "pumpEnergy",
+          "label": "Signed pump shaft energy",
+          "unit": "J",
+          "digits": 3
+        },
+        {
+          "name": "valveOpening",
+          "label": "Valve opening",
+          "unit": "1",
+          "digits": 3
+        },
+        {
+          "name": "totalMass",
+          "label": "Stored mass",
+          "unit": "kg",
+          "digits": 3
+        },
+        {
+          "name": "massResidual",
+          "label": "Stored-mass change",
+          "unit": "kg",
+          "digits": 6
+        },
+        {
+          "name": "tankATemperature",
+          "label": "Tank A temperature",
+          "unit": "K",
+          "digits": 3
+        },
+        {
+          "name": "tankBTemperature",
+          "label": "Tank B temperature",
+          "unit": "K",
+          "digits": 3
+        }
+      ],
+      "diagram": {
+        "topologyLabel": "CLOSED TANK LOOP",
+        "nodes": [
+          {
+            "id": "tankA",
+            "type": "tank",
+            "label": "Tank A",
+            "description": "Open storage tank. The pressure shown is its bottom-port absolute pressure.",
+            "level": "tankALevel",
+            "capacity": "tankHeight",
+            "pressure": "tankAPressure",
+            "readouts": [
+              {
+                "signal": "tankALevel",
+                "label": "Liquid level",
+                "digits": 5
+              },
+              {
+                "signal": "tankAPressure",
+                "label": "Bottom-port absolute pressure"
+              },
+              {
+                "signal": "tankATemperature",
+                "label": "Liquid temperature"
+              },
+              {
+                "signal": "tankHeight",
+                "label": "Tank height"
+              }
+            ]
+          },
+          {
+            "id": "pump",
+            "type": "pump",
+            "label": "Pump",
+            "description": "Native pump moves fluid through the supply pipe. Its speed follows the Modelica controller.",
+            "speed": "pumpRPM",
+            "readouts": [
+              {
+                "signal": "pumpRPM",
+                "label": "Actual speed"
+              },
+              {
+                "signal": "supplyFlow",
+                "label": "Supply mass flow \u00b7 A \u2192 B"
+              },
+              {
+                "signal": "pumpPressureRise",
+                "label": "Pressure rise"
+              },
+              {
+                "signal": "pumpPower",
+                "label": "Pump shaft power"
+              }
+            ]
+          },
+          {
+            "id": "tankB",
+            "type": "tank",
+            "label": "Tank B",
+            "description": "Controlled open tank. The dashed amber line marks its recorded target level.",
+            "level": "tankBLevel",
+            "capacity": "tankHeight",
+            "pressure": "tankBPressure",
+            "target": "targetLevel",
+            "readouts": [
+              {
+                "signal": "tankBLevel",
+                "label": "Liquid level",
+                "digits": 5
+              },
+              {
+                "signal": "targetLevel",
+                "label": "Controller target"
+              },
+              {
+                "signal": "tankBPressure",
+                "label": "Bottom-port absolute pressure"
+              },
+              {
+                "signal": "tankBTemperature",
+                "label": "Liquid temperature"
+              }
+            ]
+          },
+          {
+            "id": "valve",
+            "type": "valve",
+            "label": "Valve",
+            "description": "Return-path restriction. Opening and signed flow are native simulation results.",
+            "opening": "valveOpening",
+            "readouts": [
+              {
+                "signal": "valveOpening",
+                "label": "Opening \u00b7 fraction"
+              },
+              {
+                "signal": "returnFlow",
+                "label": "Return mass flow \u00b7 B \u2192 A"
+              }
+            ]
+          }
+        ],
+        "edges": [
+          {
+            "id": "a-pump",
+            "label": "Pump inlet",
+            "from": "tankA",
+            "to": "pump",
+            "flow": "supplyFlow",
+            "orientation": 1
+          },
+          {
+            "id": "pump-b",
+            "label": "Supply pipe",
+            "from": "pump",
+            "to": "tankB",
+            "flow": "supplyFlow",
+            "orientation": 1
+          },
+          {
+            "id": "b-valve",
+            "label": "Return pipe",
+            "from": "tankB",
+            "to": "valve",
+            "flow": "returnFlow",
+            "orientation": 1
+          },
+          {
+            "id": "valve-a",
+            "label": "Return to A",
+            "from": "valve",
+            "to": "tankA",
+            "flow": "returnFlow",
+            "orientation": 1
+          }
+        ],
+        "layouts": {
+          "desktop": {
+            "width": 1000,
+            "height": 525,
+            "nodes": {
+              "tankA": [
+                140,
+                185,
+                150,
+                200
+              ],
+              "pump": [
+                500,
+                105
+              ],
+              "tankB": [
+                710,
+                185,
+                150,
+                200
+              ],
+              "valve": [
+                500,
+                445
+              ]
+            },
+            "edges": {
+              "a-pump": [
+                [
+                  290,
+                  335
+                ],
+                [
+                  350,
+                  335
+                ],
+                [
+                  350,
+                  105
+                ],
+                [
+                  473,
+                  105
+                ]
+              ],
+              "pump-b": [
+                [
+                  527,
+                  105
+                ],
+                [
+                  920,
+                  105
+                ],
+                [
+                  920,
+                  335
+                ],
+                [
+                  860,
+                  335
+                ]
+              ],
+              "b-valve": [
+                [
+                  710,
+                  355
+                ],
+                [
+                  625,
+                  355
+                ],
+                [
+                  625,
+                  445
+                ],
+                [
+                  527,
+                  445
+                ]
+              ],
+              "valve-a": [
+                [
+                  473,
+                  445
+                ],
+                [
+                  215,
+                  445
+                ],
+                [
+                  215,
+                  385
+                ]
+              ]
+            },
+            "labels": {
+              "a-pump": [
+                340,
+                65
+              ],
+              "pump-b": [
+                745,
+                65
+              ],
+              "b-valve": [
+                660,
+                465
+              ],
+              "valve-a": [
+                300,
+                478
+              ]
+            }
+          },
+          "mobile": {
+            "width": 480,
+            "height": 755,
+            "nodes": {
+              "tankA": [
+                165,
+                75,
+                150,
+                180
+              ],
+              "pump": [
+                410,
+                365
+              ],
+              "tankB": [
+                165,
+                500,
+                150,
+                180
+              ],
+              "valve": [
+                65,
+                365
+              ]
+            },
+            "edges": {
+              "a-pump": [
+                [
+                  315,
+                  215
+                ],
+                [
+                  410,
+                  215
+                ],
+                [
+                  410,
+                  338
+                ]
+              ],
+              "pump-b": [
+                [
+                  410,
+                  392
+                ],
+                [
+                  410,
+                  640
+                ],
+                [
+                  315,
+                  640
+                ]
+              ],
+              "b-valve": [
+                [
+                  165,
+                  640
+                ],
+                [
+                  65,
+                  640
+                ],
+                [
+                  65,
+                  392
+                ]
+              ],
+              "valve-a": [
+                [
+                  65,
+                  338
+                ],
+                [
+                  65,
+                  215
+                ],
+                [
+                  165,
+                  215
+                ]
+              ]
+            },
+            "labels": {
+              "a-pump": [
+                392,
+                265
+              ],
+              "pump-b": [
+                391,
+                550
+              ],
+              "b-valve": [
+                73,
+                550
+              ],
+              "valve-a": [
+                75,
+                265
+              ]
+            }
+          }
+        }
+      },
+      "readouts": [
+        {
+          "signal": "tankALevel",
+          "label": "TANK A",
+          "digits": 4
+        },
+        {
+          "signal": "tankBLevel",
+          "label": "TANK B",
+          "digits": 4
+        },
+        {
+          "signal": "pumpRPM",
+          "label": "PUMP",
+          "digits": 0
+        },
+        {
+          "signal": "valveOpening",
+          "label": "VALVE",
+          "digits": 3
+        }
+      ],
+      "plots": [
+        {
+          "id": "levels",
+          "label": "Tank levels and control target",
+          "unit": "m",
+          "signals": [
+            "tankALevel",
+            "tankBLevel",
+            "targetLevel"
+          ],
+          "includeZero": true
+        },
+        {
+          "id": "flows",
+          "label": "Signed mass flow",
+          "unit": "kg/s",
+          "signals": [
+            "supplyFlow",
+            "returnFlow"
+          ],
+          "includeZero": true
+        },
+        {
+          "id": "pressures",
+          "label": "Tank bottom-port absolute pressure",
+          "unit": "Pa",
+          "signals": [
+            "tankAPressure",
+            "tankBPressure"
+          ]
+        },
+        {
+          "id": "speed",
+          "label": "Controlled pump speed",
+          "unit": "rev/min",
+          "signals": [
+            "pumpRPM"
+          ],
+          "includeZero": true
+        }
+      ],
+      "measurements": [
+        {
+          "name": "finalTankALevelM",
+          "label": "Final tank A level",
+          "unit": "m",
+          "digits": 4
+        },
+        {
+          "name": "finalTankBLevelM",
+          "label": "Final tank B level",
+          "unit": "m",
+          "digits": 4
+        },
+        {
+          "name": "peakPumpPowerW",
+          "label": "Peak pump shaft power",
+          "unit": "W",
+          "digits": 3
+        },
+        {
+          "name": "pumpEnergyJ",
+          "label": "Signed pump shaft energy",
+          "unit": "J",
+          "digits": 2
+        },
+        {
+          "name": "maxAbsMassResidualKg",
+          "label": "Maximum stored-mass change",
+          "unit": "kg",
+          "digits": 6
+        }
+      ],
+      "metricNotes": "The closed network conserves stored mass. The residual measures the maximum absolute change from the initial stored mass. Pump energy is the native integrated signed shaft power over this finite run."
+    },
+    {
+      "id": "m3-restricted",
+      "prefix": "m3_tanks_restricted",
+      "model": "DomelicaLab.Examples.ControlledTankRestrictedValve",
+      "title": "Restricted return valve",
+      "description": "The return valve is more restricted. Compare native flow, pressure, and control response using the same tank-loop composition.",
+      "kind": "AUTHORED MODELICA COMPOSITION",
+      "series": [
+        {
+          "name": "tankALevel",
+          "label": "Tank A",
+          "unit": "m",
+          "digits": 5
+        },
+        {
+          "name": "tankBLevel",
+          "label": "Tank B",
+          "unit": "m",
+          "digits": 5
+        },
+        {
+          "name": "tankHeight",
+          "label": "Tank height",
+          "unit": "m",
+          "digits": 2
+        },
+        {
+          "name": "targetLevel",
+          "label": "Target B",
+          "unit": "m",
+          "digits": 3,
+          "reference": true
+        },
+        {
+          "name": "tankAPressure",
+          "label": "Tank A port",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "tankBPressure",
+          "label": "Tank B port",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "supplyFlow",
+          "label": "Supply A \u2192 B",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "returnFlow",
+          "label": "Return B \u2192 A",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "bypassFlow",
+          "label": "Added branch B \u2192 A",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "pumpRPM",
+          "label": "Pump speed",
+          "unit": "rev/min",
+          "digits": 0
+        },
+        {
+          "name": "pumpPressureRise",
+          "label": "Pump pressure rise",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "pumpPower",
+          "label": "Pump shaft power",
+          "unit": "W",
+          "digits": 3
+        },
+        {
+          "name": "pumpEnergy",
+          "label": "Signed pump shaft energy",
+          "unit": "J",
+          "digits": 3
+        },
+        {
+          "name": "valveOpening",
+          "label": "Valve opening",
+          "unit": "1",
+          "digits": 3
+        },
+        {
+          "name": "totalMass",
+          "label": "Stored mass",
+          "unit": "kg",
+          "digits": 3
+        },
+        {
+          "name": "massResidual",
+          "label": "Stored-mass change",
+          "unit": "kg",
+          "digits": 6
+        },
+        {
+          "name": "tankATemperature",
+          "label": "Tank A temperature",
+          "unit": "K",
+          "digits": 3
+        },
+        {
+          "name": "tankBTemperature",
+          "label": "Tank B temperature",
+          "unit": "K",
+          "digits": 3
+        }
+      ],
+      "diagram": {
+        "topologyLabel": "CLOSED TANK LOOP",
+        "nodes": [
+          {
+            "id": "tankA",
+            "type": "tank",
+            "label": "Tank A",
+            "description": "Open storage tank. The pressure shown is its bottom-port absolute pressure.",
+            "level": "tankALevel",
+            "capacity": "tankHeight",
+            "pressure": "tankAPressure",
+            "readouts": [
+              {
+                "signal": "tankALevel",
+                "label": "Liquid level",
+                "digits": 5
+              },
+              {
+                "signal": "tankAPressure",
+                "label": "Bottom-port absolute pressure"
+              },
+              {
+                "signal": "tankATemperature",
+                "label": "Liquid temperature"
+              },
+              {
+                "signal": "tankHeight",
+                "label": "Tank height"
+              }
+            ]
+          },
+          {
+            "id": "pump",
+            "type": "pump",
+            "label": "Pump",
+            "description": "Native pump moves fluid through the supply pipe. Its speed follows the Modelica controller.",
+            "speed": "pumpRPM",
+            "readouts": [
+              {
+                "signal": "pumpRPM",
+                "label": "Actual speed"
+              },
+              {
+                "signal": "supplyFlow",
+                "label": "Supply mass flow \u00b7 A \u2192 B"
+              },
+              {
+                "signal": "pumpPressureRise",
+                "label": "Pressure rise"
+              },
+              {
+                "signal": "pumpPower",
+                "label": "Pump shaft power"
+              }
+            ]
+          },
+          {
+            "id": "tankB",
+            "type": "tank",
+            "label": "Tank B",
+            "description": "Controlled open tank. The dashed amber line marks its recorded target level.",
+            "level": "tankBLevel",
+            "capacity": "tankHeight",
+            "pressure": "tankBPressure",
+            "target": "targetLevel",
+            "readouts": [
+              {
+                "signal": "tankBLevel",
+                "label": "Liquid level",
+                "digits": 5
+              },
+              {
+                "signal": "targetLevel",
+                "label": "Controller target"
+              },
+              {
+                "signal": "tankBPressure",
+                "label": "Bottom-port absolute pressure"
+              },
+              {
+                "signal": "tankBTemperature",
+                "label": "Liquid temperature"
+              }
+            ]
+          },
+          {
+            "id": "valve",
+            "type": "valve",
+            "label": "Valve",
+            "description": "Return-path restriction. Opening and signed flow are native simulation results.",
+            "opening": "valveOpening",
+            "readouts": [
+              {
+                "signal": "valveOpening",
+                "label": "Opening \u00b7 fraction"
+              },
+              {
+                "signal": "returnFlow",
+                "label": "Return mass flow \u00b7 B \u2192 A"
+              }
+            ]
+          }
+        ],
+        "edges": [
+          {
+            "id": "a-pump",
+            "label": "Pump inlet",
+            "from": "tankA",
+            "to": "pump",
+            "flow": "supplyFlow",
+            "orientation": 1
+          },
+          {
+            "id": "pump-b",
+            "label": "Supply pipe",
+            "from": "pump",
+            "to": "tankB",
+            "flow": "supplyFlow",
+            "orientation": 1
+          },
+          {
+            "id": "b-valve",
+            "label": "Return pipe",
+            "from": "tankB",
+            "to": "valve",
+            "flow": "returnFlow",
+            "orientation": 1
+          },
+          {
+            "id": "valve-a",
+            "label": "Return to A",
+            "from": "valve",
+            "to": "tankA",
+            "flow": "returnFlow",
+            "orientation": 1
+          }
+        ],
+        "layouts": {
+          "desktop": {
+            "width": 1000,
+            "height": 525,
+            "nodes": {
+              "tankA": [
+                140,
+                185,
+                150,
+                200
+              ],
+              "pump": [
+                500,
+                105
+              ],
+              "tankB": [
+                710,
+                185,
+                150,
+                200
+              ],
+              "valve": [
+                500,
+                445
+              ]
+            },
+            "edges": {
+              "a-pump": [
+                [
+                  290,
+                  335
+                ],
+                [
+                  350,
+                  335
+                ],
+                [
+                  350,
+                  105
+                ],
+                [
+                  473,
+                  105
+                ]
+              ],
+              "pump-b": [
+                [
+                  527,
+                  105
+                ],
+                [
+                  920,
+                  105
+                ],
+                [
+                  920,
+                  335
+                ],
+                [
+                  860,
+                  335
+                ]
+              ],
+              "b-valve": [
+                [
+                  710,
+                  355
+                ],
+                [
+                  625,
+                  355
+                ],
+                [
+                  625,
+                  445
+                ],
+                [
+                  527,
+                  445
+                ]
+              ],
+              "valve-a": [
+                [
+                  473,
+                  445
+                ],
+                [
+                  215,
+                  445
+                ],
+                [
+                  215,
+                  385
+                ]
+              ]
+            },
+            "labels": {
+              "a-pump": [
+                340,
+                65
+              ],
+              "pump-b": [
+                745,
+                65
+              ],
+              "b-valve": [
+                660,
+                465
+              ],
+              "valve-a": [
+                300,
+                478
+              ]
+            }
+          },
+          "mobile": {
+            "width": 480,
+            "height": 755,
+            "nodes": {
+              "tankA": [
+                165,
+                75,
+                150,
+                180
+              ],
+              "pump": [
+                410,
+                365
+              ],
+              "tankB": [
+                165,
+                500,
+                150,
+                180
+              ],
+              "valve": [
+                65,
+                365
+              ]
+            },
+            "edges": {
+              "a-pump": [
+                [
+                  315,
+                  215
+                ],
+                [
+                  410,
+                  215
+                ],
+                [
+                  410,
+                  338
+                ]
+              ],
+              "pump-b": [
+                [
+                  410,
+                  392
+                ],
+                [
+                  410,
+                  640
+                ],
+                [
+                  315,
+                  640
+                ]
+              ],
+              "b-valve": [
+                [
+                  165,
+                  640
+                ],
+                [
+                  65,
+                  640
+                ],
+                [
+                  65,
+                  392
+                ]
+              ],
+              "valve-a": [
+                [
+                  65,
+                  338
+                ],
+                [
+                  65,
+                  215
+                ],
+                [
+                  165,
+                  215
+                ]
+              ]
+            },
+            "labels": {
+              "a-pump": [
+                392,
+                265
+              ],
+              "pump-b": [
+                391,
+                550
+              ],
+              "b-valve": [
+                73,
+                550
+              ],
+              "valve-a": [
+                75,
+                265
+              ]
+            }
+          }
+        }
+      },
+      "readouts": [
+        {
+          "signal": "tankALevel",
+          "label": "TANK A",
+          "digits": 4
+        },
+        {
+          "signal": "tankBLevel",
+          "label": "TANK B",
+          "digits": 4
+        },
+        {
+          "signal": "pumpRPM",
+          "label": "PUMP",
+          "digits": 0
+        },
+        {
+          "signal": "valveOpening",
+          "label": "VALVE",
+          "digits": 3
+        }
+      ],
+      "plots": [
+        {
+          "id": "levels",
+          "label": "Tank levels and control target",
+          "unit": "m",
+          "signals": [
+            "tankALevel",
+            "tankBLevel",
+            "targetLevel"
+          ],
+          "includeZero": true
+        },
+        {
+          "id": "flows",
+          "label": "Signed mass flow",
+          "unit": "kg/s",
+          "signals": [
+            "supplyFlow",
+            "returnFlow"
+          ],
+          "includeZero": true
+        },
+        {
+          "id": "pressures",
+          "label": "Tank bottom-port absolute pressure",
+          "unit": "Pa",
+          "signals": [
+            "tankAPressure",
+            "tankBPressure"
+          ]
+        },
+        {
+          "id": "speed",
+          "label": "Controlled pump speed",
+          "unit": "rev/min",
+          "signals": [
+            "pumpRPM"
+          ],
+          "includeZero": true
+        }
+      ],
+      "measurements": [
+        {
+          "name": "finalTankALevelM",
+          "label": "Final tank A level",
+          "unit": "m",
+          "digits": 4
+        },
+        {
+          "name": "finalTankBLevelM",
+          "label": "Final tank B level",
+          "unit": "m",
+          "digits": 4
+        },
+        {
+          "name": "peakPumpPowerW",
+          "label": "Peak pump shaft power",
+          "unit": "W",
+          "digits": 3
+        },
+        {
+          "name": "pumpEnergyJ",
+          "label": "Signed pump shaft energy",
+          "unit": "J",
+          "digits": 2
+        },
+        {
+          "name": "maxAbsMassResidualKg",
+          "label": "Maximum stored-mass change",
+          "unit": "kg",
+          "digits": 6
+        }
+      ],
+      "metricNotes": "The closed network conserves stored mass. The residual measures the maximum absolute change from the initial stored mass. Pump energy is the native integrated signed shaft power over this finite run."
+    },
+    {
+      "id": "m3-initial",
+      "prefix": "m3_tanks_initial",
+      "model": "DomelicaLab.Examples.ControlledTankInitialLevels",
+      "title": "Different initial tank levels",
+      "description": "The same components begin with a different distribution of water. Arrow direction follows the signed native flow, including any reversal.",
+      "kind": "AUTHORED MODELICA COMPOSITION",
+      "series": [
+        {
+          "name": "tankALevel",
+          "label": "Tank A",
+          "unit": "m",
+          "digits": 5
+        },
+        {
+          "name": "tankBLevel",
+          "label": "Tank B",
+          "unit": "m",
+          "digits": 5
+        },
+        {
+          "name": "tankHeight",
+          "label": "Tank height",
+          "unit": "m",
+          "digits": 2
+        },
+        {
+          "name": "targetLevel",
+          "label": "Target B",
+          "unit": "m",
+          "digits": 3,
+          "reference": true
+        },
+        {
+          "name": "tankAPressure",
+          "label": "Tank A port",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "tankBPressure",
+          "label": "Tank B port",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "supplyFlow",
+          "label": "Supply A \u2192 B",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "returnFlow",
+          "label": "Return B \u2192 A",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "bypassFlow",
+          "label": "Added branch B \u2192 A",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "pumpRPM",
+          "label": "Pump speed",
+          "unit": "rev/min",
+          "digits": 0
+        },
+        {
+          "name": "pumpPressureRise",
+          "label": "Pump pressure rise",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "pumpPower",
+          "label": "Pump shaft power",
+          "unit": "W",
+          "digits": 3
+        },
+        {
+          "name": "pumpEnergy",
+          "label": "Signed pump shaft energy",
+          "unit": "J",
+          "digits": 3
+        },
+        {
+          "name": "valveOpening",
+          "label": "Valve opening",
+          "unit": "1",
+          "digits": 3
+        },
+        {
+          "name": "totalMass",
+          "label": "Stored mass",
+          "unit": "kg",
+          "digits": 3
+        },
+        {
+          "name": "massResidual",
+          "label": "Stored-mass change",
+          "unit": "kg",
+          "digits": 6
+        },
+        {
+          "name": "tankATemperature",
+          "label": "Tank A temperature",
+          "unit": "K",
+          "digits": 3
+        },
+        {
+          "name": "tankBTemperature",
+          "label": "Tank B temperature",
+          "unit": "K",
+          "digits": 3
+        }
+      ],
+      "diagram": {
+        "topologyLabel": "CLOSED TANK LOOP",
+        "nodes": [
+          {
+            "id": "tankA",
+            "type": "tank",
+            "label": "Tank A",
+            "description": "Open storage tank. The pressure shown is its bottom-port absolute pressure.",
+            "level": "tankALevel",
+            "capacity": "tankHeight",
+            "pressure": "tankAPressure",
+            "readouts": [
+              {
+                "signal": "tankALevel",
+                "label": "Liquid level",
+                "digits": 5
+              },
+              {
+                "signal": "tankAPressure",
+                "label": "Bottom-port absolute pressure"
+              },
+              {
+                "signal": "tankATemperature",
+                "label": "Liquid temperature"
+              },
+              {
+                "signal": "tankHeight",
+                "label": "Tank height"
+              }
+            ]
+          },
+          {
+            "id": "pump",
+            "type": "pump",
+            "label": "Pump",
+            "description": "Native pump moves fluid through the supply pipe. Its speed follows the Modelica controller.",
+            "speed": "pumpRPM",
+            "readouts": [
+              {
+                "signal": "pumpRPM",
+                "label": "Actual speed"
+              },
+              {
+                "signal": "supplyFlow",
+                "label": "Supply mass flow \u00b7 A \u2192 B"
+              },
+              {
+                "signal": "pumpPressureRise",
+                "label": "Pressure rise"
+              },
+              {
+                "signal": "pumpPower",
+                "label": "Pump shaft power"
+              }
+            ]
+          },
+          {
+            "id": "tankB",
+            "type": "tank",
+            "label": "Tank B",
+            "description": "Controlled open tank. The dashed amber line marks its recorded target level.",
+            "level": "tankBLevel",
+            "capacity": "tankHeight",
+            "pressure": "tankBPressure",
+            "target": "targetLevel",
+            "readouts": [
+              {
+                "signal": "tankBLevel",
+                "label": "Liquid level",
+                "digits": 5
+              },
+              {
+                "signal": "targetLevel",
+                "label": "Controller target"
+              },
+              {
+                "signal": "tankBPressure",
+                "label": "Bottom-port absolute pressure"
+              },
+              {
+                "signal": "tankBTemperature",
+                "label": "Liquid temperature"
+              }
+            ]
+          },
+          {
+            "id": "valve",
+            "type": "valve",
+            "label": "Valve",
+            "description": "Return-path restriction. Opening and signed flow are native simulation results.",
+            "opening": "valveOpening",
+            "readouts": [
+              {
+                "signal": "valveOpening",
+                "label": "Opening \u00b7 fraction"
+              },
+              {
+                "signal": "returnFlow",
+                "label": "Return mass flow \u00b7 B \u2192 A"
+              }
+            ]
+          }
+        ],
+        "edges": [
+          {
+            "id": "a-pump",
+            "label": "Pump inlet",
+            "from": "tankA",
+            "to": "pump",
+            "flow": "supplyFlow",
+            "orientation": 1
+          },
+          {
+            "id": "pump-b",
+            "label": "Supply pipe",
+            "from": "pump",
+            "to": "tankB",
+            "flow": "supplyFlow",
+            "orientation": 1
+          },
+          {
+            "id": "b-valve",
+            "label": "Return pipe",
+            "from": "tankB",
+            "to": "valve",
+            "flow": "returnFlow",
+            "orientation": 1
+          },
+          {
+            "id": "valve-a",
+            "label": "Return to A",
+            "from": "valve",
+            "to": "tankA",
+            "flow": "returnFlow",
+            "orientation": 1
+          }
+        ],
+        "layouts": {
+          "desktop": {
+            "width": 1000,
+            "height": 525,
+            "nodes": {
+              "tankA": [
+                140,
+                185,
+                150,
+                200
+              ],
+              "pump": [
+                500,
+                105
+              ],
+              "tankB": [
+                710,
+                185,
+                150,
+                200
+              ],
+              "valve": [
+                500,
+                445
+              ]
+            },
+            "edges": {
+              "a-pump": [
+                [
+                  290,
+                  335
+                ],
+                [
+                  350,
+                  335
+                ],
+                [
+                  350,
+                  105
+                ],
+                [
+                  473,
+                  105
+                ]
+              ],
+              "pump-b": [
+                [
+                  527,
+                  105
+                ],
+                [
+                  920,
+                  105
+                ],
+                [
+                  920,
+                  335
+                ],
+                [
+                  860,
+                  335
+                ]
+              ],
+              "b-valve": [
+                [
+                  710,
+                  355
+                ],
+                [
+                  625,
+                  355
+                ],
+                [
+                  625,
+                  445
+                ],
+                [
+                  527,
+                  445
+                ]
+              ],
+              "valve-a": [
+                [
+                  473,
+                  445
+                ],
+                [
+                  215,
+                  445
+                ],
+                [
+                  215,
+                  385
+                ]
+              ]
+            },
+            "labels": {
+              "a-pump": [
+                340,
+                65
+              ],
+              "pump-b": [
+                745,
+                65
+              ],
+              "b-valve": [
+                660,
+                465
+              ],
+              "valve-a": [
+                300,
+                478
+              ]
+            }
+          },
+          "mobile": {
+            "width": 480,
+            "height": 755,
+            "nodes": {
+              "tankA": [
+                165,
+                75,
+                150,
+                180
+              ],
+              "pump": [
+                410,
+                365
+              ],
+              "tankB": [
+                165,
+                500,
+                150,
+                180
+              ],
+              "valve": [
+                65,
+                365
+              ]
+            },
+            "edges": {
+              "a-pump": [
+                [
+                  315,
+                  215
+                ],
+                [
+                  410,
+                  215
+                ],
+                [
+                  410,
+                  338
+                ]
+              ],
+              "pump-b": [
+                [
+                  410,
+                  392
+                ],
+                [
+                  410,
+                  640
+                ],
+                [
+                  315,
+                  640
+                ]
+              ],
+              "b-valve": [
+                [
+                  165,
+                  640
+                ],
+                [
+                  65,
+                  640
+                ],
+                [
+                  65,
+                  392
+                ]
+              ],
+              "valve-a": [
+                [
+                  65,
+                  338
+                ],
+                [
+                  65,
+                  215
+                ],
+                [
+                  165,
+                  215
+                ]
+              ]
+            },
+            "labels": {
+              "a-pump": [
+                392,
+                265
+              ],
+              "pump-b": [
+                391,
+                550
+              ],
+              "b-valve": [
+                73,
+                550
+              ],
+              "valve-a": [
+                75,
+                265
+              ]
+            }
+          }
+        }
+      },
+      "readouts": [
+        {
+          "signal": "tankALevel",
+          "label": "TANK A",
+          "digits": 4
+        },
+        {
+          "signal": "tankBLevel",
+          "label": "TANK B",
+          "digits": 4
+        },
+        {
+          "signal": "pumpRPM",
+          "label": "PUMP",
+          "digits": 0
+        },
+        {
+          "signal": "valveOpening",
+          "label": "VALVE",
+          "digits": 3
+        }
+      ],
+      "plots": [
+        {
+          "id": "levels",
+          "label": "Tank levels and control target",
+          "unit": "m",
+          "signals": [
+            "tankALevel",
+            "tankBLevel",
+            "targetLevel"
+          ],
+          "includeZero": true
+        },
+        {
+          "id": "flows",
+          "label": "Signed mass flow",
+          "unit": "kg/s",
+          "signals": [
+            "supplyFlow",
+            "returnFlow"
+          ],
+          "includeZero": true
+        },
+        {
+          "id": "pressures",
+          "label": "Tank bottom-port absolute pressure",
+          "unit": "Pa",
+          "signals": [
+            "tankAPressure",
+            "tankBPressure"
+          ]
+        },
+        {
+          "id": "speed",
+          "label": "Controlled pump speed",
+          "unit": "rev/min",
+          "signals": [
+            "pumpRPM"
+          ],
+          "includeZero": true
+        }
+      ],
+      "measurements": [
+        {
+          "name": "finalTankALevelM",
+          "label": "Final tank A level",
+          "unit": "m",
+          "digits": 4
+        },
+        {
+          "name": "finalTankBLevelM",
+          "label": "Final tank B level",
+          "unit": "m",
+          "digits": 4
+        },
+        {
+          "name": "peakPumpPowerW",
+          "label": "Peak pump shaft power",
+          "unit": "W",
+          "digits": 3
+        },
+        {
+          "name": "pumpEnergyJ",
+          "label": "Signed pump shaft energy",
+          "unit": "J",
+          "digits": 2
+        },
+        {
+          "name": "maxAbsMassResidualKg",
+          "label": "Maximum stored-mass change",
+          "unit": "kg",
+          "digits": 6
+        }
+      ],
+      "metricNotes": "The closed network conserves stored mass. The residual measures the maximum absolute change from the initial stored mass. Pump energy is the native integrated signed shaft power over this finite run."
+    },
+    {
+      "id": "m3-parallel",
+      "prefix": "m3_tanks_parallel",
+      "model": "DomelicaLab.Examples.ControlledTankParallelReturn",
+      "title": "Added parallel return pipe",
+      "description": "An additional native pipe connects B back to A. The diagram and flow plots include this extra physical branch.",
+      "kind": "NEW TOPOLOGY \u00b7 NATIVE MODELICA",
+      "series": [
+        {
+          "name": "tankALevel",
+          "label": "Tank A",
+          "unit": "m",
+          "digits": 5
+        },
+        {
+          "name": "tankBLevel",
+          "label": "Tank B",
+          "unit": "m",
+          "digits": 5
+        },
+        {
+          "name": "tankHeight",
+          "label": "Tank height",
+          "unit": "m",
+          "digits": 2
+        },
+        {
+          "name": "targetLevel",
+          "label": "Target B",
+          "unit": "m",
+          "digits": 3,
+          "reference": true
+        },
+        {
+          "name": "tankAPressure",
+          "label": "Tank A port",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "tankBPressure",
+          "label": "Tank B port",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "supplyFlow",
+          "label": "Supply A \u2192 B",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "returnFlow",
+          "label": "Return B \u2192 A",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "bypassFlow",
+          "label": "Added branch B \u2192 A",
+          "unit": "kg/s",
+          "digits": 3
+        },
+        {
+          "name": "pumpRPM",
+          "label": "Pump speed",
+          "unit": "rev/min",
+          "digits": 0
+        },
+        {
+          "name": "pumpPressureRise",
+          "label": "Pump pressure rise",
+          "unit": "Pa",
+          "digits": 0
+        },
+        {
+          "name": "pumpPower",
+          "label": "Pump shaft power",
+          "unit": "W",
+          "digits": 3
+        },
+        {
+          "name": "pumpEnergy",
+          "label": "Signed pump shaft energy",
+          "unit": "J",
+          "digits": 3
+        },
+        {
+          "name": "valveOpening",
+          "label": "Valve opening",
+          "unit": "1",
+          "digits": 3
+        },
+        {
+          "name": "totalMass",
+          "label": "Stored mass",
+          "unit": "kg",
+          "digits": 3
+        },
+        {
+          "name": "massResidual",
+          "label": "Stored-mass change",
+          "unit": "kg",
+          "digits": 6
+        },
+        {
+          "name": "tankATemperature",
+          "label": "Tank A temperature",
+          "unit": "K",
+          "digits": 3
+        },
+        {
+          "name": "tankBTemperature",
+          "label": "Tank B temperature",
+          "unit": "K",
+          "digits": 3
+        }
+      ],
+      "diagram": {
+        "topologyLabel": "PARALLEL RETURN",
+        "nodes": [
+          {
+            "id": "tankA",
+            "type": "tank",
+            "label": "Tank A",
+            "description": "Open storage tank. The pressure shown is its bottom-port absolute pressure.",
+            "level": "tankALevel",
+            "capacity": "tankHeight",
+            "pressure": "tankAPressure",
+            "readouts": [
+              {
+                "signal": "tankALevel",
+                "label": "Liquid level",
+                "digits": 5
+              },
+              {
+                "signal": "tankAPressure",
+                "label": "Bottom-port absolute pressure"
+              },
+              {
+                "signal": "tankATemperature",
+                "label": "Liquid temperature"
+              },
+              {
+                "signal": "tankHeight",
+                "label": "Tank height"
+              }
+            ]
+          },
+          {
+            "id": "pump",
+            "type": "pump",
+            "label": "Pump",
+            "description": "Native pump moves fluid through the supply pipe. Its speed follows the Modelica controller.",
+            "speed": "pumpRPM",
+            "readouts": [
+              {
+                "signal": "pumpRPM",
+                "label": "Actual speed"
+              },
+              {
+                "signal": "supplyFlow",
+                "label": "Supply mass flow \u00b7 A \u2192 B"
+              },
+              {
+                "signal": "pumpPressureRise",
+                "label": "Pressure rise"
+              },
+              {
+                "signal": "pumpPower",
+                "label": "Pump shaft power"
+              }
+            ]
+          },
+          {
+            "id": "tankB",
+            "type": "tank",
+            "label": "Tank B",
+            "description": "Controlled open tank. The dashed amber line marks its recorded target level.",
+            "level": "tankBLevel",
+            "capacity": "tankHeight",
+            "pressure": "tankBPressure",
+            "target": "targetLevel",
+            "readouts": [
+              {
+                "signal": "tankBLevel",
+                "label": "Liquid level",
+                "digits": 5
+              },
+              {
+                "signal": "targetLevel",
+                "label": "Controller target"
+              },
+              {
+                "signal": "tankBPressure",
+                "label": "Bottom-port absolute pressure"
+              },
+              {
+                "signal": "tankBTemperature",
+                "label": "Liquid temperature"
+              },
+              {
+                "signal": "bypassFlow",
+                "label": "Added branch flow \u00b7 B \u2192 A"
+              }
+            ]
+          },
+          {
+            "id": "valve",
+            "type": "valve",
+            "label": "Valve",
+            "description": "Return-path restriction. Opening and signed flow are native simulation results.",
+            "opening": "valveOpening",
+            "readouts": [
+              {
+                "signal": "valveOpening",
+                "label": "Opening \u00b7 fraction"
+              },
+              {
+                "signal": "returnFlow",
+                "label": "Return mass flow \u00b7 B \u2192 A"
+              }
+            ]
+          }
+        ],
+        "edges": [
+          {
+            "id": "a-pump",
+            "label": "Pump inlet",
+            "from": "tankA",
+            "to": "pump",
+            "flow": "supplyFlow",
+            "orientation": 1
+          },
+          {
+            "id": "pump-b",
+            "label": "Supply pipe",
+            "from": "pump",
+            "to": "tankB",
+            "flow": "supplyFlow",
+            "orientation": 1
+          },
+          {
+            "id": "b-valve",
+            "label": "Return pipe",
+            "from": "tankB",
+            "to": "valve",
+            "flow": "returnFlow",
+            "orientation": 1
+          },
+          {
+            "id": "valve-a",
+            "label": "Return to A",
+            "from": "valve",
+            "to": "tankA",
+            "flow": "returnFlow",
+            "orientation": 1
+          },
+          {
+            "id": "bypass",
+            "label": "Added return pipe",
+            "from": "tankB",
+            "to": "tankA",
+            "flow": "bypassFlow",
+            "orientation": 1
+          }
+        ],
+        "layouts": {
+          "desktop": {
+            "width": 1000,
+            "height": 625,
+            "nodes": {
+              "tankA": [
+                140,
+                185,
+                150,
+                200
+              ],
+              "pump": [
+                500,
+                105
+              ],
+              "tankB": [
+                710,
+                185,
+                150,
+                200
+              ],
+              "valve": [
+                500,
+                445
+              ]
+            },
+            "edges": {
+              "a-pump": [
+                [
+                  290,
+                  335
+                ],
+                [
+                  350,
+                  335
+                ],
+                [
+                  350,
+                  105
+                ],
+                [
+                  473,
+                  105
+                ]
+              ],
+              "pump-b": [
+                [
+                  527,
+                  105
+                ],
+                [
+                  920,
+                  105
+                ],
+                [
+                  920,
+                  335
+                ],
+                [
+                  860,
+                  335
+                ]
+              ],
+              "b-valve": [
+                [
+                  710,
+                  355
+                ],
+                [
+                  625,
+                  355
+                ],
+                [
+                  625,
+                  445
+                ],
+                [
+                  527,
+                  445
+                ]
+              ],
+              "valve-a": [
+                [
+                  473,
+                  445
+                ],
+                [
+                  215,
+                  445
+                ],
+                [
+                  215,
+                  385
+                ]
+              ],
+              "bypass": [
+                [
+                  860,
+                  355
+                ],
+                [
+                  955,
+                  355
+                ],
+                [
+                  955,
+                  575
+                ],
+                [
+                  45,
+                  575
+                ],
+                [
+                  45,
+                  355
+                ],
+                [
+                  140,
+                  355
+                ]
+              ]
+            },
+            "labels": {
+              "a-pump": [
+                340,
+                65
+              ],
+              "pump-b": [
+                745,
+                65
+              ],
+              "b-valve": [
+                660,
+                465
+              ],
+              "valve-a": [
+                300,
+                478
+              ],
+              "bypass": [
+                500,
+                552
+              ]
+            }
+          },
+          "mobile": {
+            "width": 480,
+            "height": 755,
+            "nodes": {
+              "tankA": [
+                165,
+                75,
+                150,
+                180
+              ],
+              "pump": [
+                410,
+                365
+              ],
+              "tankB": [
+                165,
+                500,
+                150,
+                180
+              ],
+              "valve": [
+                65,
+                365
+              ]
+            },
+            "edges": {
+              "a-pump": [
+                [
+                  315,
+                  215
+                ],
+                [
+                  410,
+                  215
+                ],
+                [
+                  410,
+                  338
+                ]
+              ],
+              "pump-b": [
+                [
+                  410,
+                  392
+                ],
+                [
+                  410,
+                  640
+                ],
+                [
+                  315,
+                  640
+                ]
+              ],
+              "b-valve": [
+                [
+                  165,
+                  640
+                ],
+                [
+                  65,
+                  640
+                ],
+                [
+                  65,
+                  392
+                ]
+              ],
+              "valve-a": [
+                [
+                  65,
+                  338
+                ],
+                [
+                  65,
+                  215
+                ],
+                [
+                  165,
+                  215
+                ]
+              ],
+              "bypass": [
+                [
+                  165,
+                  610
+                ],
+                [
+                  125,
+                  610
+                ],
+                [
+                  125,
+                  240
+                ],
+                [
+                  165,
+                  240
+                ]
+              ]
+            },
+            "labels": {
+              "a-pump": [
+                392,
+                265
+              ],
+              "pump-b": [
+                391,
+                550
+              ],
+              "b-valve": [
+                73,
+                550
+              ],
+              "valve-a": [
+                75,
+                265
+              ],
+              "bypass": [
+                230,
+                405
+              ]
+            }
+          }
+        }
+      },
+      "readouts": [
+        {
+          "signal": "tankALevel",
+          "label": "TANK A",
+          "digits": 4
+        },
+        {
+          "signal": "tankBLevel",
+          "label": "TANK B",
+          "digits": 4
+        },
+        {
+          "signal": "pumpRPM",
+          "label": "PUMP",
+          "digits": 0
+        },
+        {
+          "signal": "valveOpening",
+          "label": "VALVE",
+          "digits": 3
+        }
+      ],
+      "plots": [
+        {
+          "id": "levels",
+          "label": "Tank levels and control target",
+          "unit": "m",
+          "signals": [
+            "tankALevel",
+            "tankBLevel",
+            "targetLevel"
+          ],
+          "includeZero": true
+        },
+        {
+          "id": "flows",
+          "label": "Signed mass flow",
+          "unit": "kg/s",
+          "signals": [
+            "supplyFlow",
+            "returnFlow",
+            "bypassFlow"
+          ],
+          "includeZero": true
+        },
+        {
+          "id": "pressures",
+          "label": "Tank bottom-port absolute pressure",
+          "unit": "Pa",
+          "signals": [
+            "tankAPressure",
+            "tankBPressure"
+          ]
+        },
+        {
+          "id": "speed",
+          "label": "Controlled pump speed",
+          "unit": "rev/min",
+          "signals": [
+            "pumpRPM"
+          ],
+          "includeZero": true
+        }
+      ],
+      "measurements": [
+        {
+          "name": "finalTankALevelM",
+          "label": "Final tank A level",
+          "unit": "m",
+          "digits": 4
+        },
+        {
+          "name": "finalTankBLevelM",
+          "label": "Final tank B level",
+          "unit": "m",
+          "digits": 4
+        },
+        {
+          "name": "peakPumpPowerW",
+          "label": "Peak pump shaft power",
+          "unit": "W",
+          "digits": 3
+        },
+        {
+          "name": "pumpEnergyJ",
+          "label": "Signed pump shaft energy",
+          "unit": "J",
+          "digits": 2
+        },
+        {
+          "name": "maxAbsMassResidualKg",
+          "label": "Maximum stored-mass change",
+          "unit": "kg",
+          "digits": 6
+        }
+      ],
+      "metricNotes": "The closed network conserves stored mass. The residual measures the maximum absolute change from the initial stored mass. Pump energy is the native integrated signed shaft power over this finite run."
+    }
+  ]
+}
