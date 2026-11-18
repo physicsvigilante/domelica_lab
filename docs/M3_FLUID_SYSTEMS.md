@@ -49,7 +49,7 @@ The stock examples have separate declared checks appropriate to their own bounda
 
 Failed criteria remain failures until the cause is resolved or the unsuccessful outcome is explicitly documented. Final measurements and execution verdicts belong to the CI artifact and pull request for the exact source revision.
 
-The native run script checks the simulation result's success and original time coverage before printing a completion message. A partial MAT file is retained as failure evidence, never treated as a successful run. The numerical trials and their observed failures are documented in [M3_FLUID_PHYSICS.md](M3_FLUID_PHYSICS.md).
+The native run script calls `scripts/check_fluid_completion.py` after each simulation. It requires the current native log's simulation-success marker and checks original sample count and time coverage through OpenModelica's native reader before printing a completion message. A partial MAT file is retained as failure evidence, never treated as a successful run. The numerical trials and their observed failures are documented in [M3_FLUID_PHYSICS.md](M3_FLUID_PHYSICS.md).
 
 ## Visualization and evidence
 

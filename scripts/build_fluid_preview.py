@@ -155,7 +155,7 @@ def main():
         inputs[toolchain_path.name] = digest(toolchain_path)
     sources = sorted((ROOT / "DomelicaLab").rglob("*.mo"))
     sources += sorted((ROOT / "DomelicaLab").rglob("package.order"))
-    sources += [ROOT / name for name in ("scripts/native_m3.mos", "scripts/export_native_csv.py", "scripts/export_fluid_csv.py", "scripts/verify_csv.py",
+    sources += [ROOT / name for name in ("scripts/native_m3.mos", "scripts/check_fluid_completion.py", "scripts/export_native_csv.py", "scripts/export_fluid_csv.py", "scripts/verify_csv.py",
                 "scripts/verify_m3.py", "scripts/build_fluid_preview.py", "scripts/check_fluid.cjs",
                 "viewer/fluid.template.html", "viewer/fluid-experiments.json")]
     provenance = {

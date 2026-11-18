@@ -2,7 +2,7 @@
 print("DOMELICA_M3_START\n");
 print("Compiler: " + getVersion() + "\n");
 for prefix in {"m3_msl_pumping", "m3_msl_empty", "m3_tanks_nominal", "m3_tanks_restricted", "m3_tanks_initial", "m3_tanks_parallel"} loop
-  for suffix in {"_res.mat", "_res.csv", "_visual.xml"} loop
+  for suffix in {"_res.mat", "_res.csv", "_visual.xml", ".log"} loop
     if regularFileExists(prefix + suffix) then
       if not deleteFile(prefix + suffix) then
         print("ERROR: cannot remove stale output " + prefix + suffix + "\n");
@@ -22,46 +22,26 @@ if not loadFile("DomelicaLab/package.mo") then
   exit(1);
 end if;
 
+// The helper checks the fresh native log and native result time/sample count.
+// A partially written MAT file is not evidence of a completed simulation.
 print("QUALIFYING unchanged MSL pumping system:\n");
-pumpingResult := simulate(Modelica.Fluid.Examples.PumpingSystem,
+simulate(Modelica.Fluid.Examples.PumpingSystem,
   stopTime=2000, numberOfIntervals=5000, tolerance=1e-6,
   outputFormat="mat", fileNamePrefix="m3_msl_pumping");
 print(getErrorString());
-if pumpingResult.resultFile == "" or not regularFileExists("m3_msl_pumping_res.mat") then
-  print("ERROR: stock pumping system failed.\n");
-  print(pumpingResult.messages);
-  exit(1);
-end if;
-pumpingTimes := readSimulationResult(pumpingResult.resultFile, {time}, 0);
-if size(pumpingTimes, 1) <> 1 or size(pumpingTimes, 2) < 5001 then
-  print("ERROR: stock pumping result has incomplete native samples.\n");
-  exit(1);
-end if;
-pumpingStop := pumpingTimes[1, size(pumpingTimes, 2)];
-if not (pumpingStop >= 2000 - 1e-9 and pumpingStop <= 2000 + 1e-9) then
-  print("ERROR: stock pumping native result stopped at " + String(pumpingStop) + " s.\n");
+if system("python3 scripts/check_fluid_completion.py m3_msl_pumping 2000 5001") <> 0 then
+  print("ERROR: m3_msl_pumping native simulation did not complete.\n");
   exit(1);
 end if;
 print("PASS M3 stock pumping native simulation\n");
 
 print("QUALIFYING unchanged MSL empty tanks example:\n");
-emptyResult := simulate(Modelica.Fluid.Examples.Tanks.EmptyTanks,
+simulate(Modelica.Fluid.Examples.Tanks.EmptyTanks,
   stopTime=50, numberOfIntervals=1000, tolerance=1e-7,
   outputFormat="mat", fileNamePrefix="m3_msl_empty");
 print(getErrorString());
-if emptyResult.resultFile == "" or not regularFileExists("m3_msl_empty_res.mat") then
-  print("ERROR: stock empty tanks example failed.\n");
-  print(emptyResult.messages);
-  exit(1);
-end if;
-emptyTimes := readSimulationResult(emptyResult.resultFile, {time}, 0);
-if size(emptyTimes, 1) <> 1 or size(emptyTimes, 2) < 1001 then
-  print("ERROR: stock empty-tank result has incomplete native samples.\n");
-  exit(1);
-end if;
-emptyStop := emptyTimes[1, size(emptyTimes, 2)];
-if not (emptyStop >= 50 - 1e-9 and emptyStop <= 50 + 1e-9) then
-  print("ERROR: stock empty-tank native result stopped at " + String(emptyStop) + " s.\n");
+if system("python3 scripts/check_fluid_completion.py m3_msl_empty 50 1001") <> 0 then
+  print("ERROR: m3_msl_empty native simulation did not complete.\n");
   exit(1);
 end if;
 print("PASS M3 stock empty-tank native simulation\n");
@@ -69,65 +49,32 @@ print("PASS M3 stock empty-tank native simulation\n");
 print("CHECKING authored reusable hydraulic plant and control:\n");
 print(checkModel(DomelicaLab.Examples.ControlledTankLoop) + "\n");
 print(getErrorString());
-nominalResult := simulate(DomelicaLab.Examples.ControlledTankLoop,
+simulate(DomelicaLab.Examples.ControlledTankLoop,
   stopTime=300, numberOfIntervals=3000, tolerance=1e-10,
   outputFormat="mat", fileNamePrefix="m3_tanks_nominal");
 print(getErrorString());
-if nominalResult.resultFile == "" or not regularFileExists("m3_tanks_nominal_res.mat") then
-  print("ERROR: nominal controlled tanks failed.\n");
-  print(nominalResult.messages);
-  exit(1);
-end if;
-nominalTimes := readSimulationResult(nominalResult.resultFile, {time}, 0);
-if size(nominalTimes, 1) <> 1 or size(nominalTimes, 2) < 3001 then
-  print("ERROR: nominal controlled tanks have incomplete native samples.\n");
-  exit(1);
-end if;
-nominalStop := nominalTimes[1, size(nominalTimes, 2)];
-if not (nominalStop >= 300 - 1e-9 and nominalStop <= 300 + 1e-9) then
-  print("ERROR: nominal native result stopped at " + String(nominalStop) + " s.\n");
+if system("python3 scripts/check_fluid_completion.py m3_tanks_nominal 300 3001") <> 0 then
+  print("ERROR: m3_tanks_nominal native simulation did not complete.\n");
   exit(1);
 end if;
 print("PASS M3 nominal controlled tanks\n");
 
-restrictedResult := simulate(DomelicaLab.Examples.ControlledTankRestrictedValve,
+simulate(DomelicaLab.Examples.ControlledTankRestrictedValve,
   stopTime=300, numberOfIntervals=3000, tolerance=1e-10,
   outputFormat="mat", fileNamePrefix="m3_tanks_restricted");
 print(getErrorString());
-if restrictedResult.resultFile == "" or not regularFileExists("m3_tanks_restricted_res.mat") then
-  print("ERROR: restricted-valve controlled tanks failed.\n");
-  print(restrictedResult.messages);
-  exit(1);
-end if;
-restrictedTimes := readSimulationResult(restrictedResult.resultFile, {time}, 0);
-if size(restrictedTimes, 1) <> 1 or size(restrictedTimes, 2) < 3001 then
-  print("ERROR: restricted controlled tanks have incomplete native samples.\n");
-  exit(1);
-end if;
-restrictedStop := restrictedTimes[1, size(restrictedTimes, 2)];
-if not (restrictedStop >= 300 - 1e-9 and restrictedStop <= 300 + 1e-9) then
-  print("ERROR: restricted native result stopped at " + String(restrictedStop) + " s.\n");
+if system("python3 scripts/check_fluid_completion.py m3_tanks_restricted 300 3001") <> 0 then
+  print("ERROR: m3_tanks_restricted native simulation did not complete.\n");
   exit(1);
 end if;
 print("PASS M3 restricted-valve controlled tanks\n");
 
-initialResult := simulate(DomelicaLab.Examples.ControlledTankInitialLevels,
+simulate(DomelicaLab.Examples.ControlledTankInitialLevels,
   stopTime=300, numberOfIntervals=3000, tolerance=1e-10,
   outputFormat="mat", fileNamePrefix="m3_tanks_initial");
 print(getErrorString());
-if initialResult.resultFile == "" or not regularFileExists("m3_tanks_initial_res.mat") then
-  print("ERROR: changed initial levels controlled tanks failed.\n");
-  print(initialResult.messages);
-  exit(1);
-end if;
-initialTimes := readSimulationResult(initialResult.resultFile, {time}, 0);
-if size(initialTimes, 1) <> 1 or size(initialTimes, 2) < 3001 then
-  print("ERROR: changed initial levels have incomplete native samples.\n");
-  exit(1);
-end if;
-initialStop := initialTimes[1, size(initialTimes, 2)];
-if not (initialStop >= 300 - 1e-9 and initialStop <= 300 + 1e-9) then
-  print("ERROR: changed initial levels result stopped at " + String(initialStop) + " s.\n");
+if system("python3 scripts/check_fluid_completion.py m3_tanks_initial 300 3001") <> 0 then
+  print("ERROR: m3_tanks_initial native simulation did not complete.\n");
   exit(1);
 end if;
 print("PASS M3 changed initial levels controlled tanks\n");
@@ -135,23 +82,12 @@ print("PASS M3 changed initial levels controlled tanks\n");
 print("CHECKING new physical return-branch composition:\n");
 print(checkModel(DomelicaLab.Examples.ControlledTankParallelReturn) + "\n");
 print(getErrorString());
-parallelResult := simulate(DomelicaLab.Examples.ControlledTankParallelReturn,
+simulate(DomelicaLab.Examples.ControlledTankParallelReturn,
   stopTime=300, numberOfIntervals=3000, tolerance=1e-10,
   outputFormat="mat", fileNamePrefix="m3_tanks_parallel");
 print(getErrorString());
-if parallelResult.resultFile == "" or not regularFileExists("m3_tanks_parallel_res.mat") then
-  print("ERROR: parallel-return controlled tanks failed.\n");
-  print(parallelResult.messages);
-  exit(1);
-end if;
-parallelTimes := readSimulationResult(parallelResult.resultFile, {time}, 0);
-if size(parallelTimes, 1) <> 1 or size(parallelTimes, 2) < 3001 then
-  print("ERROR: parallel-return controlled tanks have incomplete native samples.\n");
-  exit(1);
-end if;
-parallelStop := parallelTimes[1, size(parallelTimes, 2)];
-if not (parallelStop >= 300 - 1e-9 and parallelStop <= 300 + 1e-9) then
-  print("ERROR: parallel-return native result stopped at " + String(parallelStop) + " s.\n");
+if system("python3 scripts/check_fluid_completion.py m3_tanks_parallel 300 3001") <> 0 then
+  print("ERROR: m3_tanks_parallel native simulation did not complete.\n");
   exit(1);
 end if;
 print("PASS M3 parallel-return controlled tanks\n");

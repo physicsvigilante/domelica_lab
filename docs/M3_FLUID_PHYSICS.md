@@ -100,9 +100,15 @@ partial results were rejected.
 The current setup restores automatic state selection and tightens solver
 tolerance to 1e-10. The output interval is 0.1 s to resolve the initial shaft-power
 transient in independent sampled quadrature. All physical acceptance tolerances
-remain unchanged. The native script checks the simulation's returned success
-filename, minimum sample count, and actual final native time before printing
-PASS; the presence of a partially written MAT file is insufficient.
+remain unchanged. Before printing PASS, the native script invokes
+`check_fluid_completion.py`, which requires the current run's native success log
+marker, complete sample count, and actual final native time. The time check uses
+the supported native batch result reader. Stale result files and logs are removed
+before the run; the presence of a partially written MAT file is insufficient.
+
+An attempted completion guard using stored `SimulationResult` record fields was
+rejected by the OMC 1.27.1 script interpreter before the authored simulations
+ran. The separate native-reader helper avoids that scripting limitation.
 
 `supplyFlow` is positive from A through the pump to B. `returnFlow` and
 `bypassFlow` are positive from B to A. These are signed mass flow rates in kg/s;
