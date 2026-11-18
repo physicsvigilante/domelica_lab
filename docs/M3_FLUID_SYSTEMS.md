@@ -23,7 +23,9 @@ The parallel case adds an actual `StaticPipe` instance and connections; it is no
 
 ## Authored experiment
 
-Each authored run lasts 300 s with a regular 0.1 s output interval, native event samples, automatic native state selection, and solver tolerance 1e-10. Both tank bases share an elevation; each has 0.25 m² cross-sectional area and 1.2 m height. Nominal initial levels are 0.9 m in A and 0.5 m in B. The pump has 0.001 m³ storage, an illustrative quadratic head curve, and constant 80% efficiency. The water medium is MSL `ConstantPropertyLiquidWater`.
+Each authored run lasts 300 s with a regular 0.1 s output interval, native event samples, and solver tolerance 1e-10. The two tank levels and actuator output are explicitly selected as physical states, with OpenModelica's hybrid nonlinear solver. Both tank bases share an elevation; each has 0.25 m² cross-sectional area and 1.2 m height. Nominal initial levels are 0.9 m in A and 0.5 m in B. The pump has 0.001 m³ storage, an illustrative quadratic head curve, and constant 80% efficiency. The water medium is MSL `ConstantPropertyLiquidWater`.
+
+The pump curve is expressed by a native one-input Modelica function with its complete derivative and linear extrapolation. Seven native initialization assertions compare its values with the original MSL curve. This preserves the hydraulic law while avoiding the differentiated-function inconsistency observed in the pinned compiler setup. A separate native diagnostic comparison selected the explicit curve, physical states, and hybrid solver; the full milestone also requires all four scenarios to pass. See [M3_TEMPORAL_ACCEPTANCE.md](M3_TEMPORAL_ACCEPTANCE.md) for the independent trajectory checks.
 
 The tank B target is 0.8 m for 0–100 s, 0.9 m for 100–200 s, and 0.78 m for 200–300 s. The nominal return-valve opening is 0.65 until 140 s, 1 until 240 s, then 0.45. Changes in opening act on the Modelica valve.
 
@@ -41,6 +43,9 @@ Pump output is limited to a nonzero minimum and a maximum corresponding to 1800 
 | Modeled internal-energy derivative minus shaft power | ≤1e-4 W |
 | Independent sampled shaft-work quadrature | ≤0.05 J + 0.002 × cumulative absolute work |
 | Independent sampled tank transfer quadrature | ≤0.05 kg + 0.002 × cumulative absolute transfer |
+| Independent actuator-state integration | ≤0.0001 + 0.002 × cumulative absolute speed-fraction change |
+| Exact first-second actuator response in the changed-initial-level case | Absolute speed-fraction error ≤1e-6 |
+| Exported pump-head derivative, where available on the open-valve branch | Full chain-rule residual ≤1e-5 m/s |
 | Target tracking | Absolute level error ≤0.025 m throughout the final 20 s of each 100 s target hold |
 | Wet/nonoverflow operation | Both levels strictly between 0.05 and 1.15 m |
 | Native reversal/topology behavior | Nominal main return flow has both signs; the new parallel branch carries meaningful nonzero flow |

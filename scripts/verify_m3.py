@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Verify native MSL fluid qualification runs and authored tank-loop experiments.
 
-Constants and tolerances are declared before the first native run. This checks
-component identities, closed mass, the modeled internal-energy balance, native
-integration, and finite-window control. It is not experimental validation or an
-independent solution of the complete fluid DAE. No verifier value drives motion.
+Physical constants and limits were declared before the first native run;
+additional temporal and derivative gates were declared before the diagnostic
+solver comparison. This checks component identities, closed mass, modeled
+internal energy, native integration, and finite-window control. It is not
+experimental validation or an independent solution of the complete fluid DAE.
+No verifier value drives motion.
 """
+import csv
 import hashlib
 import json
 import math
@@ -28,6 +31,7 @@ CASES = (
          initialLevelA=0.9, initialLevelB=0.5, valveScale=1.0, returnBranchCount=2),
 )
 PLATEAUS = ((0.0, 100.0, 0.8), (100.0, 200.0, 0.9), (200.0, 300.0, 0.78))
+PUMP_DERIVATIVE_COLUMNS = ("der(plant.pump.head)", "der(supplyFlow)", "der(plant.pump.V_flow)")
 
 
 def sha(path):
@@ -72,6 +76,83 @@ def require_schedule_events(rows, name, steps, scale=1):
             raise AssertionError(f"{name}: missing pre/post native event samples at {at} s")
 
 
+def verify_speed_trajectory(rows, case_id, prefix):
+    """Check time evolution independently of exported derivative aliases.
+
+    A native pointwise derivative identity can pass even when a reconstructed
+    state follows an incorrect trajectory. Integrate the declared first-order
+    ODE from its recorded input/output, and use an exact constant-input oracle
+    for the first second of the initial-high-B experiment.
+    """
+    residuals = {}
+    if case_id == "m3-initial":
+        selected = [row for row in rows if 0 <= row["time"] <= 1+1e-9]
+        if len(selected) < 11 or not any(abs(row["time"]-1) <= 1e-9 for row in selected):
+            raise AssertionError(f"{prefix}: missing native samples for the exact first-second speed oracle")
+        close(rows[0]["filteredFraction"], 0.3, 1e-9, f"{prefix} exact speed oracle initial state")
+        worst = 0.0
+        for row in selected:
+            context = f"{prefix} t={row['time']:.9g}"
+            close(row["pumpFraction"], 0.001, 1e-9, f"{context} exact speed oracle constant input")
+            expected = 0.001+0.299*math.exp(-row["time"]/2)
+            error = row["filteredFraction"]-expected
+            close(error, 0, 1e-6, f"{context} exact first-order speed trajectory")
+            worst = max(worst, abs(error))
+        residuals["initialSpeedOracleFraction"] = worst
+    cumulative = absolute_cumulative = worst = 0.0
+    initial = rows[0]["filteredFraction"]
+    previous = rows[0]
+    for row in rows:
+        dt = row["time"]-previous["time"]
+        rate = (row["pumpFraction"]-row["filteredFraction"])/2
+        old_rate = (previous["pumpFraction"]-previous["filteredFraction"])/2
+        cumulative += dt*(rate+old_rate)/2
+        absolute_cumulative += dt*(abs(rate)+abs(old_rate))/2
+        error = row["filteredFraction"]-initial-cumulative
+        close(error, 0, 0.0001+0.002*absolute_cumulative,
+              f"{prefix} t={row['time']:.9g} independently integrated speed trajectory")
+        worst = max(worst, abs(error))
+        previous = row
+    residuals["speedTrajectoryFraction"] = worst
+    return residuals
+
+
+def verify_pump_head_derivative(rows, prefix):
+    """Check the full affinity-law chain rule when native derivatives exist."""
+    available_columns = [name for name in PUMP_DERIVATIVE_COLUMNS if name in rows[0]]
+    derivative_rows = [row for row in rows if row["supplyFlow"] > 1e-5
+                       and "der(plant.pump.head)" in row
+                       and ("der(supplyFlow)" in row or "der(plant.pump.V_flow)" in row)]
+    report = dict(available=bool(derivative_rows), nativeColumns=available_columns,
+                  samples=len(derivative_rows), toleranceMPerS=1e-5,
+                  scope="Open pump check valve only, supplyFlow > 1e-5 kg/s")
+    if not derivative_rows:
+        report["unavailableReason"] = "No open-valve samples with both native head and flow derivatives exported."
+        return report
+    worst = 0.0
+    for row in derivative_rows:
+        ratio = row["pumpRPM"]/1200
+        ratio_derivative = row["filteredFractionDerivative"]
+        flow = row["supplyFlow"]/RHO
+        flow_derivative = (row["der(supplyFlow)"]/RHO if "der(supplyFlow)" in row
+                           else row["der(plant.pump.V_flow)"])
+        nominal_flow = flow/ratio
+        if nominal_flow < 0:
+            head, slope = 10-250*nominal_flow, -250
+        elif nominal_flow > 0.008:
+            head, slope = -2250*(nominal_flow-0.008), -2250
+        else:
+            head = 10-250*nominal_flow-125000*nominal_flow**2
+            slope = -250-250000*nominal_flow
+        expected = (2*ratio*ratio_derivative*head
+                    + slope*(ratio*flow_derivative-flow*ratio_derivative))
+        error = row["der(plant.pump.head)"]-expected
+        close(error, 0, 1e-5, f"{prefix} t={row['time']:.9g} native pump-head derivative chain rule")
+        worst = max(worst, abs(error))
+    report.update(passed=True, maxAbsErrorMPerS=worst)
+    return report
+
+
 def verify_case(case):
     prefix = case["prefix"]
     names = (
@@ -97,7 +178,11 @@ def verify_case(case):
     if case["returnBranchCount"] == 2:
         names += ("bypassPipe.port_a.m_flow", "bypassPipe.port_b.m_flow",
                   "bypassPipe.port_a.p", "bypassPipe.port_b.p", "bypassPipe.length", "bypassPipe.diameter")
-    rows = read_csv(ROOT / f"{prefix}_res.csv", names)
+    csv_path = ROOT / f"{prefix}_res.csv"
+    with csv_path.open(newline="", encoding="utf-8-sig") as stream:
+        native_columns = next(csv.reader(stream), [])
+    names += tuple(name for name in PUMP_DERIVATIVE_COLUMNS if name in native_columns)
+    rows = read_csv(csv_path, names)
     coverage(rows, 300, 0.1, prefix)
     first, last = rows[0], rows[-1]
     expected_mass = RHO*(AREA*1.4+0.001)
@@ -106,6 +191,7 @@ def verify_case(case):
                        "pumpEnergy": 0, "transferredMass": 0, "controllerIntegral": 0.1,
                        "filteredFraction": 0.3}.items():
         close(first[key], value, 1e-7, f"{prefix} initial {key}")
+    speed_residuals = verify_speed_trajectory(rows, case["id"], prefix)
     parameters = {key: case[key] for key in ("initialLevelA", "initialLevelB", "valveScale", "returnBranchCount")}
     parameters.update(crossArea=AREA, tankHeight=1.2, controllerGain=3, integralTime=30)
     residuals = {key: 0.0 for key in (
@@ -113,6 +199,7 @@ def verify_case(case):
         "pumpPowerW", "modeledInternalEnergyDerivativeW", "sampledPumpEnergyJ",
         "storedInternalEnergyJ", "sampledTransferredMassKg", "controllerFraction",
     )}
+    residuals.update(speed_residuals)
     cumulative_power = cumulative_abs_power = cumulative_transfer = cumulative_abs_transfer = 0.0
     prev = first
     for row in rows:
@@ -237,6 +324,9 @@ def verify_case(case):
                            ("sampledTransferredMassKg", transfer_error)):
             residuals[key] = max(residuals[key], abs(value))
         prev = row
+    head_derivative = verify_pump_head_derivative(rows, prefix)
+    if head_derivative["available"]:
+        residuals["pumpHeadDerivativeMPerS"] = head_derivative["maxAbsErrorMPerS"]
     require_schedule_events(rows, "targetLevel", ((0, 0.8), (100, 0.9), (200, 0.78)))
     require_schedule_events(rows, "valveOpening", ((0, 0.65), (140, 1), (240, 0.45)), case["valveScale"])
     tails = []
@@ -269,7 +359,8 @@ def verify_case(case):
           f"worst tail {metrics['maxTailLevelErrorM']:.6g} m; mass residual {residuals['massKg']:.3g} kg")
     return dict(id=case["id"], prefix=prefix, model="DomelicaLab.Examples."+case["model"],
                 samples=len(rows), parameters=parameters, metrics=metrics, plateaus=tails,
-                verification=dict(passed=True, residualMaxima=residuals), **identity(prefix))
+                verification=dict(passed=True, residualMaxima=residuals,
+                                  nativePumpHeadDerivative=head_derivative), **identity(prefix))
 
 
 def verify_empty_tanks():
@@ -380,6 +471,8 @@ def main():
                       mass="Closed inventory includes both tanks and the 0.001 m3 pump; pipes and valves store no mass.",
                       energy="Signed pump shaft energy; modeled fluid internal energy includes both tanks and the pump. Tank potential/kinetic energy is outside this simplified model.",
                       sampleIntegralTolerance="Authored energy: 0.05 J + 0.002 times cumulative absolute work; mass transfer: 0.05 kg + 0.002 times cumulative absolute transfer.",
+                      speedTrajectory="Native speed-fraction change is checked against the sampled integral of (controller output - speed fraction)/2, tolerance 0.0001 + 0.002 times its cumulative absolute integral. The initial-high-B case also requires the exact first-second response 0.001 + 0.299*exp(-t/2) within 1e-6.",
+                      pumpHeadDerivative="When native head and flow derivative columns are exported, the full speed/flow affinity-law chain rule must hold within 1e-5 m/s on open-valve samples with supplyFlow > 1e-5 kg/s. Availability and checked sample count are recorded per case.",
                       visualization="Illustrative engineering schematic; values and direction come from native solver results."),
                   qualifications=qualifications, cases=cases)
     output = ROOT / "artifacts/m3-metrics.json"

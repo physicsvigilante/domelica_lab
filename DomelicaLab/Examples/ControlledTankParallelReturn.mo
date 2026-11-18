@@ -8,4 +8,6 @@ model ControlledTankParallelReturn
 equation
   connect(plant.branchB, bypassPipe.port_a);
   connect(bypassPipe.port_b, plant.branchA);
+  annotation(experiment(StartTime=0, StopTime=300, Interval=0.1, Tolerance=1e-10),
+    __OpenModelica_simulationFlags(s="dassl", nls="hybrid"));
 end ControlledTankParallelReturn;

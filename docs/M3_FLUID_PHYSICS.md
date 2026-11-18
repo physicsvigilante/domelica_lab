@@ -66,6 +66,24 @@ valve coefficient, and pipe dimensions are illustrative. They are not measured
 specifications of a physical installation. `ValveLinear` is a deliberately
 simple pressure-flow law supplied by MSL, not a detailed valve sizing model.
 
+The pump uses `DomelicaLab.Functions.TwoTankPumpCurve`, a native Modelica
+specialization of MSL `quadraticFlow` for the three fixed nominal points above.
+For nominal volume flow `Q` in m³/s, its head in metres is:
+
+| Nominal-flow region | Head expression |
+| --- | --- |
+| `Q < 0` | `10 - 250*Q` |
+| `0 <= Q <= 0.008` | `10 - 250*Q - 125000*Q*Q` |
+| `Q > 0.008` | `-2250*(Q - 0.008)` |
+
+These are the original quadratic coefficients and MSL's original linear
+extrapolation, including the endpoint slopes. The value expression is inlineable;
+an explicit derivative function also supplies the same piecewise slopes.
+Seven native initialization assertions compare it with MSL `quadraticFlow` at
+`Q = {-0.002, 0, 0.002, 0.004, 0.006, 0.008, 0.010}` m³/s, including both
+extrapolation regions, within 1e-10 m. The specialization preserves the pump law;
+it exposes the flow dependence to the pinned compiler as described below.
+
 Both tank bases have the same elevation. `use_portsData=false` places all tank
 ports at zero height without inlet/outlet resistance. Consequently their
 absolute pressure is the surface pressure plus `rho*g*level`. Separate pressure
@@ -87,20 +105,73 @@ timestamps. The target is 0.8 m initially, 0.9 m at 100 s, and 0.78 m at 200 s.
 The main return valve opening is 0.65 initially, 1 at 140 s, and 0.45 at 240 s,
 multiplied by the case's `valveScale`.
 
-Native automatic state selection remains enabled so that the solver can change
-coordinates when the pump check valve closes. The first native trial, at solver
-tolerance 1e-7, completed and met the tracking criterion but failed the
-predeclared mass and internal-energy checks because conserved mass drifted by
-up to approximately 0.0016 kg. A second trial explicitly selected tank levels
-and pump-speed response as states, with tolerance 1e-9. This improved the
-conservation residuals before termination, but all four authored runs terminated
-at their first pump check-valve closure with event-iteration failures. Those
-partial results were rejected.
+### Selected native numerical configuration
 
-The current setup restores automatic state selection and tightens solver
-tolerance to 1e-10. The output interval is 0.1 s to resolve the initial shaft-power
-transient in independent sampled quadrature. All physical acceptance tolerances
-remain unchanged. Before printing PASS, the native script invokes
+The authored runs use DASSL, tolerance 1e-10, the explicit native curve above,
+`StateSelect.always` on both tank levels and the first-order actuator output,
+and OpenModelica's `-nls=hybrid` nonlinear solver option. The output interval is
+0.1 s to resolve the initial shaft-power transient in independent sampled
+quadrature. Stock examples retain their original component configuration and
+their separately declared simulation settings.
+
+Each of the four selectable authored examples explicitly saves this setup:
+
+```modelica
+annotation(
+  experiment(StartTime=0, StopTime=300, Interval=0.1, Tolerance=1e-10),
+  __OpenModelica_simulationFlags(s="dassl", nls="hybrid"));
+```
+
+The standard `experiment` annotation supplies the time range, output interval,
+and tolerance; the OpenModelica-specific annotation supplies the integration
+method and nonlinear solver. In OMEdit, use the C simulation target and inspect
+Simulation Setup: General should show 0–300 s, interval 0.1 s (3000 intervals),
+DASSL, and tolerance 1e-10; Simulation Flags should select the hybrid nonlinear
+solver. Keep **Ignore __OpenModelica_simulationFlags annotation** unchecked.
+OMEdit can retain model-specific session overrides, so inspect these fields
+when reopening a model already simulated in that session.
+
+The CLI acceptance path is `omc scripts/native_m3.mos`; that script passes the
+same settings explicitly through `simulate(..., method="dassl", simflags="-nls=hybrid")`
+and the numeric experiment arguments. The recorded evidence comes from scripted
+native runs. An OMEdit GUI run has not been performed or claimed.
+These annotations follow the official
+[OpenModelica 1.27.1 OMEdit guide](https://openmodelica.org/doc/OpenModelicaUsersGuide/v1.27.1/omedit.html#openmodelica-simulationflags-annotation)
+and [C runtime flag reference](https://openmodelica.org/doc/OpenModelicaUsersGuide/v1.27.1/simulationflags.html).
+
+This configuration was selected after retaining and rejecting failed native
+results. The first automatic-state trial at tolerance 1e-7 completed and met
+the tracking criterion, but conserved mass drifted by up to approximately
+0.0016 kg. Selecting physical states with the default nonlinear solver improved
+conservation but produced event-iteration failures when the pump check valve
+closed. Partial results from that trial were rejected. Returning to automatic
+selection at 1e-10 completed, but still failed mass conservation and an added
+independent actuator trajectory check.
+
+The generated OpenModelica 1.27.1 equations explained why tightening tolerance
+alone was insufficient: differentiation of the partially applied generic pump
+curve omitted its flow-dependent contribution. In the automatic-state
+configuration, this incorrect derivative fed the transformed integration
+states. Physical-state selection with the hybrid nonlinear solver gave correct
+primary trajectories, but still exported incorrect auxiliary derivatives.
+The explicit one-input curve value exposes the polynomial and extrapolation
+before differentiation. A wrapper that merely delegated the value to MSL and
+supplied a derivative annotation did not correct this observed transformation.
+
+The combined explicit-curve, physical-state, hybrid configuration completed the
+300 s initial-high-B experiment in
+[diagnostic run 44315234663, job 134839455353](https://github.com/physicsvigilante/domelica_lab/actions/runs/44315234663/job/134839455353).
+It passed all original physical gates, all three tracking windows, the new exact
+and integrated actuator checks, the seven native curve comparisons, and the
+full pump-head derivative chain rule. The exact first-second actuator error was
+at most 4.96e-10; the head-derivative residual was at most 2.45e-15 m/s across
+1936 open-valve samples. The explicit curve with automatic selection did not
+pass. This diagnostic qualifies the selected configuration for that experiment;
+production acceptance additionally requires all four experiments and both stock
+qualifications to pass the complete native CI run.
+
+All original physical acceptance tolerances remain unchanged. Before printing
+PASS, the native script invokes
 `check_fluid_completion.py`, which requires the current run's native success log
 marker, complete sample count, and actual final native time. The time check uses
 the supported native batch result reader. Stale result files and logs are removed
@@ -115,9 +186,12 @@ ran. The separate native-reader helper avoids that scripting limitation.
 a negative value means actual native flow reversal. The nominal initial level
 difference is intended to demonstrate reversal of the main return path.
 
-## Acceptance declared before native execution
+## Acceptance contracts
 
-`scripts/verify_m3.py` checks the following independently specified contracts:
+The original physical limits below were declared before the first native run.
+The additional temporal and derivative checks were declared before comparing
+the diagnostic solver candidates. `scripts/verify_m3.py` checks these
+independently specified contracts:
 
 - All required native columns are finite, time is monotone, the regular sample
   grid is complete, and the requested final simulation time is reached.
@@ -132,6 +206,15 @@ difference is intended to demonstrate reversal of the main return path.
   shaft-power relation satisfy their specified numerical tolerances.
 - Native PI proportional/integral contributions, limits, anti-windup, and the
   first-order pump response agree with their component identities.
+- Recorded speed-fraction change agrees with independent sampled integration of
+  `(pumpFraction-filteredFraction)/2`, within 0.0001 plus 0.002 times its
+  cumulative absolute integral. The initial-high-B case also agrees with the
+  exact first-second response `0.001 + 0.299*exp(-t/2)` within 1e-6, after
+  verifying its constant input and initial-state premises.
+- When native pump-head and flow derivative columns are exported, the complete
+  speed/flow chain rule holds within 1e-5 m/s on open-valve samples with
+  `supplyFlow > 1e-5 kg/s`. Availability, sample count, and the maximum residual
+  are recorded. Missing native derivative columns are reported explicitly.
 - Absolute level error is at most **0.025 m throughout the final 20 s of each
   target hold**: 80–100 s, 180–200 s, and 280–300 s. The sample immediately after
   a new target event belongs to the new hold, not the preceding window.
@@ -141,6 +224,9 @@ difference is intended to demonstrate reversal of the main return path.
 The criteria are not relaxed to accommodate observed results. A failed criterion
 requires investigating the model, numerical setup, or verifier and recording
 the resulting correction.
+
+[M3_TEMPORAL_ACCEPTANCE.md](M3_TEMPORAL_ACCEPTANCE.md) explains why pointwise
+component identities also need independent checks of the recorded trajectories.
 
 ### What the energy check means
 

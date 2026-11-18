@@ -50,8 +50,8 @@ print("CHECKING authored reusable hydraulic plant and control:\n");
 print(checkModel(DomelicaLab.Examples.ControlledTankLoop) + "\n");
 print(getErrorString());
 simulate(DomelicaLab.Examples.ControlledTankLoop,
-  stopTime=300, numberOfIntervals=3000, tolerance=1e-10,
-  outputFormat="mat", fileNamePrefix="m3_tanks_nominal");
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-10, method="dassl",
+  outputFormat="mat", fileNamePrefix="m3_tanks_nominal", simflags="-nls=hybrid");
 print(getErrorString());
 if system("python3 scripts/check_fluid_completion.py m3_tanks_nominal 300 3001") <> 0 then
   print("ERROR: m3_tanks_nominal native simulation did not complete.\n");
@@ -60,8 +60,8 @@ end if;
 print("PASS M3 nominal controlled tanks\n");
 
 simulate(DomelicaLab.Examples.ControlledTankRestrictedValve,
-  stopTime=300, numberOfIntervals=3000, tolerance=1e-10,
-  outputFormat="mat", fileNamePrefix="m3_tanks_restricted");
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-10, method="dassl",
+  outputFormat="mat", fileNamePrefix="m3_tanks_restricted", simflags="-nls=hybrid");
 print(getErrorString());
 if system("python3 scripts/check_fluid_completion.py m3_tanks_restricted 300 3001") <> 0 then
   print("ERROR: m3_tanks_restricted native simulation did not complete.\n");
@@ -70,8 +70,8 @@ end if;
 print("PASS M3 restricted-valve controlled tanks\n");
 
 simulate(DomelicaLab.Examples.ControlledTankInitialLevels,
-  stopTime=300, numberOfIntervals=3000, tolerance=1e-10,
-  outputFormat="mat", fileNamePrefix="m3_tanks_initial");
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-10, method="dassl",
+  outputFormat="mat", fileNamePrefix="m3_tanks_initial", simflags="-nls=hybrid");
 print(getErrorString());
 if system("python3 scripts/check_fluid_completion.py m3_tanks_initial 300 3001") <> 0 then
   print("ERROR: m3_tanks_initial native simulation did not complete.\n");
@@ -83,8 +83,8 @@ print("CHECKING new physical return-branch composition:\n");
 print(checkModel(DomelicaLab.Examples.ControlledTankParallelReturn) + "\n");
 print(getErrorString());
 simulate(DomelicaLab.Examples.ControlledTankParallelReturn,
-  stopTime=300, numberOfIntervals=3000, tolerance=1e-10,
-  outputFormat="mat", fileNamePrefix="m3_tanks_parallel");
+  stopTime=300, numberOfIntervals=3000, tolerance=1e-10, method="dassl",
+  outputFormat="mat", fileNamePrefix="m3_tanks_parallel", simflags="-nls=hybrid");
 print(getErrorString());
 if system("python3 scripts/check_fluid_completion.py m3_tanks_parallel 300 3001") <> 0 then
   print("ERROR: m3_tanks_parallel native simulation did not complete.\n");

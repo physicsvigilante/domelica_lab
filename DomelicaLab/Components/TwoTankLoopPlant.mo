@@ -24,12 +24,14 @@ model TwoTankLoopPlant
   Modelica.Fluid.Vessels.OpenTank tankA(
     redeclare package Medium=Medium, nPorts=4, use_portsData=false,
     crossArea=crossArea, height=tankHeight, level_start=initialLevelA,
+    level(stateSelect=StateSelect.always),
     T_start=initialTemperature,
     massDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial,
     energyDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial);
   Modelica.Fluid.Vessels.OpenTank tankB(
     redeclare package Medium=Medium, nPorts=4, use_portsData=false,
     crossArea=crossArea, height=tankHeight, level_start=initialLevelB,
+    level(stateSelect=StateSelect.always),
     T_start=initialTemperature,
     massDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial,
     energyDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial);
@@ -42,8 +44,7 @@ model TwoTankLoopPlant
     massDynamics=Modelica.Fluid.Types.Dynamics.SteadyState,
     energyDynamics=Modelica.Fluid.Types.Dynamics.FixedInitial,
     redeclare function flowCharacteristic =
-      Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(
-        V_flow_nominal={0,0.004,0.008}, head_nominal={10,7,0}),
+      DomelicaLab.Functions.TwoTankPumpCurve,
     redeclare function efficiencyCharacteristic =
       Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.constantEfficiency(
         eta_nominal=0.8));
@@ -58,6 +59,36 @@ model TwoTankLoopPlant
     m_flow_nominal=2, allowFlowReversal=true);
   Modelica.Fluid.Sensors.Pressure pressureA(redeclare package Medium=Medium);
   Modelica.Fluid.Sensors.Pressure pressureB(redeclare package Medium=Medium);
+
+initial algorithm
+  assert(abs(DomelicaLab.Functions.TwoTankPumpCurve(-0.002)
+    - Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(
+      -0.002, {0, 0.004, 0.008}, {10, 7, 0})) <= 1e-10,
+    "Pump curve must preserve the native MSL value at Q=-0.002 m3/s.");
+  assert(abs(DomelicaLab.Functions.TwoTankPumpCurve(0)
+    - Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(
+      0, {0, 0.004, 0.008}, {10, 7, 0})) <= 1e-10,
+    "Pump curve must preserve the native MSL value at Q=0 m3/s.");
+  assert(abs(DomelicaLab.Functions.TwoTankPumpCurve(0.002)
+    - Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(
+      0.002, {0, 0.004, 0.008}, {10, 7, 0})) <= 1e-10,
+    "Pump curve must preserve the native MSL value at Q=0.002 m3/s.");
+  assert(abs(DomelicaLab.Functions.TwoTankPumpCurve(0.004)
+    - Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(
+      0.004, {0, 0.004, 0.008}, {10, 7, 0})) <= 1e-10,
+    "Pump curve must preserve the native MSL value at Q=0.004 m3/s.");
+  assert(abs(DomelicaLab.Functions.TwoTankPumpCurve(0.006)
+    - Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(
+      0.006, {0, 0.004, 0.008}, {10, 7, 0})) <= 1e-10,
+    "Pump curve must preserve the native MSL value at Q=0.006 m3/s.");
+  assert(abs(DomelicaLab.Functions.TwoTankPumpCurve(0.008)
+    - Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(
+      0.008, {0, 0.004, 0.008}, {10, 7, 0})) <= 1e-10,
+    "Pump curve must preserve the native MSL value at Q=0.008 m3/s.");
+  assert(abs(DomelicaLab.Functions.TwoTankPumpCurve(0.010)
+    - Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(
+      0.010, {0, 0.004, 0.008}, {10, 7, 0})) <= 1e-10,
+    "Pump curve must preserve the native MSL value at Q=0.010 m3/s.");
 
 equation
   measuredLevel=tankB.level;
