@@ -1,0 +1,24 @@
+{
+  "revision": "fa349241b57cd8fa355da4ee8426a81493e2e68a",
+  "runUrl": "https://github.com/physicsvigilante/domelica_lab/actions/runs/44286228183",
+  "scope": "Accepted native-result and offline-browser baseline for M2; OMEdit GUI separately uninspected.",
+  "immutableSourcesSHA256": {
+    "DomelicaLab/Components/ArmatureDrive.mo": "eee32431288d7d90f0cb322194fc6a75e77d628aa302a2346561c4b9c96fde44",
+    "DomelicaLab/Components/ThermalArmatureDrive.mo": "db244b01266da20fcf580eebd4ea5455ffe6afe2e52ef5be55affb57e4699d8c",
+    "DomelicaLab/Components/package.mo": "ee7cc797ef16e3877da7ebab19bc8034c9722ff798891ce17d2d373838f3416e",
+    "DomelicaLab/Examples/HeatedBody.mo": "1f316a0d3d6e513718be4d5b67a45d8e881dbd5e33bc6526bf5834f6268c1548",
+    "DomelicaLab/Examples/MotorizedPendulum3D.mo": "1547efcf78513ecf5fc25bbedda3d41749f94cfca387bb659d39ed9391144f13",
+    "DomelicaLab/Examples/ThermalGearedArm3D.mo": "7d58e50f62ad9b4fc523ff01dc94b5b6e8aaf29c943d921a7215ef652969018e",
+    "DomelicaLab/Examples/package.mo": "42fb0268779b4b6c53d292fffd986ae28764fcae96218a2367cb7de5fdeaa412",
+    "DomelicaLab/package.mo": "e2f1728b7485f8829584f06b665f52eb054802ccb7a8aa940ac23860c17ba30b",
+    "scripts/export_native_csv.py": "fdb3f5cd071ec2d9f09e8406f02fd04f0378446096082e7447928871054450e2",
+    "scripts/native_scene.py": "45c3dea5f9e3ae2e7394cde15584232fef49a6108c320cc9924a2da0c9516745",
+    "scripts/verify_csv.py": "d0e6e27ed37c9f78db74cbbabb5e4160301d713817689917c73fe1870998b825",
+    "scripts/native_smoke.mos": "a41b6037ce8981a8a0bf299b56965e60a0063d310cea02ab882a0e61a07b69ae",
+    "viewer/preview.template.html": "489fed1fb7c3915154b7c94dadf44b11fc30611513471b3d30838a37feb01cee",
+    "viewer/three-runtime.js": "5f0a09f0982d2d66abf5ae02340a0d4a782555193b0f95e34bb205fbc57a9d8d",
+    "package.json": "54d7b105db71e9339b756b9fa66c9759e43c511dcb4a71385029e7d384cd26c6",
+    "package-lock.json": "0e8f60d029bd2883badbe32c7b9116e97dac0b295cbc219d8ac72339794fe526",
+    "scripts/test_native_scene.py": "ee99be843939550bac2bf4633fdcfa24660245665e46798a82a8b9975d0534e2"
+  }
+}

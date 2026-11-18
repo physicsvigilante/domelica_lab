@@ -48,6 +48,8 @@ def main() -> None:
     if "</script" in runtime.lower():
         raise ValueError("Renderer contains an unsafe inline-script delimiter")
     definitions = json.loads((ROOT / "viewer/experiments.json").read_text())
+    metrics_path = ROOT / "artifacts/m2-metrics.json"
+    metrics = json.loads(metrics_path.read_text()) if metrics_path.is_file() else None
     scenes, inputs = [], {}
     for definition in definitions:
         prefix = definition["prefix"]
@@ -56,6 +58,9 @@ def main() -> None:
         scene = export_scene(xml_path, csv_path)
         scene.update({k: definition[k] for k in ("id", "title", "description", "model")})
         add_series(scene, csv_path, definition["series"])
+        for key in ("scenario", "parameters"):
+            if key in definition:
+                scene[key] = definition[key]
         scenes.append(scene)
         for path in (csv_path, xml_path, ROOT / f"{prefix}_res.mat"):
             if path.is_file():
@@ -77,6 +82,11 @@ def main() -> None:
     sources += sorted((ROOT / "scripts").glob("*.cjs"))
     sources += [ROOT / "viewer/experiments.json", ROOT / "viewer/preview.template.html",
                 ROOT / "viewer/three-runtime.js", ROOT / "package.json", ROOT / "package-lock.json"]
+    sources += [path for path in (ROOT / "viewer/comparisons.json", ROOT / "viewer/comparison.template.html",
+                                 ROOT / "docs/m1-baseline.json")
+                if path.is_file()]
+    if metrics_path.is_file():
+        inputs["artifacts/m2-metrics.json"] = digest(metrics_path)
     provenance = {
         "revision": os.environ.get("MODEL_SOURCE_REVISION", "local build; inspect source hashes"),
         "checkoutRevision": os.environ.get("CHECKOUT_REVISION", ""),
@@ -96,6 +106,8 @@ def main() -> None:
         ],
     }
     payload = {"schema": "domelica.native-scene.v1", "provenance": provenance, "scenes": scenes}
+    if metrics is not None:
+        payload["metrics"] = metrics
     template = (ROOT / "viewer/preview.template.html").read_text(encoding="utf-8")
     marker = "__NATIVE_MODEL_DATA__"
     runtime_marker = "__THREE_RUNTIME__"
@@ -104,6 +116,8 @@ def main() -> None:
     encoded = json.dumps(payload, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c")
     output_dir = ROOT / "artifacts"
     output_dir.mkdir(exist_ok=True)
+    (output_dir / "native-scenes.json").write_text(
+        json.dumps(payload, separators=(",", ":"), allow_nan=False) + "\n", encoding="utf-8")
     output = output_dir / "browser-preview.html"
     output.write_text(template.replace(runtime_marker, runtime).replace(marker, encoded), encoding="utf-8")
     manifest = {**provenance, "previewSHA256": digest(output), "scenes": [

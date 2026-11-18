@@ -182,8 +182,8 @@ async function main() {
     assert.equal(await page.locator("#error").isVisible(), false);
     const payload = await page.evaluate(() => D);
     assert.equal(payload.schema, "domelica.native-scene.v1");
-    assert.equal(payload.scenes.length, 3, "This milestone should contain three native scenes");
-    assert.equal(new Set(payload.scenes.map(scene => scene.id)).size, 3);
+    assert.equal(payload.scenes.length, 7, "M2 retains three baseline scenes and adds four controlled scenarios");
+    assert.equal(new Set(payload.scenes.map(scene => scene.id)).size, 7);
     report.provenance = payload.provenance;
     report.scenes = payload.scenes.map(scene => ({
       id: scene.id,

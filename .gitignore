@@ -1,6 +1,7 @@
 # Native experiment outputs; ordinary source and JSON files remain visible.
 /m0_*
 /m1_*
+/m2_*
 /native-toolchain.txt
 
 # Python

@@ -91,5 +91,261 @@
         "color": "#ee9da5"
       }
     ]
+  },
+  {
+    "id": "m2-nominal",
+    "title": "Nominal control",
+    "description": "Nominal forearm mass and cooling, with a voltage-limited Modelica PID controller.",
+    "model": "DomelicaLab.Examples.ControlledThermalArm3D",
+    "prefix": "m2_controlled_nominal",
+    "scenario": "nominal",
+    "series": [
+      {
+        "name": "desiredAngle",
+        "label": "Target shoulder angle",
+        "unit": "rad",
+        "color": "#b6c5d4"
+      },
+      {
+        "name": "shoulderAngle",
+        "label": "Measured shoulder angle",
+        "unit": "rad",
+        "color": "#81e3c9"
+      },
+      {
+        "name": "trackingError",
+        "label": "Tracking error",
+        "unit": "rad",
+        "color": "#cba3ef"
+      },
+      {
+        "name": "motorCurrent",
+        "label": "Armature current",
+        "unit": "A",
+        "color": "#84b4ff"
+      },
+      {
+        "name": "appliedVoltage",
+        "label": "Applied motor voltage",
+        "unit": "V",
+        "color": "#f2a64b"
+      },
+      {
+        "name": "windingTemperature",
+        "label": "Winding temperature",
+        "unit": "K",
+        "color": "#ee9da5"
+      },
+      {
+        "name": "inputPower",
+        "label": "Signed electrical power",
+        "unit": "W",
+        "color": "#7bcfdf"
+      },
+      {
+        "name": "electricalEnergy",
+        "label": "Signed electrical energy",
+        "unit": "J",
+        "color": "#b5c78a"
+      },
+      {
+        "name": "copperEnergy",
+        "label": "Copper heating energy",
+        "unit": "J",
+        "color": "#e8ab7d"
+      }
+    ]
+  },
+  {
+    "id": "m2-heavy",
+    "title": "Heavier load",
+    "description": "The forearm density is doubled, retaining the nominal controller and cooling.",
+    "model": "DomelicaLab.Examples.ControlledArmHeavyLoad",
+    "prefix": "m2_controlled_heavy",
+    "scenario": "heavy",
+    "series": [
+      {
+        "name": "desiredAngle",
+        "label": "Target shoulder angle",
+        "unit": "rad",
+        "color": "#b6c5d4"
+      },
+      {
+        "name": "shoulderAngle",
+        "label": "Measured shoulder angle",
+        "unit": "rad",
+        "color": "#81e3c9"
+      },
+      {
+        "name": "trackingError",
+        "label": "Tracking error",
+        "unit": "rad",
+        "color": "#cba3ef"
+      },
+      {
+        "name": "motorCurrent",
+        "label": "Armature current",
+        "unit": "A",
+        "color": "#84b4ff"
+      },
+      {
+        "name": "appliedVoltage",
+        "label": "Applied motor voltage",
+        "unit": "V",
+        "color": "#f2a64b"
+      },
+      {
+        "name": "windingTemperature",
+        "label": "Winding temperature",
+        "unit": "K",
+        "color": "#ee9da5"
+      },
+      {
+        "name": "inputPower",
+        "label": "Signed electrical power",
+        "unit": "W",
+        "color": "#7bcfdf"
+      },
+      {
+        "name": "electricalEnergy",
+        "label": "Signed electrical energy",
+        "unit": "J",
+        "color": "#b5c78a"
+      },
+      {
+        "name": "copperEnergy",
+        "label": "Copper heating energy",
+        "unit": "J",
+        "color": "#e8ab7d"
+      }
+    ]
+  },
+  {
+    "id": "m2-retuned",
+    "title": "Heavier load \u00b7 retuned",
+    "description": "The heavier forearm uses different proportional and derivative settings, with the same cooling.",
+    "model": "DomelicaLab.Examples.ControlledArmRetuned",
+    "prefix": "m2_controlled_retuned",
+    "scenario": "retuned",
+    "series": [
+      {
+        "name": "desiredAngle",
+        "label": "Target shoulder angle",
+        "unit": "rad",
+        "color": "#b6c5d4"
+      },
+      {
+        "name": "shoulderAngle",
+        "label": "Measured shoulder angle",
+        "unit": "rad",
+        "color": "#81e3c9"
+      },
+      {
+        "name": "trackingError",
+        "label": "Tracking error",
+        "unit": "rad",
+        "color": "#cba3ef"
+      },
+      {
+        "name": "motorCurrent",
+        "label": "Armature current",
+        "unit": "A",
+        "color": "#84b4ff"
+      },
+      {
+        "name": "appliedVoltage",
+        "label": "Applied motor voltage",
+        "unit": "V",
+        "color": "#f2a64b"
+      },
+      {
+        "name": "windingTemperature",
+        "label": "Winding temperature",
+        "unit": "K",
+        "color": "#ee9da5"
+      },
+      {
+        "name": "inputPower",
+        "label": "Signed electrical power",
+        "unit": "W",
+        "color": "#7bcfdf"
+      },
+      {
+        "name": "electricalEnergy",
+        "label": "Signed electrical energy",
+        "unit": "J",
+        "color": "#b5c78a"
+      },
+      {
+        "name": "copperEnergy",
+        "label": "Copper heating energy",
+        "unit": "J",
+        "color": "#e8ab7d"
+      }
+    ]
+  },
+  {
+    "id": "m2-reduced-cooling",
+    "title": "Retuned \u00b7 weaker cooling",
+    "description": "The heavier, retuned arm has reduced thermal conductance to ambient.",
+    "model": "DomelicaLab.Examples.ControlledArmReducedCooling",
+    "prefix": "m2_controlled_cooling",
+    "scenario": "cooling",
+    "series": [
+      {
+        "name": "desiredAngle",
+        "label": "Target shoulder angle",
+        "unit": "rad",
+        "color": "#b6c5d4"
+      },
+      {
+        "name": "shoulderAngle",
+        "label": "Measured shoulder angle",
+        "unit": "rad",
+        "color": "#81e3c9"
+      },
+      {
+        "name": "trackingError",
+        "label": "Tracking error",
+        "unit": "rad",
+        "color": "#cba3ef"
+      },
+      {
+        "name": "motorCurrent",
+        "label": "Armature current",
+        "unit": "A",
+        "color": "#84b4ff"
+      },
+      {
+        "name": "appliedVoltage",
+        "label": "Applied motor voltage",
+        "unit": "V",
+        "color": "#f2a64b"
+      },
+      {
+        "name": "windingTemperature",
+        "label": "Winding temperature",
+        "unit": "K",
+        "color": "#ee9da5"
+      },
+      {
+        "name": "inputPower",
+        "label": "Signed electrical power",
+        "unit": "W",
+        "color": "#7bcfdf"
+      },
+      {
+        "name": "electricalEnergy",
+        "label": "Signed electrical energy",
+        "unit": "J",
+        "color": "#b5c78a"
+      },
+      {
+        "name": "copperEnergy",
+        "label": "Copper heating energy",
+        "unit": "J",
+        "color": "#e8ab7d"
+      }
+    ]
   }
 ]
