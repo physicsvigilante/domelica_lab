@@ -9,3 +9,5 @@ GrooveSlide3D
 TwoSpringOscillator3D
 MovingWedge3D
 SpringWedge3D
+CartPendulumSpring3D
+ReleasedSpringChain3D

@@ -1,0 +1,59 @@
+// Run from repository root after scripts/install_msl.mos.
+print("DOMELICA_M4C_START\n");
+print("Compiler: " + getVersion() + "\n");
+for prefix in {"m4c_cart_pendulum", "m4c_pdf_composition"} loop
+  for suffix in {"_res.mat", "_res.csv", "_visual.xml", ".log"} loop
+    if regularFileExists(prefix + suffix) then
+      if not deleteFile(prefix + suffix) then
+        print("ERROR: cannot remove stale output " + prefix + suffix + "\n");
+        exit(1);
+      end if;
+    end if;
+  end for;
+end for;
+if not setCommandLineOptions("+d=visxml") then
+  print("ERROR: cannot enable native visualization export.\n");
+  exit(1);
+end if;
+if not loadModel(Modelica, {"4.1.0"}) then
+  print("ERROR: cannot load MSL 4.1.0.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+if not loadFile("DomelicaLab/package.mo") then
+  print("ERROR: cannot load DomelicaLab/package.mo.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+writeFile("m4c-native-toolchain.txt", "compiler=" + getVersion() + "\nmslVersion=" + getVersion(Modelica) + "\nmslSource=" + getSourceFile(Modelica) + "\n");
+
+print("CHECKING cart-pendulum-spring composition:\n");
+print(checkModel(DomelicaLab.Examples.CartPendulumSpring3D) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.CartPendulumSpring3D,
+  startTime=0, stopTime=6, numberOfIntervals=1200, tolerance=1e-9,
+  method="dassl", outputFormat="mat", fileNamePrefix="m4c_cart_pendulum");
+print(getErrorString());
+if system("python3 scripts/verify_m4c.py --completion-only m4c_cart_pendulum 6 1201") <> 0 then
+  print("ERROR: cart-pendulum native simulation did not complete.\n");
+  exit(1);
+end if;
+
+print("CHECKING Q192 released spring chain:\n");
+print(checkModel(DomelicaLab.Examples.ReleasedSpringChain3D) + "\n");
+print(getErrorString());
+simulate(DomelicaLab.Examples.ReleasedSpringChain3D,
+  startTime=0, stopTime=0.8, numberOfIntervals=800, tolerance=1e-9,
+  method="dassl", outputFormat="mat", fileNamePrefix="m4c_pdf_composition");
+print(getErrorString());
+if system("python3 scripts/verify_m4c.py --completion-only m4c_pdf_composition 0.8 801") <> 0 then
+  print("ERROR: released-chain native simulation did not complete.\n");
+  exit(1);
+end if;
+for prefix in {"m4c_cart_pendulum", "m4c_pdf_composition"} loop
+  if not regularFileExists(prefix + "_visual.xml") then
+    print("ERROR: native scene missing for " + prefix + "\n");
+    exit(1);
+  end if;
+end for;
+print("DOMELICA_M4C_COMPLETE\n");

@@ -9,6 +9,9 @@
 /m4b_*
 /m4b-native-toolchain.txt
 /m4b-native-run.log
+/m4c_*
+/m4c-native-toolchain.txt
+/m4c-native-run.log
 /native-toolchain.txt
 
 # Python
