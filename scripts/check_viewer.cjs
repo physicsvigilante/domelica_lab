@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/* Browser checks against the actual generated native artifact, never fixture data.
+/* Browser checks against the generated native artifact, plus isolated and
+ * explicitly labeled synthetic graphics fixtures for renderer edge cases.
  * Usage: node scripts/check_viewer.cjs artifacts/browser-preview.html
  * Requires Playwright and its Chromium browser (installed separately by CI).
  */
@@ -39,32 +40,110 @@ const closestIndex = (times, target) => {
   return index;
 };
 
-// Independently project conservative envelopes for every exported object frame.
-// This verifies camera fit over the whole run, including the old clipping case.
-// It does not establish that the exporter matches the Modelica mechanics.
-function checkFraming(scene, camera, viewport) {
-  const { yaw, pitch, center, radius, zoom } = camera;
-  const right = [Math.cos(yaw), 0, -Math.sin(yaw)];
-  const up = [-Math.sin(yaw) * Math.sin(pitch), Math.cos(pitch), -Math.cos(yaw) * Math.sin(pitch)];
-  const scale = Math.min(viewport.width, viewport.height) * 0.405 / radius * zoom;
-  const dot = (a, b) => a.reduce((sum, v, i) => sum + v * b[i], 0);
-  let margin = Infinity;
-  let cornerCount = 0;
+// These checks use the actual Three camera matrices, not a duplicate of the
+// application's camera-placement formula. Matrix elements are column-major.
+function transformPoint(matrix, point) {
+  const v = [...point, 1];
+  const out = [0, 1, 2, 3].map(row => v.reduce((sum, x, col) => sum + matrix[4 * col + row] * x, 0));
+  assert.ok(out.every(Number.isFinite) && Math.abs(out[3]) > 1e-14, "Invalid homogeneous projection");
+  return out.slice(0, 3).map(x => x / out[3]);
+}
+function nativePoint(frame, point) {
+  return [0, 1, 2].map(k => frame[9 + k] + point[0] * frame[k] + point[1] * frame[3 + k] + point[2] * frame[6 + k]);
+}
+function checkFraming(scene, diagnostics, viewport) {
+  assert.equal(diagnostics.projectionMatrix.length, 16);
+  assert.equal(diagnostics.matrixWorldInverse.length, 16);
+  let margin = Infinity, depthMargin = Infinity, cornerCount = 0;
   for (const object of scene.objects) {
     for (const frame of object.frames) {
       for (const x of [0, 1]) for (const y of [-0.5, 0.5]) for (const z of [-0.5, 0.5]) {
-        const v = [0, 1, 2].map(k => frame[9 + k] + x * frame[k] + y * frame[3 + k] + z * frame[6 + k] - center[k]);
-        const screenX = viewport.width / 2 + dot(v, right) * scale;
-        const screenY = viewport.height / 2 - dot(v, up) * scale;
+        const world = nativePoint(frame, [x, y, z]);
+        const view = transformPoint(diagnostics.matrixWorldInverse, world);
+        const ndc = transformPoint(diagnostics.projectionMatrix, view);
+        const screenX = (ndc[0] + 1) * viewport.width / 2;
+        const screenY = (1 - ndc[1]) * viewport.height / 2;
         const distance = Math.min(screenX, screenY, viewport.width - screenX, viewport.height - screenY);
-        assert.ok(Number.isFinite(distance), `Nonfinite projected position: ${scene.id}/${object.id}`);
         assert.ok(distance >= -0.01, `Clipped native envelope: ${scene.id}/${object.id}, margin ${distance}px`);
+        assert.ok(ndc[2] >= -1.000001 && ndc[2] <= 1.000001,
+          `Near/far clipping: ${scene.id}/${object.id}, NDC depth ${ndc[2]}`);
         margin = Math.min(margin, distance);
+        depthMargin = Math.min(depthMargin, 1 - Math.abs(ndc[2]));
         cornerCount++;
       }
     }
   }
-  return { checkedCorners: cornerCount, minimumMarginPx: Number(margin.toFixed(3)) };
+  return { checkedCorners: cornerCount, minimumMarginPx: Number(margin.toFixed(3)),
+    minimumClipDepthMargin: Number(depthMargin.toFixed(6)) };
+}
+
+function checkUnitGeometry(object, snapshot) {
+  const epsilon = 2e-6;
+  assert.ok(snapshot.boundingBox, `Missing actual geometry bounds: ${object.id}`);
+  for (const [key, expected] of [["min", [0, -0.5, -0.5]], ["max", [1, 0.5, 0.5]]]) {
+    snapshot.boundingBox[key].forEach((value, axis) => {
+      assert.ok(Math.abs(value - expected[axis]) < epsilon,
+        `Wrong unit ${object.type} extent ${key}[${axis}]: ${value}`);
+    });
+  }
+  if (!snapshot.geometryPositions) return;
+  const positions = snapshot.geometryPositions;
+  assert.ok(positions.length >= 12 && positions.length % 3 === 0);
+  assert.ok(positions.every(Number.isFinite));
+  const points = [];
+  for (let i = 0; i < positions.length; i += 3) points.push(positions.slice(i, i + 3));
+  for (const [x, y, z] of points) {
+    assert.ok(x >= -epsilon && x <= 1 + epsilon && Math.abs(y) <= 0.5 + epsilon && Math.abs(z) <= 0.5 + epsilon);
+    if (object.type === "sphere") {
+      assert.ok(Math.abs(Math.hypot(x - 0.5, y, z) - 0.5) < epsilon, "Sphere center/radius convention changed");
+    }
+  }
+  if (object.type === "cone") {
+    const tips = points.filter(p => p[0] >= 1 - epsilon);
+    const base = points.filter(p => Math.abs(p[0]) <= epsilon);
+    assert.ok(tips.length && tips.every(p => Math.hypot(p[1], p[2]) < epsilon), "Cone tip must face +X");
+    assert.ok(base.some(p => Math.abs(Math.hypot(p[1], p[2]) - 0.5) < epsilon), "Cone base must lie at X=0");
+  }
+  if (object.type === "cylinder") {
+    for (const x of [0, 1]) {
+      assert.ok(points.some(p => Math.abs(p[0] - x) < epsilon && Math.abs(Math.hypot(p[1], p[2]) - 0.5) < epsilon),
+        "Cylinder must span the X-axis with radius 0.5");
+    }
+  }
+}
+
+async function checkLiveMeshes(page, scene) {
+  const indices = [...new Set([0, Math.floor(scene.times.length / 3),
+    Math.floor(2 * scene.times.length / 3), scene.times.length - 1])];
+  const inspectedTypes = new Set();
+  let maxMatrixError = 0;
+  for (const index of indices) {
+    await page.evaluate(i => window.__domelica.seek(i), index);
+    const requests = scene.objects.map(object => {
+      const includeGeometry = !inspectedTypes.has(object.type);
+      inspectedTypes.add(object.type);
+      return { id: object.id, includeGeometry };
+    });
+    const snapshots = await page.evaluate(items => items.map(item =>
+      window.__domelica.getObjectTransform(item.id, item.includeGeometry)), requests);
+    scene.objects.forEach((object, i) => {
+      const snapshot = snapshots[i], frame = object.frames[object.frames.length === 1 ? 0 : index];
+      assert.equal(snapshot.id, object.id);
+      assert.equal(snapshot.type, object.type);
+      assert.equal(snapshot.matrixWorld.length, 16);
+      const expected = [...frame.slice(0, 3), 0, ...frame.slice(3, 6), 0,
+        ...frame.slice(6, 9), 0, ...frame.slice(9, 12), 1];
+      snapshot.matrixWorld.forEach((value, j) => {
+        const error = Math.abs(value - expected[j]);
+        maxMatrixError = Math.max(maxMatrixError, error);
+        assert.ok(Number.isFinite(value) && error <= 1e-10,
+          `Actual Three mesh differs from native frame: ${scene.id}/${object.id}, sample ${index}, entry ${j}`);
+      });
+      checkUnitGeometry(object, snapshot);
+    });
+  }
+  return { sampledFrames: indices, checkedMeshTransforms: indices.length * scene.objects.length,
+    actualPrimitiveTypes: [...inspectedTypes], maxMatrixError };
 }
 
 async function main() {
@@ -72,7 +151,11 @@ async function main() {
   try {
     assert.ok(fs.existsSync(input), `Native HTML artifact is missing: ${input}`);
     report.artifactSha256 = sha256(fs.readFileSync(input));
-    browser = await chromium.launch({ headless: true });
+    // This exercises real WebGL rendering on CI without claiming a hardware GPU.
+    // Chromium documents SwANGLE for supported GPU-less browser testing.
+    browser = await chromium.launch({ headless: true, args: [
+      "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
+    ] });
     report.browser = browser.version();
     const context = await browser.newContext({
       viewport: { width: 1440, height: 1080 },
@@ -111,6 +194,7 @@ async function main() {
       timeRange: [scene.times[0], scene.times.at(-1)],
     }));
     const state = () => page.evaluate(() => window.__domelica.getState());
+    const renderDiagnostics = () => page.evaluate(() => window.__domelica.getRenderDiagnostics());
     const screenshot = async name => {
       await page.screenshot({ path: path.join(output, name), fullPage: true, animations: "disabled" });
       report.screenshots.push(name);
@@ -138,6 +222,25 @@ async function main() {
     assert.equal(current.playing, false, "Reduced-motion preference must disable autoplay");
     assert.equal(current.index, 0);
     record("initial native payload and reduced-motion behavior", { state: current });
+    const glState = await page.evaluate(() => {
+      const gl = document.querySelector("#scene").getContext("webgl2");
+      const debug = gl && gl.getExtension("WEBGL_debug_renderer_info");
+      return { isWebGL2: gl instanceof WebGL2RenderingContext,
+        depth: gl?.getContextAttributes()?.depth,
+        depthBits: gl?.getParameter(gl.DEPTH_BITS),
+        renderer: gl && debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl?.getParameter(gl.RENDERER),
+        threeRevision: THREE.REVISION };
+    });
+    assert.equal(glState.isWebGL2, true, "Native scene must use an actual WebGL2 context");
+    assert.equal(glState.depth, true);
+    assert.ok(glState.depthBits >= 16, "A real depth buffer is required");
+    assert.equal(current.rendererInfo.type, "Three.js WebGLRenderer");
+    assert.equal(current.rendererInfo.isWebGL2, true);
+    assert.equal(current.rendererInfo.contextLost, false);
+    assert.equal(current.rendererInfo.revision, glState.threeRevision);
+    assert.equal(glState.threeRevision, String(payload.provenance.renderer.revision));
+    report.renderer = { ...glState, ...current.rendererInfo, testMode: "Chromium SwiftShader software WebGL" };
+    record("pinned Three.js runtime, real WebGL2 context and depth buffer", { renderer: report.renderer });
 
     // Every scene is opened with the visible tab controls, and its UI is compared
     // against the actual embedded native data rather than hardcoded object counts.
@@ -151,15 +254,13 @@ async function main() {
       assert.equal(await page.locator("#title").textContent(), scene.title);
       assert.equal(await page.locator("#scrub").getAttribute("max"), String(scene.times.length - 1));
       const canvasBox = await page.locator("#scene").boundingBox();
-      const framing = checkFraming(scene, current.camera, canvasBox);
-      const paintedPixels = await page.locator("#scene").evaluate(canvas => {
-        const pixels = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
-        let count = 0;
-        for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 0) count++;
-        return count;
-      });
-      assert.ok(paintedPixels > 500, "Scene canvas was not painted");
-      record(`native scene controls and framing: ${scene.id}`, { objects: current.objectCount, plots: scene.series.length, paintedPixels, ...framing });
+      const framing = checkFraming(scene, await renderDiagnostics(), canvasBox);
+      assert.ok(current.rendererInfo.drawCalls > 0 && current.rendererInfo.triangles > 0,
+        "Actual Three renderer must submit native geometry");
+      record(`native scene controls and actual camera framing: ${scene.id}`,
+        { objects: current.objectCount, plots: scene.series.length, ...framing });
+      record(`live native mesh transforms and primitive geometry: ${scene.id}`,
+        await checkLiveMeshes(page, scene));
     }
 
     const arm = payload.scenes.find(scene => scene.model.endsWith(".ThermalGearedArm3D"));
@@ -232,7 +333,7 @@ async function main() {
     assert.equal(current.camera.zoom, 1);
     assert.equal(current.camera.yaw, orbit.camera.yaw, "Fit should preserve the chosen orientation");
     box = await page.locator("#scene").boundingBox();
-    const orbitFraming = checkFraming(arm, current.camera, box);
+    const orbitFraming = checkFraming(arm, await renderDiagnostics(), box);
     await screenshot("02-thermal-arm-orbit.png");
     record("XY, pointer orbit, wheel zoom, and Fit", { state: current, ...orbitFraming });
 
@@ -245,12 +346,29 @@ async function main() {
     await page.locator("#objects summary").click();
     record("native object inspector", { selected: current.selected });
 
+    // Click a real link, not its list button, using the actual camera projection.
+    // At this time the upper link's center is unobscured in the default view.
+    await page.locator("#view3d").click();
+    const pickedLink = arm.objects.find(object => object.type === "box" && object.id.startsWith("upperArm."));
+    assert.ok(pickedLink, "Native shoulder link is missing");
+    current = await state();
+    const pickedFrame = pickedLink.frames[pickedLink.frames.length === 1 ? 0 : current.index];
+    const targetPoint = nativePoint(pickedFrame, [0.5, 0, 0]);
+    const projectedLink = await page.evaluate(point => window.__domelica.projectWorld(point), targetPoint);
+    box = await page.locator("#scene").boundingBox();
+    await page.mouse.click(box.x + projectedLink.x, box.y + projectedLink.y);
+    current = await state();
+    assert.equal(current.selected, pickedLink.id, "Raycaster did not pick the actual native link");
+    assert.ok((await page.locator("#inspector").textContent()).includes(pickedLink.id));
+    if (await page.locator("#objects").evaluate(element => element.open)) await page.locator("#objects summary").click();
+    record("raycaster selection of an actual native link", { selected: current.selected, worldPoint: targetPoint });
+
     await switchTo(pendulum);
     current = await seekTime(pendulum, 1.0);
     await page.locator("#viewxy").click();
     current = await state();
     box = await page.locator("#scene").boundingBox();
-    const pendulumFraming = checkFraming(pendulum, current.camera, box);
+    const pendulumFraming = checkFraming(pendulum, await renderDiagnostics(), box);
     await screenshot("03-motorized-pendulum-xy.png");
     record("rotating pendulum clipping regression", { time: current.time, ...pendulumFraming });
 
@@ -276,9 +394,110 @@ async function main() {
     assert.ok(dimensions.body <= dimensions.viewport + 1, "Mobile body overflows horizontally");
     current = await state();
     box = await page.locator("#scene").boundingBox();
-    const mobileFraming = checkFraming(arm, current.camera, box);
+    const mobileFraming = checkFraming(arm, await renderDiagnostics(), box);
     await screenshot("05-mobile.png");
     record("390 px mobile layout and trajectory framing", { dimensions, ...mobileFraming });
+
+    // Isolated graphics fixtures exercise the production renderer. These are
+    // deliberately synthetic rendering checks, not Modelica simulation evidence.
+    const graphicsPage = await context.newPage();
+    const graphicsErrors = [];
+    graphicsPage.on("pageerror", error => graphicsErrors.push(error.message));
+    await graphicsPage.goto(fileURL, { waitUntil: "load" });
+    await graphicsPage.waitForFunction(() => window.__domelica?.available === true);
+    try {
+      const depthCases = [];
+      for (const frontFirst of [true, false]) {
+        await graphicsPage.evaluate(frontFirst => {
+          const makeBox = (id, color, z) => ({ id, type: "box", color,
+            frames: [[1.2, 0, 0, 0, 1.2, 0, 0, 0, 0.1, -0.6, 0, z]] });
+          const front = makeBox("synthetic.front", [0, 255, 0], 0.35);
+          const back = makeBox("synthetic.back", [255, 0, 0], -0.35);
+          const scene = { id: "synthetic-depth-" + frontFirst, title: "Synthetic depth-buffer regression",
+            description: "Graphics fixture only; these boxes are not native simulation evidence.",
+            model: "synthetic.graphics.depth", times: [0, 1], objects: frontFirst ? [front, back] : [back, front],
+            bounds: { min: [-1, -1, -1], max: [1, 1, 1] }, series: [] };
+          D.scenes.push(scene);
+          window.__domelica.changeScene(scene.id);
+          document.querySelector("#viewxy").click();
+        }, frontFirst);
+        const pixel = await graphicsPage.evaluate(() => {
+          window.__domelica.draw();
+          const canvas = document.querySelector("#scene"), gl = canvas.getContext("webgl2");
+          const rgba = new Uint8Array(4);
+          gl.readPixels(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
+          return { rgba: Array.from(rgba), error: gl.getError() };
+        });
+        assert.equal(pixel.error, 0, "WebGL pixel readback failed");
+        assert.ok(pixel.rgba[1] > 30 && pixel.rgba[1] > 2 * pixel.rgba[0] && pixel.rgba[1] > 2 * pixel.rgba[2],
+          `Far red surface overwrote near green surface: ${JSON.stringify(pixel.rgba)}`);
+        const fixtureBox = await graphicsPage.locator("#scene").boundingBox();
+        await graphicsPage.mouse.click(fixtureBox.x + fixtureBox.width / 2, fixtureBox.y + fixtureBox.height / 2);
+        const selected = await graphicsPage.evaluate(() => window.__domelica.getState().selected);
+        assert.equal(selected, "synthetic.front", "Picking must return the nearest intersected native-shaped mesh");
+        depthCases.push({ frontFirst, centerRGBA: pixel.rgba, selected });
+      }
+      record("synthetic opaque depth-buffer and nearest-surface picking regression", { cases: depthCases,
+        scope: "Graphics fixture only; separate from native physics evidence" });
+
+      // The real demonstrations contain boxes/cylinders/cones. Exercise the
+      // remaining advertised sphere convention through the same renderer.
+      const sphereSnapshot = await graphicsPage.evaluate(() => {
+        const scene = { id: "synthetic-sphere", title: "Synthetic sphere contract",
+          description: "Graphics fixture only", model: "synthetic.graphics.sphere", times: [0, 1],
+          objects: [{ id: "synthetic.sphere", type: "sphere", color: [80, 180, 220],
+            frames: [[1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]] }],
+          bounds: { min: [0, -0.5, -0.5], max: [1, 0.5, 0.5] }, series: [] };
+        D.scenes.push(scene); window.__domelica.changeScene(scene.id);
+        return window.__domelica.getObjectTransform("synthetic.sphere", true);
+      });
+      checkUnitGeometry({ id: "synthetic.sphere", type: "sphere" }, sphereSnapshot);
+      record("synthetic sphere canonical geometry contract", { vertices: sphereSnapshot.geometryPositions.length / 3,
+        scope: "Graphics fixture only; separate from native physics evidence" });
+
+      const canLoseContext = await graphicsPage.evaluate(() => {
+        const gl = document.querySelector("#scene").getContext("webgl2");
+        const extension = gl.getExtension("WEBGL_lose_context");
+        if (!extension) return false;
+        extension.loseContext(); return true;
+      });
+      assert.equal(canLoseContext, true, "CI WebGL context-loss extension is unavailable");
+      await graphicsPage.waitForFunction(() => window.__domelica.getState().rendererInfo.contextLost);
+      assert.equal(await graphicsPage.locator("#error").isVisible(), true);
+      assert.match(await graphicsPage.locator("#error").textContent(), /context.*lost/i);
+      assert.equal(await graphicsPage.locator("#play").isDisabled(), true);
+      assert.equal(await graphicsPage.locator("#scrub").isDisabled(), true);
+      assert.equal(await graphicsPage.evaluate(() => window.__domelica.getState().playing), false);
+      assert.deepEqual(graphicsErrors, []);
+      record("WebGL context loss visibly pauses playback");
+    } finally {
+      await graphicsPage.close();
+    }
+
+    // Test an unavailable graphics capability explicitly. This isolated page
+    // cannot create WebGL; the delivered application must explain the limitation.
+    const unavailableContext = await browser.newContext({ viewport: { width: 1100, height: 800 }, reducedMotion: "reduce" });
+    await unavailableContext.route(/^https?:\/\//, route => route.abort());
+    await unavailableContext.addInitScript(() => {
+      const original = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (kind, ...args) {
+        if (this.id === "scene" && /^(webgl2?|experimental-webgl)$/.test(kind)) return null;
+        return original.call(this, kind, ...args);
+      };
+    });
+    const unavailablePage = await unavailableContext.newPage(), unavailableErrors = [];
+    unavailablePage.on("pageerror", error => unavailableErrors.push(error.message));
+    await unavailablePage.goto(fileURL, { waitUntil: "load" });
+    await unavailablePage.locator("#error").waitFor({ state: "visible" });
+    assert.match(await unavailablePage.locator("#error").textContent(), /WebGL2/);
+    assert.equal(await unavailablePage.locator("#play").isDisabled(), true);
+    assert.equal(await unavailablePage.locator("#scrub").isDisabled(), true);
+    assert.equal(await unavailablePage.evaluate(() => window.__domelica?.available === true), false);
+    assert.deepEqual(unavailableErrors, []);
+    record("WebGL2 unavailable has an explicit visible failure state", {
+      message: await unavailablePage.locator("#error").textContent(),
+    });
+    await unavailableContext.close();
 
     assert.deepEqual(report.pageErrors, [], "Unexpected browser exceptions");
     assert.deepEqual(report.consoleErrors, [], "Unexpected browser console errors");

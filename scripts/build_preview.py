@@ -33,6 +33,20 @@ def add_series(scene: dict, csv_path: Path, definitions: list[dict]) -> None:
 
 
 def main() -> None:
+    runtime_path = ROOT / "artifacts/three-runtime.js"
+    runtime_info_path = ROOT / "artifacts/three-runtime.json"
+    if not runtime_path.is_file() or not runtime_info_path.is_file():
+        raise ValueError("Missing offline Three.js runtime; run npm ci and npm run build:runtime")
+    runtime = runtime_path.read_text(encoding="utf-8")
+    renderer = json.loads(runtime_info_path.read_text())
+    package = json.loads((ROOT / "package.json").read_text())
+    if (renderer["runtimeSHA256"] != digest(runtime_path)
+            or renderer["version"] != package["dependencies"]["three"]
+            or renderer["packageLockSHA256"] != digest(ROOT / "package-lock.json")
+            or renderer["entrySHA256"] != digest(ROOT / "viewer/three-runtime.js")):
+        raise ValueError("Offline renderer inputs changed; rebuild with npm run build:runtime")
+    if "</script" in runtime.lower():
+        raise ValueError("Renderer contains an unsafe inline-script delimiter")
     definitions = json.loads((ROOT / "viewer/experiments.json").read_text())
     scenes, inputs = [], {}
     for definition in definitions:
@@ -60,13 +74,16 @@ def main() -> None:
     sources += sorted((ROOT / "DomelicaLab").rglob("package.order"))
     sources += sorted((ROOT / "scripts").glob("*.py"))
     sources += sorted((ROOT / "scripts").glob("*.mos"))
-    sources += [ROOT / "viewer/experiments.json", ROOT / "viewer/preview.template.html"]
+    sources += sorted((ROOT / "scripts").glob("*.cjs"))
+    sources += [ROOT / "viewer/experiments.json", ROOT / "viewer/preview.template.html",
+                ROOT / "viewer/three-runtime.js", ROOT / "package.json", ROOT / "package-lock.json"]
     provenance = {
         "revision": os.environ.get("MODEL_SOURCE_REVISION", "local build; inspect source hashes"),
         "checkoutRevision": os.environ.get("CHECKOUT_REVISION", ""),
         "runUrl": os.environ.get("NATIVE_RUN_URL", ""),
         "compiler": toolchain.get("compiler", "Native OpenModelica results; see run log"),
         "toolchain": toolchain,
+        "renderer": renderer,
         "method": "Native MAT results read through OpenModelica; visxml geometry and sampled transforms",
         "inputsSHA256": inputs,
         "sourceSHA256": {str(p.relative_to(ROOT)): digest(p) for p in sources},
@@ -74,20 +91,21 @@ def main() -> None:
             "Offline sampled playback, not an in-browser Modelica solver.",
             "Primitive subset: boxes, circular cylinders, real cones and spheres.",
             "No CAD assets, surfaces, vectors, advanced expressions or interactive model changes.",
-            "Shaded polygon renderer can show ordering artifacts at intersecting surfaces.",
+            "Three.js WebGL2 renderer; supported opaque primitives only.",
             "MSL version is requested; its package-manager maintenance revision is not locked.",
         ],
     }
     payload = {"schema": "domelica.native-scene.v1", "provenance": provenance, "scenes": scenes}
     template = (ROOT / "viewer/preview.template.html").read_text(encoding="utf-8")
     marker = "__NATIVE_MODEL_DATA__"
-    if template.count(marker) != 1:
-        raise ValueError("Viewer payload marker must occur exactly once")
+    runtime_marker = "__THREE_RUNTIME__"
+    if template.count(marker) != 1 or template.count(runtime_marker) != 1:
+        raise ValueError("Viewer data and runtime markers must each occur exactly once")
     encoded = json.dumps(payload, separators=(",", ":"), allow_nan=False).replace("<", "\\u003c")
     output_dir = ROOT / "artifacts"
     output_dir.mkdir(exist_ok=True)
     output = output_dir / "browser-preview.html"
-    output.write_text(template.replace(marker, encoded), encoding="utf-8")
+    output.write_text(template.replace(runtime_marker, runtime).replace(marker, encoded), encoding="utf-8")
     manifest = {**provenance, "previewSHA256": digest(output), "scenes": [
         {"id": s["id"], "model": s["model"], "objects": len(s["objects"]),
          "samples": len(s["times"]), "startTime": s["times"][0], "stopTime": s["times"][-1]}

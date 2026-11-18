@@ -36,7 +36,7 @@ The applied voltage ramps from 0 to 6 V between 0.5 and 1 s, remains at 6 V unti
 
 The CI container pins OpenModelica 1.27.1 by image digest. The export and verification scripts use Python standard-library modules and native batch commands. The workflow requests MSL 4.1.0 through OpenModelica's package manager; its maintenance source revision is not locked. The install log records the revision actually used.
 
-Run at the repository root with `omc` and Python 3 available:
+Run at the repository root with `omc`, Python 3, and Node.js 22 or later available. The JavaScript dependency versions and integrity hashes are locked in `package-lock.json`:
 
 ```sh
 omc scripts/install_msl.mos
@@ -44,12 +44,23 @@ omc scripts/native_smoke.mos
 python3 scripts/export_native_csv.py m0_motorized_pendulum m0_thermal_step m0_msl_double_pendulum m1_thermal_geared_arm
 python3 scripts/verify_csv.py
 python3 scripts/test_native_scene.py --native
+npm ci --ignore-scripts --no-audit --no-fund
+npm run build:runtime
 python3 scripts/build_preview.py
 ```
 
 The native script removes only this suite's previous result/scene files before simulating. A failed rerun cannot pass by finding an old CSV or MAT file. CI runs in a fresh workspace and preserves each run's artifact independently.
 
 The native simulation emits MAT results and visualization XML. OpenModelica's ordinary CSV writer omits parameters, including some geometry dimensions. `export_native_csv.py` reads complete values through OpenModelica's own batch result API and writes CSV including those parameters and signed aliases. It performs no simulation or parameter evaluation. The MAT remains in the artifact as the primary native result.
+
+`build_three_runtime.cjs` bundles the pinned Three.js release into one script, including its MIT license. `build_preview.py` embeds that script and the native scene data in the HTML. The renderer version and bundle hash are recorded in `provenance.json` and the HTML. The build rejects a stale runtime if the dependency lockfile or runtime entry point has changed. Node.js and OpenModelica are build dependencies; opening the downloaded viewer only requires WebGL2 in the browser.
+
+To run the browser checks locally after building the HTML:
+
+```sh
+npx playwright install --with-deps chromium
+npm run check:viewer
+```
 
 ## What the numerical checks establish
 
@@ -68,7 +79,9 @@ Those numbers are experiment results for the nominal parameters, not general spe
 
 ## Browser checks and visual scope
 
-The workflow's browser job opens the generated HTML in Chromium and exercises scene switching, Play/Pause/Replay, scrubbing, camera controls, object inspection, synchronized values, offline operation and a 390 px mobile layout. It checks framing across every exported shape pose and preserves screenshots plus a report tied to the HTML's SHA-256. A passing native job alone does not imply a passing browser job.
+The workflow's browser job opens the generated HTML in Chromium and exercises scene switching, Play/Pause/Replay, scrubbing, camera controls, object inspection, synchronized values, offline operation and a 390 px mobile layout. It checks the actual Three.js mesh matrices against native samples, primitive geometry conventions, camera clipping across every exported shape pose, and clicks a native link through the raycaster. It preserves screenshots plus a report tied to the HTML's SHA-256. A passing native job alone does not imply a passing browser job.
+
+Separate synthetic graphics fixtures check opaque depth occlusion in both object insertion orders, nearest-surface picking, and the sphere geometry convention. These are rendering checks, not native physics evidence. The checks also exercise visible WebGL2-unavailable and context-loss states. CI uses Chromium's SwiftShader software WebGL2 implementation; its results verify the rendering path and interactions, not hardware GPU performance.
 
 The viewer supports a defined native primitive subset and displays three mechanical scenes through the same exporter and renderer. The thermal-only experiment is numerically verified; the coupled arm's actual winding trace is shown in the browser.
 

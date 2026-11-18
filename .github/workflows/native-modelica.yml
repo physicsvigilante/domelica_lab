@@ -36,6 +36,13 @@ jobs:
         run: python3 scripts/verify_csv.py
       - name: Check native transform convention and explicit rejection
         run: python3 scripts/test_native_scene.py --native
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bundle pinned offline Three.js runtime
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:runtime
       - name: Build offline browser playback from native data
         run: python3 scripts/build_preview.py
       - name: Preserve native results
@@ -55,6 +62,9 @@ jobs:
             m1_*_visual.xml
             artifacts/browser-preview.html
             artifacts/provenance.json
+            artifacts/three-runtime.js
+            artifacts/three-runtime.json
+            artifacts/three.LICENSE.txt
             native-toolchain.txt
 
   browser-playback:
@@ -72,7 +82,7 @@ jobs:
           node-version: '22'
       - name: Prepare pinned browser checker
         run: |
-          npm install --no-save --ignore-scripts playwright@1.56.1
+          npm ci --ignore-scripts --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: Exercise actual offline native playback
         run: node scripts/check_viewer.cjs artifacts/browser-preview.html
