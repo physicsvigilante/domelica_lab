@@ -17,6 +17,8 @@ jobs:
         run: omc scripts/native_smoke.mos
       - name: Verify physical output independently
         run: python3 scripts/verify_csv.py
+      - name: Build offline browser playback from native data
+        run: python3 scripts/build_preview.py
       - name: Preserve native results
         if: always()
         uses: actions/upload-artifact@v4
@@ -26,3 +28,4 @@ jobs:
           path: |
             m0_*_res.csv
             m0_*.log
+            artifacts/browser-preview.html

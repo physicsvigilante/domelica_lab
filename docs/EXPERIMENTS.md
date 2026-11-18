@@ -30,3 +30,9 @@ GitHub Actions uses OpenModelica's published v1.27.1 Docker image; the image doe
 - **Composability:** Alter the model topology using existing components (for example replace a passive arm with two linked bodies) without changing engine code. This gate is **not yet passed**.
 
 No initial benchmark or generated simulation file should be called accepted until native CI finishes successfully. Do not regenerate or overwrite verified evidence during later experiments.
+
+## Standalone browser preview
+
+After the CI native and numeric checks pass, the workflow builds an **offline** file named `browser-preview.html` from the actual native pendulum and thermal CSV files. Download the `modelica-m0-results` artifact from the passing GitHub Actions run and open the HTML file in a browser: no Modelica installation, local web server or JavaScript dependencies are required.
+
+The viewer has playback, scrubbing, speed control, live angle/current readouts, electrical and mechanical plots, and the independent thermal trace. Its arm shape is a *specific, guarded XY projection* of the authored 3D model, not an automatically extracted general 3D scene. Full OMEdit animation is a separate visual acceptance gate.

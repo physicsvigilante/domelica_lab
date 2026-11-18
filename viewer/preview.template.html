@@ -112,7 +112,7 @@ const P=D.pendulum,T=D.thermal,N=P.length;
 const el=id=>document.getElementById(id);
 const scrub=el("scrub"), play=el("play"),speed=el("speed");
 scrub.max=String(N-1);
-let cursor=0, playing=!matchMedia("(prefers-reduced-motion: reduce)").matches,last=0;
+let cursor=0, playing=!matchMedia("(prefers-reduced-motion: reduce)").matches,last=0,playTime=P[0][0];
 function indexFor(t){let lo=0,hi=N-1;while(lo<hi){const m=(lo+hi+1)>>1;if(P[m][0]<=t)lo=m;else hi=m-1;}return lo;}
 function setPlayback(i){
  cursor=Math.max(0,Math.min(N-1,i));const p=P[cursor],deg=p[1]*180/Math.PI;
@@ -140,11 +140,11 @@ function chart(id,arr,timeColumn,valueColumn,color,playhead){
  if(playhead!==null){const t=P[playhead][0],x=X(Math.min(t,tmax));c.strokeStyle="#ebfafb99";c.lineWidth=1;c.beginPath();c.moveTo(x,top);c.lineTo(x,bottom);c.stroke();const cur=arr[Math.min(playhead,arr.length-1)];c.beginPath();c.arc(x,Y(cur[valueColumn]),4,0,Math.PI*2);c.fillStyle=color;c.fill();}
 }
 function drawGraphs(){chart("angleChart",P,0,1,"#5adbd2",cursor);chart("currentChart",P,0,3,"#f7b267",cursor);chart("thermalChart",T,0,1,"#65abf5",null);}
-function toggle(){playing=!playing;play.textContent=playing?"Pause":"Play";last=0;}
+function toggle(){if(!playing&&cursor===N-1){playTime=P[0][0];setPlayback(0);}playing=!playing;play.textContent=playing?"Pause":"Play";last=0;}
 play.addEventListener("click",toggle);
-scrub.addEventListener("input",()=>{playing=false;play.textContent="Play";setPlayback(Number(scrub.value));});
+scrub.addEventListener("input",()=>{playing=false;play.textContent="Play";setPlayback(Number(scrub.value));playTime=P[cursor][0];});
 window.addEventListener("resize",drawGraphs);
-function frame(ts){if(playing&&last){const target=P[cursor][0]+Math.min(.1,(ts-last)/1000)*Number(speed.value);const idx=indexFor(target);if(idx===cursor&&cursor<N-1){/* keep same sample until enough time has elapsed */}else setPlayback(idx);if(cursor===N-1){playing=false;play.textContent="Replay";}}last=ts;requestAnimationFrame(frame);}
+function frame(ts){if(playing&&last){playTime=Math.min(P[N-1][0],playTime+Math.min(.1,(ts-last)/1000)*Number(speed.value));const idx=indexFor(playTime);if(idx!==cursor)setPlayback(idx);if(cursor===N-1){playing=false;play.textContent="Replay";}}last=ts;requestAnimationFrame(frame);}
 if(!playing)play.textContent="Play";
 setPlayback(0);requestAnimationFrame(frame);
 </script>

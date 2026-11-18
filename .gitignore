@@ -23,3 +23,6 @@ __pycache__/
 # Local run artifacts
 .artifacts/
 results/
+
+# Generated browser playback (CI artifact)
+artifacts/

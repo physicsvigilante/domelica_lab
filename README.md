@@ -14,4 +14,4 @@ A **Modelica-first multiphysics laboratory** for exploring how reusable componen
 
 Establish a native MultiBody animation baseline and an authored electric-to-mechanical 3D model, with repeatable checks and a path to a richer viewer. Development is performed in ChatGPT and proposed changes are reviewed through pull requests.
 
-Project status: initialization; native qualification not yet established.
+Project status: M0 native and independent numeric gates qualified in [draft PR #1](https://github.com/physicsvigilante/domelica_lab/pull/1). Full native 3D visual inspection and unfamiliar topology composition remain pending. The PR also contains a self-contained browser preview generated from Modelica results.
