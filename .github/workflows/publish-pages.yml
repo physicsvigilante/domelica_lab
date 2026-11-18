@@ -1,0 +1,64 @@
+name: Publish Verified Lab
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-pages.yml'
+      - 'site/**'
+      - 'scripts/build_site.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verified-lab-pages
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the explicitly selected native and browser run
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/build_site.py --check-run
+      - uses: actions/download-artifact@v4
+        with:
+          name: modelica-lab-results
+          run-id: ${{ steps.release.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: .
+      - uses: actions/download-artifact@v4
+        with:
+          name: modelica-browser-checks
+          run-id: ${{ steps.release.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: artifacts
+      - name: Check artifact identities and prepare the public site
+        run: python3 scripts/build_site.py
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site-output
+
+  deploy:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish the verified viewer files
+        id: deployment
+        uses: actions/deploy-pages@v4

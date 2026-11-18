@@ -20,7 +20,9 @@ From a successful [Native Modelica Lab workflow run](https://github.com/physicsv
 
 Choose a scene, play or scrub time, drag to orbit, switch to XY, and click a visible object to inspect its transform. Three.js renders the native geometry with lighting, a depth buffer, and surface picking. It is bundled inside the HTML; viewing requires a browser with WebGL2, with no installation or network connection. The **modelica-browser-checks** artifact contains the browser test report and screenshots for that same HTML file.
 
-Development is proposed in [draft PR #1](https://github.com/physicsvigilante/domelica_lab/pull/1). Check the run attached to the exact revision before treating a result as verified.
+M1 and M2 have been reviewed and merged into `main`. Check the run attached to the exact revision before treating a result as verified.
+
+The **Publish Verified Lab** workflow can publish the selected, verified viewers directly to GitHub Pages. Its release manifest binds the source revision, successful native/browser run, and exact HTML hashes; it does not publish arbitrary latest artifacts. See [publishing setup and release selection](docs/PUBLISHING.md).
 
 ### Compare controlled experiments
 

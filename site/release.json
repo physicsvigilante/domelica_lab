@@ -1,0 +1,28 @@
+{
+  "repository": "physicsvigilante/domelica_lab",
+  "runId": 44296447354,
+  "revision": "77cb0d4529411c6f721f6ae74bb1009491cdf926",
+  "label": "M2 · Controlled electromechanical systems",
+  "viewers": [
+    {
+      "file": "comparison.html",
+      "manifest": "comparison-provenance.json",
+      "report": "comparison-checks/report.json",
+      "sha256": "484beaf4e6b2a5a4e2ccb6c34ce9c1c4192b6ad9f98a28b43c7c385cf91fb30f",
+      "title": "Compare controlled machines",
+      "description": "Explore how forearm mass, controller settings, and cooling change motion, electrical demand, and winding temperature.",
+      "tag": "4 experiments · synchronized 3D views",
+      "kind": "comparison"
+    },
+    {
+      "file": "browser-preview.html",
+      "manifest": "provenance.json",
+      "report": "browser-checks/report.json",
+      "sha256": "d69977df45887999c043a454d7543679a6311b715e7245cf77222ba1dcd0b587",
+      "title": "Explore the scene library",
+      "description": "Orbit native Modelica geometry, inspect components, and follow the recorded motion and signals of seven mechanical scenes.",
+      "tag": "7 scenes · native geometry",
+      "kind": "scenes"
+    }
+  ]
+}
