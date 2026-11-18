@@ -118,7 +118,7 @@ initial equation
     "Positive display dimensions and a block narrower than the deck are required.");
   assert(startAlong>=blockLength/2 and startAlong<=inclineLength-blockLength/2,
     "The initial complete block footprint must lie on the finite deck.");
-  assert(lowerSupportHeight>0 and upperSupportHeight>0 and surfaceOrigin[1]==0 and surfaceOrigin[3]==0,
+  assert(lowerSupportHeight>0 and upperSupportHeight>0 and abs(surfaceOrigin[1])<1e-12 and abs(surfaceOrigin[3])<1e-12,
     "The illustrated ramp requires positive upright lengths and a lower surface origin on its centerline.");
 equation
   connect(world.frame_b,groundGuide.frame_a);
