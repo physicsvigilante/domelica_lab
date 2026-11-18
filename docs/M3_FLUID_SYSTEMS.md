@@ -23,7 +23,7 @@ The parallel case adds an actual `StaticPipe` instance and connections; it is no
 
 ## Authored experiment
 
-Each authored run lasts 300 s with a regular 0.1 s output interval, native event samples, and solver tolerance 1e-9. Physical tank levels and the pump-speed response are explicitly selected as continuous states. Both tank bases share an elevation; each has 0.25 m² cross-sectional area and 1.2 m height. Nominal initial levels are 0.9 m in A and 0.5 m in B. The pump has 0.001 m³ storage, an illustrative quadratic head curve, and constant 80% efficiency. The water medium is MSL `ConstantPropertyLiquidWater`.
+Each authored run lasts 300 s with a regular 0.1 s output interval, native event samples, automatic native state selection, and solver tolerance 1e-10. Both tank bases share an elevation; each has 0.25 m² cross-sectional area and 1.2 m height. Nominal initial levels are 0.9 m in A and 0.5 m in B. The pump has 0.001 m³ storage, an illustrative quadratic head curve, and constant 80% efficiency. The water medium is MSL `ConstantPropertyLiquidWater`.
 
 The tank B target is 0.8 m for 0–100 s, 0.9 m for 100–200 s, and 0.78 m for 200–300 s. The nominal return-valve opening is 0.65 until 140 s, 1 until 240 s, then 0.45. Changes in opening act on the Modelica valve.
 
@@ -48,6 +48,8 @@ Pump output is limited to a nonzero minimum and a maximum corresponding to 1800 
 The stock examples have separate declared checks appropriate to their own boundary conditions. Pumping checks include both controller states, the demand-valve event, a broad regulated-pressure envelope, and integrated open-system mass balance. Empty-tank checks include the complete two-tank water inventory, integrated transfer, and stopped outlet flow.
 
 Failed criteria remain failures until the cause is resolved or the unsuccessful outcome is explicitly documented. Final measurements and execution verdicts belong to the CI artifact and pull request for the exact source revision.
+
+The native run script checks the simulation result's success and original time coverage before printing a completion message. A partial MAT file is retained as failure evidence, never treated as a successful run. The numerical trials and their observed failures are documented in [M3_FLUID_PHYSICS.md](M3_FLUID_PHYSICS.md).
 
 ## Visualization and evidence
 

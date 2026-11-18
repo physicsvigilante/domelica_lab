@@ -82,20 +82,27 @@ browser does not change these physical parameters.
 | `m3-parallel` | `ControlledTankParallelReturn` | Add the separate parallel return pipe |
 
 Each simulation covers 300 s with a 0.1 s regular output interval and solver
-tolerance 1e-9. Additional native event samples are preserved, including repeated
+tolerance 1e-10. Additional native event samples are preserved, including repeated
 timestamps. The target is 0.8 m initially, 0.9 m at 100 s, and 0.78 m at 200 s.
 The main return valve opening is 0.65 initially, 1 at 140 s, and 0.45 at 240 s,
 multiplied by the case's `valveScale`.
 
-The tank levels and pump-speed response are explicitly selected as native
-continuous states. The first native trial, using automatic state selection and
-solver tolerance 1e-7, completed and met the tracking criterion but failed the
+Native automatic state selection remains enabled so that the solver can change
+coordinates when the pump check valve closes. The first native trial, at solver
+tolerance 1e-7, completed and met the tracking criterion but failed the
 predeclared mass and internal-energy checks because conserved mass drifted by
-up to approximately 0.0016 kg. Selecting the physical states and tightening
-solver accuracy addresses that numerical representation issue without changing
-the network equations. The output interval was also refined from 0.2 s to 0.1 s
-to resolve the initial shaft-power transient in independent sampled quadrature.
-All physical acceptance tolerances remain unchanged.
+up to approximately 0.0016 kg. A second trial explicitly selected tank levels
+and pump-speed response as states, with tolerance 1e-9. This improved the
+conservation residuals before termination, but all four authored runs terminated
+at their first pump check-valve closure with event-iteration failures. Those
+partial results were rejected.
+
+The current setup restores automatic state selection and tightens solver
+tolerance to 1e-10. The output interval is 0.1 s to resolve the initial shaft-power
+transient in independent sampled quadrature. All physical acceptance tolerances
+remain unchanged. The native script checks the simulation's returned success
+filename, minimum sample count, and actual final native time before printing
+PASS; the presence of a partially written MAT file is insufficient.
 
 `supplyFlow` is positive from A through the pump to B. `returnFlow` and
 `bypassFlow` are positive from B to A. These are signed mass flow rates in kg/s;
