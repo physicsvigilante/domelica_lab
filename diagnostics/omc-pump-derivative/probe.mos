@@ -1,0 +1,33 @@
+print("PROBE_VERSION " + getVersion() + "\n");
+if not loadModel(Modelica, {"4.1.0"}) then
+  print("PROBE_MSL_LOAD_FAILED\n");
+  print(getErrorString());
+  exit(1);
+end if;
+if not loadFile("diagnostics/omc-pump-derivative/PumpDerivativeProbe.mo") then
+  print("PROBE_FILE_LOAD_FAILED\n");
+  print(getErrorString());
+  exit(1);
+end if;
+print("PROBE_MSL_LOCATION " + getSourceFile(Modelica) + "\n");
+print("PROBE_CHECK_DIRECT " + checkModel(PumpDerivativeProbe.DirectMSL) + "\n");
+print(getErrorString());
+simulate(PumpDerivativeProbe.DirectMSL, startTime=0, stopTime=2,
+  numberOfIntervals=400, tolerance=1e-10, method="dassl",
+  outputFormat="csv", fileNamePrefix="probe_direct_msl");
+print(getErrorString());
+simulate(PumpDerivativeProbe.DirectExplicit, startTime=0, stopTime=2,
+  numberOfIntervals=400, tolerance=1e-10, method="dassl",
+  outputFormat="csv", fileNamePrefix="probe_direct_explicit");
+print(getErrorString());
+print("PROBE_CHECK_IMPLICIT " + checkModel(PumpDerivativeProbe.ImplicitMSL) + "\n");
+print(getErrorString());
+simulate(PumpDerivativeProbe.ImplicitMSL, startTime=0, stopTime=2,
+  numberOfIntervals=400, tolerance=1e-10, method="dassl",
+  outputFormat="csv", fileNamePrefix="probe_implicit_msl");
+print(getErrorString());
+simulate(PumpDerivativeProbe.ImplicitExplicit, startTime=0, stopTime=2,
+  numberOfIntervals=400, tolerance=1e-10, method="dassl",
+  outputFormat="csv", fileNamePrefix="probe_implicit_explicit");
+print(getErrorString());
+print("PROBE_NATIVE_DONE\n");
