@@ -2,7 +2,8 @@
 """Run one bounded, native M3 state/solver diagnostic without changing gates.
 
 Each matrix job has an isolated checkout. It creates an extending Modelica
-model, uses only native state-selection and solver options, and preserves both
+model, uses native state-selection, solver options, or equivalent curve
+functions, and preserves both
 complete and partial native evidence. An export of partial results never makes
 the completion guard pass. The original native MAT reader/exporter remains the
 only result-reading path.
@@ -34,6 +35,9 @@ CASES = {
     "dae_ida": dict(states={"speed": "always", "a": "always", "b": "always"},
                     omcOptions="--daeMode", method="ida", solverFlag="-daeMode"),
     "curve_derivative": dict(states={}, omcOptions="", method="dassl", solverFlag="", curveDerivative=True),
+    "explicit_curve": dict(states={}, omcOptions="", method="dassl", solverFlag="", explicitCurve=True),
+    "explicit_curve_hybrid": dict(states={"speed": "always", "a": "always", "b": "always"},
+                                  omcOptions="", method="dassl", solverFlag="-nls=hybrid", explicitCurve=True),
 }
 
 
@@ -41,7 +45,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def patch_curve_binding():
+def patch_curve_binding(candidate):
     """Change only the exact pump curve binding in this isolated matrix job.
 
     The production redeclaration is not replaceable, so an outer nested
@@ -49,7 +53,7 @@ def patch_curve_binding():
     diagnostic evidence; the six other candidate jobs never call this helper.
     """
     path = ROOT / "DomelicaLab/Components/TwoTankLoopPlant.mo"
-    directory = ROOT / "artifacts/m3-state-diagnostics/curve_derivative"
+    directory = ROOT / "artifacts/m3-state-diagnostics" / candidate
     directory.mkdir(parents=True, exist_ok=True)
     original = path.read_bytes()
     original_path = directory / "TwoTankLoopPlant.original.mo"
@@ -63,7 +67,7 @@ def patch_curve_binding():
     report = {"path": str(path.relative_to(ROOT)), "exactMatches": text.count(old),
               "originalSHA256": sha(original_path), "originalBinding": old,
               "modifiedBinding": new,
-              "scope": "Only the isolated curve_derivative checkout; native curve values delegated unchanged to MSL."}
+              "scope": f"Only the isolated {candidate} checkout; the same native quadratic head curve and linear extrapolation are preserved."}
     if report["exactMatches"] != 1:
         (directory / "source-patch.json").write_text(json.dumps(report, indent=2) + "\n")
         raise ValueError("Expected exactly one original native pump curve binding; refusing diagnostic patch")
@@ -88,7 +92,7 @@ def write_native_inputs(candidate):
         modifiers.append("plant(" + ", ".join(tank_modifiers) + ")")
     functions = ""
     source_patch = None
-    if settings.get("curveDerivative"):
+    if settings.get("curveDerivative") or settings.get("explicitCurve"):
         # Delegate every head value to the original MSL function. Supply only
         # its exact derivative, including MSL's linear extrapolation outside
         # the nominal points; preserve automatic native state selection.
@@ -111,12 +115,33 @@ algorithm
 end M3DiagnosticFlow;
 
 '''
-        source_patch = patch_curve_binding()
+        if settings.get("explicitCurve"):
+            # Expose the native one-input polynomial before index reduction.
+            # These are exactly the original MSL coefficients and its linear
+            # extrapolation, not a new fit or a change to the hydraulic law.
+            original_value = ("  head := Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(\n"
+                              "    V_flow, {0, 0.004, 0.008}, {10, 7, 0});")
+            explicit_value = ("  head := if V_flow < 0 then 10 - 250*V_flow\n"
+                              "    elseif V_flow > 0.008 then -2250*(V_flow - 0.008)\n"
+                              "    else 10 - 250*V_flow - 125000*V_flow*V_flow;")
+            if functions.count(original_value) != 1:
+                raise ValueError("Expected exactly one native value-function body")
+            functions = functions.replace(original_value, explicit_value, 1).replace("Inline=false", "Inline=true")
+        source_patch = patch_curve_binding(candidate)
     modification = "(\n    " + ",\n    ".join(modifiers) + ")" if modifiers else ""
+    initial_checks = ""
+    if settings.get("explicitCurve"):
+        initial_checks = "initial algorithm\n"
+        for q in ("-0.002", "0", "0.002", "0.004", "0.006", "0.008", "0.010"):
+            initial_checks += (
+                f"  assert(abs(M3DiagnosticFlow({q})\n"
+                "    - Modelica.Fluid.Machines.BaseClasses.PumpCharacteristics.quadraticFlow(\n"
+                f"      {q}, {{0, 0.004, 0.008}}, {{10, 7, 0}})) <= 1e-10,\n"
+                f'    "Diagnostic pump curve must preserve the native MSL value at Q={q} m3/s.");\n')
     model = (functions + "model M3Diagnostic\n"
              f"  \"Native state/solver diagnostic: {candidate}\"\n"
              "  extends DomelicaLab.Examples.ControlledTankInitialLevels" + modification + ";\n"
-             "end M3Diagnostic;\n")
+             + initial_checks + "end M3Diagnostic;\n")
     model_path = ROOT / "M3Diagnostic.mo"
     model_path.write_text(model, encoding="utf-8")
     options = ""
