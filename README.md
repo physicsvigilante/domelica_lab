@@ -11,6 +11,7 @@ A **Modelica-first multiphysics laboratory** for composing physical systems, run
 | **HeatedBody** | A thermal network checked against an independent analytical solution |
 | **MSL DoublePendulum** | An unchanged standard-library example using the same native scene pipeline |
 | **Controlled thermal arm (M2)** | Native PID feedback, voltage limits and anti-windup; four experiments isolate forearm load, controller settings and cooling |
+| **Visible motion (M4)** | A block sliding through a diagonal groove on an incline, and a block oscillating between two fixed springs, composed from existing MSL components |
 
 The armature is reusable Modelica code. `ThermalArmatureDrive` extends it by exposing the standard resistor's heat port; the original component is unchanged. The browser reads native geometry and transforms and has no physics solver or model-specific pendulum drawing.
 
@@ -29,6 +30,14 @@ The **Publish Verified Lab** workflow can publish the selected, verified viewers
 The M2 build also produces **artifacts/comparison.html**. It places two native runs side by side, with one physical-time clock and common-scale signal plots. Choose nominal load, heavier load, different controller settings, or weaker cooling independently on either side. Each side reuses the accepted Three.js viewer and maps the shared time to its own recorded samples.
 
 See [the M2 experiment and acceptance scope](docs/M2_CONTROLLED_ARM.md). M2 is developed from the accepted M1 revision; its source preservation check enforces reuse of the original models, result reader, scene exporter, and renderer.
+
+### Motion from the mechanics problems
+
+The **Native Motion Lab** workflow runs `GrooveSlide3D` (Q31, PDF page 5) and `TwoSpringOscillator3D` (Q90, PDF page 13). Both use existing Modelica Standard Library bodies, constraints, forces, and visualizers. The purpose is to observe motion and explore composition.
+
+The resulting **motion-lab-results** artifact includes `artifacts/motion-preview.html`, raw native MAT results, CSV exports, native animation XML, and verification reports. Open the HTML for offline 3D playback, time scrubbing, camera controls, object inspection, and synchronized signals. Spring coils are a generic rendering extension driven by native geometry; there is no browser physics solver.
+
+See [the motion experiments and reproduction guide](docs/M4_MOTION.md). The original mechanics viewer, native CSV reader, and its frozen source baseline are preserved. The motion models also provide standard MultiBody animation data for OMEdit; a browser playback check is separate from an OMEdit GUI inspection.
 
 ## Principles
 
