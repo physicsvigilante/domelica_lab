@@ -1,0 +1,65 @@
+// Run from repository root with: omc scripts/native_smoke.mos
+print("DOMELICA_NATIVE_SMOKE_START\n");
+print("Compiler: " + getVersion() + "\n");
+if not loadModel(Modelica, {"4.1.0"}) then
+  print("ERROR: cannot load MSL 4.1.0. Run scripts/install_msl.mos.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+if not loadFile("DomelicaLab/package.mo") then
+  print("ERROR: cannot load DomelicaLab/package.mo.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+print("CHECKING authored 3D electromechanical model:\n");
+print(checkModel(DomelicaLab.Examples.MotorizedPendulum3D) + "\n");
+print(getErrorString());
+pendulum := simulate(
+  DomelicaLab.Examples.MotorizedPendulum3D,
+  stopTime=4,
+  numberOfIntervals=400,
+  tolerance=1e-6,
+  outputFormat="csv",
+  fileNamePrefix="m0_motorized_pendulum");
+print(pendulum.messages + "\n");
+if pendulum.resultFile == "" then
+  print("ERROR: authored pendulum simulation failed.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+print("PASS pendulum: " + pendulum.resultFile + "\n");
+
+print("CHECKING authored thermal model:\n");
+print(checkModel(DomelicaLab.Examples.HeatedBody) + "\n");
+print(getErrorString());
+thermal := simulate(
+  DomelicaLab.Examples.HeatedBody,
+  stopTime=5,
+  numberOfIntervals=500,
+  tolerance=1e-7,
+  outputFormat="csv",
+  fileNamePrefix="m0_thermal_step");
+print(thermal.messages + "\n");
+if thermal.resultFile == "" then
+  print("ERROR: thermal simulation failed.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+print("PASS thermal: " + thermal.resultFile + "\n");
+
+print("CHECKING unchanged MSL multibody baseline:\n");
+baseline := simulate(
+  Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum,
+  stopTime=1,
+  numberOfIntervals=200,
+  tolerance=1e-6,
+  outputFormat="csv",
+  fileNamePrefix="m0_msl_double_pendulum");
+print(baseline.messages + "\n");
+if baseline.resultFile == "" then
+  print("ERROR: MSL baseline simulation failed.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+print("PASS MSL baseline: " + baseline.resultFile + "\n");
+print("DOMELICA_NATIVE_SMOKE_COMPLETE\n");

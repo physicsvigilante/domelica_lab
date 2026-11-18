@@ -1,0 +1,25 @@
+# OpenModelica generated models, binaries and simulation results
+*.exe
+*.o
+*.so
+*.dll
+*_res.csv
+*_res.mat
+*_init.xml
+*_info.json
+*_prof.json
+*.makefile
+*.c
+*.h
+*.log
+*.libs
+*.json
+!docs/*.json
+
+# Python
+__pycache__/
+*.pyc
+
+# Local run artifacts
+.artifacts/
+results/

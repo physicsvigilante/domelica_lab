@@ -1,0 +1,31 @@
+name: Native Modelica M0
+on:
+  push:
+    branches:
+      - "experiment/**"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  native-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Modelica Standard Library
+        run: omc scripts/install_msl.mos
+      - name: Build and simulate native models
+        run: omc scripts/native_smoke.mos
+      - name: Verify physical output independently
+        run: python3 scripts/verify_csv.py
+      - name: Preserve native results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: modelica-m0-results
+          if-no-files-found: warn
+          path: |
+            m0_*_res.csv
+            m0_*.log
