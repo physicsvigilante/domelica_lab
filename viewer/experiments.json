@@ -1,0 +1,95 @@
+[
+  {
+    "id": "thermal-geared-arm",
+    "title": "A motor. Two links. Three domains.",
+    "description": "A geared electric motor drives the shoulder. A passive elbow swings on a perpendicular axis. Copper loss heats the winding, and its temperature changes the electrical resistance.",
+    "model": "DomelicaLab.Examples.ThermalGearedArm3D",
+    "prefix": "m1_thermal_geared_arm",
+    "series": [
+      {
+        "name": "shoulderAngle",
+        "label": "Driven shoulder",
+        "unit": "rad",
+        "color": "#81e3c9"
+      },
+      {
+        "name": "elbowAngle",
+        "label": "Passive elbow",
+        "unit": "rad",
+        "color": "#f2a64b"
+      },
+      {
+        "name": "motorCurrent",
+        "label": "Armature current",
+        "unit": "A",
+        "color": "#84b4ff"
+      },
+      {
+        "name": "windingTemperature",
+        "label": "Winding temperature",
+        "unit": "K",
+        "color": "#ee9da5"
+      }
+    ]
+  },
+  {
+    "id": "motorized-pendulum",
+    "title": "Electrical power becomes motion.",
+    "description": "The original armature, damper and rigid pendulum, driven by an 18 V step. Its full rotations now use exported native geometry and a camera fitted to the complete trajectory.",
+    "model": "DomelicaLab.Examples.MotorizedPendulum3D",
+    "prefix": "m0_motorized_pendulum",
+    "series": [
+      {
+        "name": "angle",
+        "label": "Hinge angle",
+        "unit": "rad",
+        "color": "#81e3c9"
+      },
+      {
+        "name": "angularVelocity",
+        "label": "Angular velocity",
+        "unit": "rad/s",
+        "color": "#f2a64b"
+      },
+      {
+        "name": "motorCurrent",
+        "label": "Armature current",
+        "unit": "A",
+        "color": "#84b4ff"
+      }
+    ]
+  },
+  {
+    "id": "msl-double-pendulum",
+    "title": "Two coupled pendulums. Native MSL.",
+    "description": "An unchanged Modelica Standard Library example, passed through the same scene exporter and renderer. The viewer reads its own geometry and transforms without a model-specific drawing.",
+    "model": "Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum",
+    "prefix": "m0_msl_double_pendulum",
+    "series": [
+      {
+        "name": "revolute1.phi",
+        "label": "First joint angle",
+        "unit": "rad",
+        "color": "#81e3c9"
+      },
+      {
+        "name": "revolute2.phi",
+        "label": "Second joint angle",
+        "unit": "rad",
+        "color": "#f2a64b"
+      },
+      {
+        "name": "revolute1.w",
+        "label": "First angular velocity",
+        "unit": "rad/s",
+        "color": "#84b4ff"
+      },
+      {
+        "name": "revolute2.w",
+        "label": "Second angular velocity",
+        "unit": "rad/s",
+        "color": "#ee9da5"
+      }
+    ]
+  }
+]

@@ -1,0 +1,14 @@
+# Native experiment outputs; ordinary source and JSON files remain visible.
+/m0_*
+/m1_*
+/native-toolchain.txt
+
+# Python
+__pycache__/
+*.pyc
+
+# Generated artifacts and local dependencies
+.artifacts/
+results/
+artifacts/
+node_modules/

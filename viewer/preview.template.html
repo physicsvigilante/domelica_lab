@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Domelica Lab · Native scene playback</title>
+<style>
+:root{color-scheme:dark;--bg:#08121d;--panel:#101f2e;--line:#263b4c;--ink:#ecf5f8;--muted:#92aab9;--mint:#79e5cb;--blue:#75baf4;--amber:#f4b87a;--rose:#e797b7;--mono:ui-monospace,SFMono-Regular,Consolas,monospace}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#173447 0%,transparent 48%),var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}button,select,input{font:inherit}button,select{color:var(--ink)}button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,canvas:focus-visible{outline:2px solid var(--mint);outline-offset:4px}button,select{border:1px solid #395162;background:#162b3b;border-radius:9px}button:hover,select:hover{border-color:#77c9bc}button:disabled{opacity:.45;cursor:default}main{max-width:1460px;margin:auto;padding:25px 32px 30px}.masthead{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-bottom:22px;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px}.mark{display:grid;place-items:center;width:43px;height:43px;border:1px solid #4f9b92;border-radius:13px;color:var(--mint);background:#163731}.wordmark{font-weight:760;font-size:19px;letter-spacing:-.7px}.wordmark span{font-weight:400;color:var(--muted)}.brand small{display:block;font-size:10px;letter-spacing:2.1px;color:var(--muted);margin-top:2px}.status{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.8px;font-weight:650;color:#b1e9dc;border:1px solid #315b57;background:#122d2c;border-radius:50px;padding:8px 13px}.status i{width:6px;height:6px;background:var(--mint);border-radius:100%}.intro{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin:25px 0 20px}.eyebrow{font-size:10px;letter-spacing:2px;font-weight:750;color:var(--mint);margin-bottom:6px}h1{font-size:clamp(25px,3.1vw,37px);line-height:1.16;font-weight:670;letter-spacing:-1.1px;margin:0 0 8px}.description{font-size:13px;color:var(--muted);max-width:780px;margin:0}.experiment-number{font:11px var(--mono);color:#7892a4;white-space:nowrap;margin-bottom:3px}.scene-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}.scene-tab{padding:10px 15px;background:#102332;font-size:12px;color:var(--muted);text-align:left}.scene-tab[aria-pressed=true]{background:#183c3b;border-color:#558c80;color:#c6fff0}.scene-tab .tab-number{font:10px var(--mono);color:#6e928e;margin-right:9px}.scene-tab[aria-pressed=true] .tab-number{color:var(--mint)}.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(310px,1fr);gap:18px;align-items:start}.panel{border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,#122535,#0f1e2c);overflow:hidden;box-shadow:0 12px 32px #030b1344}.panel-title{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px 18px;border-bottom:1px solid var(--line)}h2{font-size:13px;letter-spacing:-.1px;font-weight:670;margin:0}.subtle{font-size:11px;color:var(--muted)}.scene-tools{display:flex;gap:5px}.scene-tools button{padding:5px 9px;font-size:10px;min-width:34px;background:#122736;border-color:#2b4556}.scene-tools button.active{background:#254746;border-color:#497e72;color:#c1ffec}.stage{position:relative;background:radial-gradient(ellipse at 55% 30%,#173447,#0b1b28 78%)}#scene{display:block;width:100%;height:clamp(390px,38vw,520px);touch-action:none;cursor:grab}#scene:active{cursor:grabbing}.camera-axis{position:absolute;right:0;top:8px;width:84px;height:84px;pointer-events:none}.scene-meta{position:absolute;top:16px;left:18px;max-width:calc(100% - 100px);overflow-wrap:anywhere;pointer-events:none;font-size:10px;color:#86a6b9;letter-spacing:.3px}.scene-meta strong{display:block;font:12px var(--mono);color:#bed4df;margin-bottom:3px}.orbit-hint{position:absolute;bottom:13px;left:18px;pointer-events:none;color:#7f9dac;font-size:10px}.camera-label{position:absolute;bottom:13px;right:18px;pointer-events:none;color:#7192a6;font:9px var(--mono);letter-spacing:.5px}.timeline{padding:14px 18px 16px;border-top:1px solid var(--line);background:#102231}.time-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.time-row .current{font:18px var(--mono);letter-spacing:-.7px}.time-row .current span{font-size:11px;color:var(--muted);letter-spacing:0}.playback-state{font-size:10px;font-weight:650;letter-spacing:1.2px;color:var(--mint)}.controls{display:flex;align-items:center;gap:11px}.play-button{min-width:82px;padding:8px 12px;background:#81e3c9;border-color:#81e3c9;color:#09261e;font-size:12px;font-weight:750}.play-button:hover{background:#a1f5df;border-color:#b9ffeb}.range-wrap{display:flex;flex:1;min-width:70px;align-items:center}input[type=range]{margin:0;width:100%;accent-color:var(--mint);cursor:pointer;min-height:24px}.speed{padding:7px 8px;font:11px var(--mono);background:#142e3e}.objects{border-top:1px solid var(--line);background:#0e202e}summary{padding:13px 18px;cursor:pointer;font-size:11px;color:#adc3cf;list-style:none}summary::-webkit-details-marker{display:none}summary::before{content:'+';font:15px var(--mono);color:var(--mint);margin-right:9px}.objects[open] summary::before{content:'−'}.object-body{padding:0 18px 17px}.object-list{display:flex;flex-wrap:wrap;gap:5px;max-height:130px;overflow:auto;padding:2px 3px 7px}.object-button{font:10px var(--mono);padding:6px 8px;color:#afc8d4;background:#132e3e;border-color:#2b495b;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.object-button.selected{border-color:var(--mint);background:#234b45;color:#d0ffef}.inspector{font:10px/1.7 var(--mono);color:#8baaba;padding-top:8px;overflow-wrap:anywhere}.inspector strong{color:#bceada;font-weight:500}.signals .panel-title{padding-bottom:14px}.plot-list{padding:4px 15px 8px}.plot-block{padding:12px 0 11px;border-bottom:1px solid #213949}.plot-block:last-child{border-bottom:0}.plot-label{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:0 2px 5px}.plot-label .name{font-size:11px;color:#b2c7d2;display:flex;gap:7px;align-items:center}.signal-dot{width:5px;height:5px;flex:none;border-radius:50%}.plot-value{font:13px var(--mono);font-weight:500;white-space:nowrap}.plot-value .unit{font:10px system-ui;color:#7f9baa;margin-left:4px}.plot{display:block;width:100%;height:112px}.signal-footnote{padding:1px 17px 15px;font-size:10px;color:#6f8b9c}.provenance{margin-top:19px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;padding:17px 2px 0;border-top:1px solid var(--line)}.provenance h2{font-size:11px;color:#a7c0cc;margin-bottom:5px}.provenance p{font-size:11px;line-height:1.65;margin:0;color:#7392a5;max-width:900px}.build{font:10px/1.8 var(--mono);color:#81a2b4;text-align:right;max-width:250px;overflow-wrap:anywhere}.build b{font-weight:400;color:#b3ccd8}.error{margin:25px 0;padding:20px;background:#462b2b;border:1px solid #9c6262;border-radius:12px;color:#ffd2cc}.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.empty-note{padding:25px 15px;color:var(--muted);font-size:12px}
+@media(min-width:1450px){#scene{height:525px}}@media(max-width:1050px){main{padding:22px}.layout{grid-template-columns:minmax(0,1.2fr) minmax(290px,1fr)}#scene{height:445px}.plot{height:95px}.plot-list{padding:3px 12px 7px}.experiment-number{display:none}}@media(max-width:780px){main{padding:18px 14px 25px}.masthead{padding-bottom:17px}.status{font-size:9px;padding:7px 9px}.brand small{font-size:8px;letter-spacing:1.4px}.wordmark{font-size:17px}.mark{width:37px;height:37px}.intro{margin:23px 0 18px}.layout{grid-template-columns:1fr;gap:16px}.scene-tabs{gap:6px;margin-bottom:16px}.scene-tab{padding:9px 10px;font-size:11px}.scene-tab .tab-number{margin-right:6px}#scene{height:425px}.plot-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;padding:4px 14px}.plot-block:nth-last-child(2){border-bottom:0}.plot{height:114px}.provenance{grid-template-columns:1fr;gap:10px}.build{text-align:left;max-width:100%}.build span{display:inline;margin-right:14px}}@media(max-width:450px){main{padding:14px 11px 22px}.status{max-width:118px;text-align:center;line-height:1.4;font-size:8px}.status i{display:none}h1{font-size:27px}.description{font-size:12px}.panel-title{padding:13px 14px}.scene-tools button{padding:5px 7px}.scene-meta{left:14px;font-size:9px}.scene-meta strong{font-size:10px}.orbit-hint{left:14px;font-size:9px;max-width:190px}.camera-label{right:14px;font-size:8px}#scene{height:360px}.timeline{padding:13px 14px 15px}.plot-list{grid-template-columns:1fr;gap:0;padding:4px 14px}.plot{height:114px}.plot-block:nth-last-child(2){border-bottom:1px solid #213949}.scene-tab{flex:1}.scene-tab .tab-number{display:block;margin:0 0 2px}.controls{gap:9px}.play-button{min-width:73px}.plot-value{font-size:14px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+<header class="masthead">
+<div class="brand"><div class="mark" aria-hidden="true"><svg width="27" height="27" viewBox="0 0 27 27" fill="none"><path d="m4 18 9.5-12L23 18l-9.5 5L4 18Z" stroke="currentColor" stroke-width="1.2"/><path d="M13.5 6v17M4 18h19" stroke="currentColor" stroke-width="1.2"/><circle cx="13.5" cy="6" r="2" fill="currentColor"/><circle cx="4" cy="18" r="2" fill="currentColor"/><circle cx="23" cy="18" r="2" fill="currentColor"/></svg></div><div><div class="wordmark">domelica <span>lab</span></div><small>COMPOSABLE PHYSICAL SYSTEMS</small></div></div>
+<div class="status"><i></i>NATIVE SCENE PLAYBACK</div>
+</header>
+<div id="error" class="error" role="alert" hidden></div>
+<section class="intro"><div><div class="eyebrow">THE SYSTEMS LABORATORY</div><h1 id="title">Explore the native scene</h1><p class="description" id="description">Geometry, motion, and signals exported from OpenModelica.</p></div><div class="experiment-number" id="experimentNumber"></div></section>
+<nav class="scene-tabs" id="sceneTabs" aria-label="Choose simulation"></nav>
+<section class="layout">
+<div class="panel">
+<div class="panel-title"><div><h2>Spatial view</h2><span class="subtle">Orbit the model. Inspect its parts.</span></div><div class="scene-tools" aria-label="Camera presets"><button type="button" id="view3d" class="active" title="Three-dimensional camera">3D</button><button type="button" id="viewxy" title="View along the Z axis">XY</button><button type="button" id="fit" title="Fit the full trajectory">Fit</button></div></div>
+<div class="stage"><canvas id="scene" tabindex="0" role="img" aria-label="Native 3D Modelica scene. Drag to orbit, use arrow keys to rotate, plus or minus to zoom, and F to fit."></canvas><canvas id="axis" class="camera-axis" width="84" height="84" aria-hidden="true"></canvas><div class="scene-meta"><strong id="objectCount"></strong><span id="sceneModel"></span></div><div class="orbit-hint">Drag to orbit · scroll to zoom · click a part</div><div class="camera-label">ORTHOGRAPHIC CAMERA</div></div>
+<div class="timeline"><div class="time-row"><div class="current"><span>t</span> <output id="time">0.00</output> <span>/ <span id="duration">0.00</span> s</span></div><span id="playbackState" class="playback-state">PAUSED</span></div><div class="controls"><button type="button" id="play" class="play-button">Play</button><div class="range-wrap"><input type="range" id="scrub" min="0" max="1" step="1" value="0" aria-label="Simulation playback time"></div><label class="visually-hidden" for="speed">Playback speed</label><select id="speed" class="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></div></div>
+<details class="objects" id="objects"><summary>Native scene objects <span class="subtle" id="objectSummary"></span></summary><div class="object-body"><div class="object-list" id="objectList" aria-label="Select a native object"></div><div class="inspector" id="inspector">Select a part to inspect its native transform.</div></div></details>
+</div>
+<aside class="panel signals"><div class="panel-title"><div><h2>Signals, in sync</h2><span class="subtle">Measurements from the same native run</span></div><span class="subtle" id="sampleCount"></span></div><div id="plots" class="plot-list"></div><div class="signal-footnote">The playhead follows recorded solver samples.</div></aside>
+</section>
+<footer class="provenance"><div><h2>Modelica defines the physics and geometry.</h2><p>This file replays exported scene transforms and native simulation signals. The browser contains no physics solver. Three.js renders the supported native primitives with a depth buffer; lighting, outlines and the grid are viewing aids. Use OMEdit for the full native visualization feature set.</p></div><div class="build"><span id="compiler"></span><br><span id="renderer"></span><br><span id="revision"></span><br><span>SELF-CONTAINED · OFFLINE</span></div></footer>
+</main>
+<script>
+__THREE_RUNTIME__
+</script>
+<script>
+"use strict";
+const D = __NATIVE_MODEL_DATA__;
+(() => {
+const el=id=>document.getElementById(id);
+try {
+ if(D.schema!=="domelica.native-scene.v1"||!Array.isArray(D.scenes)||!D.scenes.length)throw new Error("Missing native scene payload");
+ if(typeof THREE!=="object")throw new Error("Bundled Three.js runtime is missing");
+ const C=el("scene"),axis=el("axis"),axisCtx=axis.getContext("2d"),palette=["#79e5cb","#75baf4","#f4b87a","#e797b7"];
+ const gl=C.getContext("webgl2",{alpha:true,antialias:true,depth:true,premultipliedAlpha:true});
+ if(!gl){const error=new Error("3D playback requires WebGL2. Enable graphics acceleration or open this file in a WebGL2-capable browser.");error.name="WebGLUnavailableError";throw error;}
+ const renderer=new THREE.WebGLRenderer({canvas:C,context:gl,alpha:true,antialias:true,depth:true});
+ renderer.setClearColor(0x000000,0);
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;
+ renderer.toneMappingExposure=1.15;
+ const renderedScene=new THREE.Scene(),nativeGroup=new THREE.Group();
+ nativeGroup.name="Native Modelica primitives";renderedScene.add(nativeGroup);
+ const renderedCamera=new THREE.OrthographicCamera(-1,1,1,-1,.01,100);
+ const hemisphere=new THREE.HemisphereLight(0xdcefff,0x263541,2.1);
+ const keyLight=new THREE.DirectionalLight(0xfff2dc,3.2),fillLight=new THREE.DirectionalLight(0x8fcfff,1.1);
+ renderedScene.add(hemisphere,keyLight,keyLight.target,fillLight,fillLight.target);
+ const raycaster=new THREE.Raycaster(),pointerNDC=new THREE.Vector2();
+ const nativeMeshes=new Map();let grid=null,geometries={},contextLost=false;
+ const debugRenderer=gl.getExtension("WEBGL_debug_renderer_info");
+ const glRenderer=gl.getParameter(debugRenderer?debugRenderer.UNMASKED_RENDERER_WEBGL:gl.RENDERER);
+ const reduced=matchMedia("(prefers-reduced-motion: reduce)");
+ let scene,index=0,playTime=0,playing=!reduced.matches,last=0,selected=null,plots=[],width=0,height=0,dpr=1;
+ let camera={yaw:.48,pitch:.24,zoom:1,center:[0,0,0],radius:1};
+ let pointer=null,dragged=false;
+ const add=(a,b)=>a.map((x,i)=>x+b[i]),sub=(a,b)=>a.map((x,i)=>x-b[i]);
+ const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+ const norm=a=>Math.hypot(...a),unit=a=>{const n=norm(a);return n?a.map(v=>v/n):[0,0,0];};
+ const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+ function fmt(v,digits=3){if(v===0)return "0.000";if(Math.abs(v)>=1e4||Math.abs(v)<1e-4)return v.toExponential(2);return v.toFixed(Math.abs(v)>=100?2:digits);}
+ function timeLabel(t){return t.toFixed(2);}
+ function make(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
+ function createPrimitive(type){
+  let geometry;
+  if(type==="box")geometry=new THREE.BoxGeometry(1,1,1);
+  else if(type==="cylinder")geometry=new THREE.CylinderGeometry(.5,.5,1,32,1,false).rotateZ(-Math.PI/2);
+  else if(type==="cone")geometry=new THREE.ConeGeometry(.5,1,32,1,false).rotateZ(-Math.PI/2);
+  else if(type==="sphere")geometry=new THREE.SphereGeometry(.5,32,20);
+  else throw new Error("Unsupported native primitive: "+type);
+  // Three's centered, Y-aligned solids become the native canonical solid:
+  // x:[0,1], y/z:[-.5,.5]. Cone tip is +X. Size and pose remain in native f.
+  geometry.translate(.5,0,0);geometry.computeBoundingBox();return geometry;
+ }
+ function disposeSceneObjects(){
+  for(const mesh of nativeMeshes.values()){
+   mesh.material.dispose();
+   for(const outline of mesh.children){outline.geometry.dispose();outline.material.dispose();}
+  }
+  nativeGroup.clear();nativeMeshes.clear();
+  for(const geometry of Object.values(geometries))geometry.dispose();geometries={};
+  if(grid){renderedScene.remove(grid);grid.geometry.dispose();const materials=Array.isArray(grid.material)?grid.material:[grid.material];for(const material of materials)material.dispose();grid=null;}
+ }
+ function buildSceneObjects(){
+  disposeSceneObjects();
+  for(const type of new Set(scene.objects.map(o=>o.type)))geometries[type]=createPrimitive(type);
+  for(const object of scene.objects){
+   const material=new THREE.MeshStandardMaterial({roughness:.48,metalness:.12,side:THREE.DoubleSide,depthTest:true,depthWrite:true});
+   const mesh=new THREE.Mesh(geometries[object.type],material);
+   mesh.name=object.id;mesh.userData.nativeId=object.id;mesh.matrixAutoUpdate=false;
+   const outline=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry,30),new THREE.LineBasicMaterial({color:0x112932,transparent:true,opacity:.4,depthTest:true,depthWrite:false}));
+   outline.visible=object.type==="box";mesh.add(outline);
+   nativeGroup.add(mesh);nativeMeshes.set(object.id,mesh);
+  }
+  const radius=Math.max(.01,norm(sub(scene.bounds.max,scene.bounds.min))/2),center=scene.bounds.min.map((v,i)=>(v+scene.bounds.max[i])/2);
+  const step=Math.pow(10,Math.floor(Math.log10(radius/3))),extent=Math.ceil(radius/step)*step;
+  grid=new THREE.GridHelper(2*extent,20,0x476278,0x304c60);grid.name="Camera grid (viewing aid)";
+  grid.position.set(center[0],scene.bounds.min[1]-.035*radius,center[2]);
+  const gridMaterials=Array.isArray(grid.material)?grid.material:[grid.material];
+  for(const material of gridMaterials){material.transparent=true;material.opacity=.28;material.depthWrite=false;}
+  renderedScene.add(grid);
+  keyLight.position.set(center[0]+2*radius,center[1]+3*radius,center[2]+4*radius);keyLight.target.position.fromArray(center);
+  fillLight.position.set(center[0]-3*radius,center[1]+radius,center[2]-2*radius);fillLight.target.position.fromArray(center);
+ }
+ function viewBasis(){const y=camera.yaw,p=camera.pitch;return {right:[Math.cos(y),0,-Math.sin(y)],up:[-Math.sin(y)*Math.sin(p),Math.cos(p),-Math.cos(y)*Math.sin(p)],toward:[Math.sin(y)*Math.cos(p),Math.sin(p),Math.cos(y)*Math.cos(p)]};}
+ function updateCamera(){
+  const baseScale=Math.min(width,height)*.405/camera.radius,basis=viewBasis(),distance=6*camera.radius;
+  renderedCamera.left=-width/(2*baseScale);renderedCamera.right=width/(2*baseScale);
+  renderedCamera.top=height/(2*baseScale);renderedCamera.bottom=-height/(2*baseScale);
+  renderedCamera.zoom=camera.zoom;renderedCamera.near=.01*camera.radius;renderedCamera.far=12*camera.radius;
+  renderedCamera.position.fromArray(camera.center.map((v,i)=>v+basis.toward[i]*distance));
+  renderedCamera.up.set(0,1,0);renderedCamera.lookAt(...camera.center);
+  renderedCamera.updateProjectionMatrix();renderedCamera.updateMatrixWorld(true);
+ }
+ function drawAxis(){
+  const b=viewBasis(),base=[42,40],colors=["#df8c91","#8ccb9d","#79aef0"],labels=["X","Y","Z"];
+  axisCtx.setTransform(dpr,0,0,dpr,0,0);axisCtx.clearRect(0,0,84,84);
+  axisCtx.font="9px system-ui";axisCtx.textBaseline="middle";axisCtx.textAlign="center";
+  for(let k=0;k<3;k++){const end=[base[0]+b.right[k]*20,base[1]-b.up[k]*20];axisCtx.strokeStyle=colors[k];axisCtx.lineWidth=1.4;axisCtx.beginPath();axisCtx.moveTo(...base);axisCtx.lineTo(...end);axisCtx.stroke();axisCtx.fillStyle=colors[k];axisCtx.fillText(labels[k],base[0]+b.right[k]*29,base[1]-b.up[k]*29);}
+ }
+ function frameOf(obj){return obj.frames[obj.frames.length===1?0:index];}
+ function drawScene(){
+  if(!scene||!width||!height||contextLost)return;
+  updateCamera();
+  for(const object of scene.objects){
+   const mesh=nativeMeshes.get(object.id),f=frameOf(object),color=object.colors?object.colors[object.colors.length===1?0:index]:object.color;
+   // Matrix4.set accepts rows; native f stores local-to-world scaled columns.
+   // Do not decompose or transpose again: this is the solver's affine transform.
+   mesh.matrix.set(f[0],f[3],f[6],f[9],f[1],f[4],f[7],f[10],f[2],f[5],f[8],f[11],0,0,0,1);
+   mesh.matrixWorldNeedsUpdate=true;
+   mesh.material.color.setRGB(color[0]/255,color[1]/255,color[2]/255,THREE.SRGBColorSpace);
+   const active=object.id===selected;
+   mesh.material.emissive.set(active?0x143e32:0x000000);
+   const outline=mesh.children[0];outline.visible=active||object.type==="box";
+   outline.material.color.set(active?0xb9ffe5:0x112932);outline.material.opacity=active?.85:.4;
+  }
+  renderedScene.updateMatrixWorld(true);renderer.render(renderedScene,renderedCamera);drawAxis();
+ }
+ function rendererInfo(){return {type:"Three.js WebGLRenderer",revision:THREE.REVISION,isWebGL2:typeof WebGL2RenderingContext!=="undefined"&&gl instanceof WebGL2RenderingContext,contextLost,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,glRenderer,depthBuffer:gl.getContextAttributes()?.depth===true,memory:{...renderer.info.memory}};}
+ function getObjectTransform(id,includeGeometry=false){
+  const mesh=nativeMeshes.get(id);if(!mesh)return null;mesh.updateWorldMatrix(true,false);
+  const box=mesh.geometry.boundingBox,result={id,type:scene.objects.find(o=>o.id===id).type,matrixWorld:mesh.matrixWorld.toArray(),boundingBox:{min:box.min.toArray(),max:box.max.toArray()}};
+  if(includeGeometry){result.geometryPositions=Array.from(mesh.geometry.attributes.position.array);result.geometryIndex=mesh.geometry.index?Array.from(mesh.geometry.index.array):null;}
+  return result;
+ }
+ function projectWorld(point){const p=new THREE.Vector3(...point).project(renderedCamera);return {x:(p.x+1)*width/2,y:(1-p.y)*height/2,z:p.z};}
+ function getRenderDiagnostics(){return {projectionMatrix:renderedCamera.projectionMatrix.toArray(),matrixWorldInverse:renderedCamera.matrixWorldInverse.toArray(),near:renderedCamera.near,far:renderedCamera.far,viewport:{width,height},rendererInfo:rendererInfo()};}
+ function fit(resetOrientation=false){
+  if(resetOrientation){camera.yaw=.48;camera.pitch=.24;}
+  camera.center=scene.bounds.min.map((v,i)=>(v+scene.bounds.max[i])/2);
+  camera.radius=Math.max(.01,norm(sub(scene.bounds.max,scene.bounds.min))/2);camera.zoom=1;
+  updateCameraButtons();drawScene();
+ }
+ function updateCameraButtons(){el("viewxy").classList.toggle("active",Math.abs(camera.yaw)<1e-9&&Math.abs(camera.pitch)<1e-9);el("view3d").classList.toggle("active",Math.abs(camera.yaw)>1e-9||Math.abs(camera.pitch)>1e-9);}
+ function indexFor(t){let lo=0,hi=scene.times.length-1;while(lo<hi){const m=(lo+hi+1)>>1;if(scene.times[m]<=t)lo=m;else hi=m-1;}return lo;}
+ function updatePlayButton(){const ended=index===scene.times.length-1;el("play").textContent=playing?"Pause":ended?"Replay":"Play";el("playbackState").textContent=playing?"PLAYING NATIVE DATA":ended?"RUN COMPLETE":"PAUSED";}
+ function toggle(){if(contextLost)return;if(!playing&&index===scene.times.length-1){index=0;playTime=scene.times[0];updateFrame();}playing=!playing;last=0;updatePlayButton();}
+ function seek(i){playing=false;index=clamp(Math.round(i),0,scene.times.length-1);playTime=scene.times[index];last=0;updateFrame();updatePlayButton();}
+ function updateFrame(){el("time").textContent=timeLabel(scene.times[index]);el("scrub").value=String(index);el("scrub").setAttribute("aria-valuetext",timeLabel(scene.times[index])+" seconds");drawScene();drawCharts();updateInspector();}
+ function selectObject(id){selected=id;for(const b of el("objectList").children){const active=b.dataset.id===id;b.classList.toggle("selected",active);b.setAttribute("aria-pressed",String(active));}updateInspector();drawScene();}
+ function updateInspector(){
+  const box=el("inspector");box.replaceChildren();
+  if(!selected){box.textContent="Select a part to inspect its native transform.";return;}
+  const obj=scene.objects.find(o=>o.id===selected),f=frameOf(obj),dimensions=[norm(f.slice(0,3)),norm(f.slice(3,6)),norm(f.slice(6,9))];
+  box.append(make("strong",null,obj.id),make("br"));box.append(document.createTextNode(obj.type+" · axis scales "+dimensions.map(v=>fmt(v)).join(" / ")+" m"),make("br"));box.append(document.createTextNode("origin ("+f.slice(9,12).map(v=>fmt(v)).join(", ")+") m"));
+ }
+ function graphNumber(v,span){if(Math.abs(v)>=1e4)return v.toExponential(1);return v.toFixed(span<.01?4:span<1?2:span<100?1:0);}
+ function prepareChart(p){
+  const rect=p.canvas.getBoundingClientRect(),w=Math.max(120,rect.width),h=Math.max(80,rect.height),pixel=Math.min(window.devicePixelRatio||1,2);
+  p.canvas.width=Math.round(w*pixel);p.canvas.height=Math.round(h*pixel);p.pixel=pixel;p.w=w;p.h=h;p.base=document.createElement("canvas");p.base.width=p.canvas.width;p.base.height=p.canvas.height;
+  const c=p.base.getContext("2d");c.scale(pixel,pixel);const vals=p.series.values;let low=Infinity,high=-Infinity;for(const v of vals){low=Math.min(low,v);high=Math.max(high,v);}
+  const raw=high-low,pad=Math.max(raw*.12,Math.abs(high)*1e-6,1e-5);low-=pad;high+=pad;
+  const left=45,right=w-11,top=10,bottom=h-22,tmin=scene.times[0],tmax=scene.times.at(-1);
+  p.X=t=>left+(t-tmin)/Math.max(tmax-tmin,1e-9)*(right-left);p.Y=v=>bottom-(v-low)/(high-low)*(bottom-top);p.top=top;p.bottom=bottom;
+  c.font="9px system-ui";c.textBaseline="middle";
+  for(let k=0;k<=2;k++){const y=top+(bottom-top)*k/2;c.strokeStyle="#2a435355";c.lineWidth=.8;c.beginPath();c.moveTo(left,y);c.lineTo(right,y);c.stroke();c.textAlign="right";c.fillStyle="#6f8c9f";c.fillText(graphNumber(high-(high-low)*k/2,raw),left-7,y);}
+  c.textAlign="left";c.fillStyle="#6f8c9f";c.fillText(tmin.toFixed(1)+" s",left,bottom+14);c.textAlign="right";c.fillText(tmax.toFixed(1)+" s",right,bottom+14);
+  c.beginPath();for(let i=0;i<vals.length;i++){const x=p.X(scene.times[i]),y=p.Y(vals[i]);i?c.lineTo(x,y):c.moveTo(x,y);}c.strokeStyle=p.color;c.lineWidth=1.65;c.lineJoin="round";c.stroke();
+  p.context=p.canvas.getContext("2d");
+ }
+ function drawCharts(){for(const p of plots){p.value.textContent=fmt(p.series.values[index]);if(!p.base)continue;const c=p.context;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,p.canvas.width,p.canvas.height);c.drawImage(p.base,0,0);c.setTransform(p.pixel,0,0,p.pixel,0,0);const x=p.X(scene.times[index]),y=p.Y(p.series.values[index]);c.strokeStyle="#b9d7df66";c.lineWidth=.8;c.beginPath();c.moveTo(x,p.top);c.lineTo(x,p.bottom);c.stroke();c.beginPath();c.arc(x,y,3.3,0,Math.PI*2);c.fillStyle=p.color;c.fill();c.strokeStyle="#0e202e";c.lineWidth=1;c.stroke();}}
+ function makePlots(){
+  const holder=el("plots");holder.replaceChildren();plots=[];
+  for(const [i,s]of(scene.series||[]).entries()){
+   const color=s.color||palette[i%palette.length],block=make("div","plot-block"),label=make("div","plot-label"),name=make("span","name"),dotEl=make("i","signal-dot"),valueBox=make("span","plot-value"),value=make("span"),unitEl=make("span","unit",s.unit||"");
+   dotEl.style.background=color;valueBox.style.color=color;name.append(dotEl,document.createTextNode(s.label||s.name));valueBox.append(value,unitEl);label.append(name,valueBox);
+   const canvas=make("canvas","plot");canvas.setAttribute("role","img");canvas.setAttribute("aria-label",(s.label||s.name)+" recorded over time in "+s.unit);block.append(label,canvas);holder.append(block);plots.push({series:s,color,canvas,value});
+  }
+  if(!plots.length)holder.append(make("p","empty-note","No signal series included for this scene."));
+ }
+ function changeScene(id){
+  const next=D.scenes.find(s=>s.id===id);if(!next)throw new Error("Unknown native scene: "+id);scene=next;index=0;playTime=scene.times[0];last=0;selected=null;
+  if(!scene.times.length||!scene.objects.length||!scene.bounds)throw new Error("Incomplete native scene: "+id);
+  for(const obj of scene.objects)if(!["box","cylinder","cone","sphere"].includes(obj.type)||(obj.frames.length!==1&&obj.frames.length!==scene.times.length))throw new Error("Invalid native object: "+obj.id);
+  for(const s of scene.series||[])if(s.values.length!==scene.times.length)throw new Error("Mismatched native signal: "+s.name);
+  el("title").textContent=scene.title;el("description").textContent=scene.description;el("sceneModel").textContent=scene.model;el("objectCount").textContent=scene.objects.length+" native primitives";el("objectSummary").textContent="· "+scene.objects.length;el("duration").textContent=timeLabel(scene.times.at(-1));el("sampleCount").textContent=scene.times.length+" samples";el("experimentNumber").textContent="SCENE "+String(D.scenes.indexOf(scene)+1).padStart(2,"0")+" / "+String(D.scenes.length).padStart(2,"0");el("scrub").max=String(scene.times.length-1);
+  for(const b of el("sceneTabs").children)b.setAttribute("aria-pressed",String(b.dataset.id===id));
+  el("objectList").replaceChildren();for(const obj of scene.objects){const b=make("button","object-button",obj.id);b.type="button";b.dataset.id=obj.id;b.title=obj.type+" · "+obj.id;b.setAttribute("aria-pressed","false");b.addEventListener("click",()=>selectObject(selected===obj.id?null:obj.id));el("objectList").append(b);}
+  buildSceneObjects();makePlots();fit(true);resize();updateFrame();updatePlayButton();
+ }
+ function resize(){const rect=C.getBoundingClientRect();width=rect.width;height=rect.height;dpr=Math.min(window.devicePixelRatio||1,2);renderer.setPixelRatio(dpr);renderer.setSize(width,height,false);axis.width=Math.round(84*dpr);axis.height=Math.round(84*dpr);for(const p of plots)prepareChart(p);drawScene();drawCharts();}
+ function pick(x,y){if(contextLost)return null;pointerNDC.set(x/width*2-1,1-y/height*2);renderedScene.updateMatrixWorld(true);raycaster.setFromCamera(pointerNDC,renderedCamera);const hit=raycaster.intersectObjects([...nativeMeshes.values()],false)[0];return hit?hit.object.userData.nativeId:null;}
+ C.addEventListener("webglcontextlost",event=>{event.preventDefault();contextLost=true;playing=false;last=0;updatePlayButton();el("play").disabled=true;el("scrub").disabled=true;el("error").hidden=false;el("error").textContent="The 3D graphics context was lost. Playback is paused while the browser restores it.";});
+ C.addEventListener("webglcontextrestored",()=>{contextLost=false;el("error").hidden=true;el("play").disabled=false;el("scrub").disabled=false;last=0;drawScene();});
+ C.addEventListener("pointerdown",e=>{if(e.button!==0)return;pointer={id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};dragged=false;C.setPointerCapture(e.pointerId);});
+ C.addEventListener("pointermove",e=>{if(!pointer||pointer.id!==e.pointerId)return;const dx=e.clientX-pointer.x,dy=e.clientY-pointer.y;if(Math.hypot(e.clientX-pointer.startX,e.clientY-pointer.startY)>3)dragged=true;camera.yaw-=dx*.008;camera.pitch=clamp(camera.pitch+dy*.008,-1.45,1.45);pointer.x=e.clientX;pointer.y=e.clientY;updateCameraButtons();drawScene();});
+ C.addEventListener("pointerup",e=>{if(!pointer||pointer.id!==e.pointerId)return;if(!dragged){const rect=C.getBoundingClientRect(),id=pick(e.clientX-rect.left,e.clientY-rect.top);selectObject(id===selected?null:id);if(id)el("objects").open=true;}pointer=null;});
+ C.addEventListener("pointercancel",()=>{pointer=null;});
+ C.addEventListener("wheel",e=>{e.preventDefault();camera.zoom=clamp(camera.zoom*Math.exp(-e.deltaY*.001),.35,6);drawScene();},{passive:false});
+ C.addEventListener("keydown",e=>{let handled=true;switch(e.key){case"ArrowLeft":camera.yaw-=.12;break;case"ArrowRight":camera.yaw+=.12;break;case"ArrowUp":camera.pitch=clamp(camera.pitch+.12,-1.45,1.45);break;case"ArrowDown":camera.pitch=clamp(camera.pitch-.12,-1.45,1.45);break;case"+":case"=":camera.zoom=clamp(camera.zoom*1.15,.35,6);break;case"-":camera.zoom=clamp(camera.zoom/1.15,.35,6);break;case"f":case"F":fit();break;case" ":toggle();break;default:handled=false;}if(handled){e.preventDefault();updateCameraButtons();drawScene();}});
+ el("play").addEventListener("click",toggle);el("scrub").addEventListener("input",()=>seek(Number(el("scrub").value)));
+ el("fit").addEventListener("click",()=>fit());el("view3d").addEventListener("click",()=>fit(true));el("viewxy").addEventListener("click",()=>{camera.yaw=0;camera.pitch=0;fit();});
+ for(const [i,s]of D.scenes.entries()){const b=make("button","scene-tab");b.type="button";b.dataset.id=s.id;b.append(make("span","tab-number",String(i+1).padStart(2,"0")),document.createTextNode(s.title));b.addEventListener("click",()=>changeScene(s.id));el("sceneTabs").append(b);}
+ const provenance=D.provenance||{};el("renderer").textContent="Three.js r"+THREE.REVISION+" · WebGL2";el("compiler").textContent=provenance.compiler||"Native OpenModelica results";el("revision").textContent=provenance.revision?"revision "+String(provenance.revision).slice(0,12):"Source provenance embedded in file";
+ window.addEventListener("resize",resize);document.addEventListener("visibilitychange",()=>{last=0;});reduced.addEventListener("change",e=>{if(e.matches){playing=false;updatePlayButton();}});
+ function tick(now){if(playing&&last&&!document.hidden){playTime=Math.min(scene.times.at(-1),playTime+Math.min(.1,(now-last)/1000)*Number(el("speed").value));const next=indexFor(playTime);if(next!==index){index=next;updateFrame();}if(playTime>=scene.times.at(-1)){playing=false;updatePlayButton();}}last=now;requestAnimationFrame(tick);}
+ window.__domelica={available:true,getState:()=>({sceneId:scene.id,time:scene.times[index],playTime,index,playing,objectCount:scene.objects.length,selected,camera:JSON.parse(JSON.stringify(camera)),rendererInfo:rendererInfo()}),getObjectTransform,getRenderDiagnostics,projectWorld,fit,draw:()=>{drawScene();drawCharts();},toggle,seek,changeScene};
+ changeScene(D.scenes[0].id);requestAnimationFrame(tick);
+} catch(error){
+ el("error").hidden=false;el("error").textContent="Cannot display native playback: "+error.message;el("play").disabled=true;el("scrub").disabled=true;
+ window.__domelica={available:false,error:error.message,getState:()=>({available:false,error:error.message})};
+ if(error.name!=="WebGLUnavailableError")throw error;
+}
+})();
+</script>
+</body>
+</html>

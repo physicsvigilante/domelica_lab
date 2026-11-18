@@ -1,0 +1,104 @@
+// Run from repository root with: omc scripts/native_smoke.mos
+print("DOMELICA_NATIVE_SMOKE_START\n");
+print("Compiler: " + getVersion() + "\n");
+// Remove only this suite's previous outputs. A failed rerun must not reuse them.
+for prefix in {"m0_motorized_pendulum", "m0_thermal_step", "m0_msl_double_pendulum", "m1_thermal_geared_arm"} loop
+  for suffix in {"_res.mat", "_res.csv", "_visual.xml"} loop
+    if regularFileExists(prefix + suffix) then
+      if not deleteFile(prefix + suffix) then
+        print("ERROR: cannot remove stale output " + prefix + suffix + "\n");
+        exit(1);
+      end if;
+    end if;
+  end for;
+end for;
+if not setCommandLineOptions("+d=visxml") then
+  print("ERROR: cannot enable native visualization export.\n");
+  exit(1);
+end if;
+if not loadModel(Modelica, {"4.1.0"}) then
+  print("ERROR: cannot load MSL 4.1.0. Run scripts/install_msl.mos.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+if not loadFile("DomelicaLab/package.mo") then
+  print("ERROR: cannot load DomelicaLab/package.mo.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+writeFile("native-toolchain.txt", "compiler=" + getVersion() + "\nmslVersion=" + getVersion(Modelica) + "\nmslSource=" + getSourceFile(Modelica) + "\n");
+print("CHECKING authored 3D electromechanical model:\n");
+print(checkModel(DomelicaLab.Examples.MotorizedPendulum3D) + "\n");
+print(getErrorString());
+simulate(
+  DomelicaLab.Examples.MotorizedPendulum3D,
+  stopTime=4,
+  numberOfIntervals=400,
+  tolerance=1e-6,
+  outputFormat="mat",
+  fileNamePrefix="m0_motorized_pendulum");
+print(getErrorString());
+if not regularFileExists("m0_motorized_pendulum_res.mat") then
+  print("ERROR: authored pendulum simulation failed.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+print("PASS pendulum: m0_motorized_pendulum_res.mat\n");
+
+print("CHECKING authored thermal model:\n");
+print(checkModel(DomelicaLab.Examples.HeatedBody) + "\n");
+print(getErrorString());
+simulate(
+  DomelicaLab.Examples.HeatedBody,
+  stopTime=5,
+  numberOfIntervals=500,
+  tolerance=1e-7,
+  outputFormat="mat",
+  fileNamePrefix="m0_thermal_step");
+print(getErrorString());
+if not regularFileExists("m0_thermal_step_res.mat") then
+  print("ERROR: thermal simulation failed.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+print("PASS thermal: m0_thermal_step_res.mat\n");
+
+print("CHECKING unchanged MSL multibody baseline:\n");
+simulate(
+  Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum,
+  stopTime=1,
+  numberOfIntervals=200,
+  tolerance=1e-6,
+  outputFormat="mat",
+  fileNamePrefix="m0_msl_double_pendulum");
+print(getErrorString());
+if not regularFileExists("m0_msl_double_pendulum_res.mat") then
+  print("ERROR: MSL baseline simulation failed.\n");
+  print(getErrorString());
+  exit(1);
+end if;
+print("PASS MSL baseline: m0_msl_double_pendulum_res.mat\n");
+
+print("CHECKING coupled thermal geared spatial arm:\n");
+print(checkModel(DomelicaLab.Examples.ThermalGearedArm3D) + "\n");
+print(getErrorString());
+simulate(
+  DomelicaLab.Examples.ThermalGearedArm3D,
+  stopTime=8,
+  numberOfIntervals=800,
+  tolerance=1e-7,
+  outputFormat="mat",
+  fileNamePrefix="m1_thermal_geared_arm");
+print(getErrorString());
+if not regularFileExists("m1_thermal_geared_arm_res.mat") then
+  print("ERROR: thermal geared arm simulation failed.\n");
+  exit(1);
+end if;
+for prefix in {"m0_motorized_pendulum", "m0_msl_double_pendulum", "m1_thermal_geared_arm"} loop
+  if not regularFileExists(prefix + "_visual.xml") then
+    print("ERROR: native scene missing for " + prefix + "\n");
+    exit(1);
+  end if;
+end for;
+print("PASS coupled arm and native scene exports\n");
+print("DOMELICA_NATIVE_SMOKE_COMPLETE\n");

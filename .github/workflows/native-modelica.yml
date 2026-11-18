@@ -1,0 +1,95 @@
+name: Native Modelica Lab
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  native-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Modelica Standard Library
+        run: omc scripts/install_msl.mos
+      - name: Build and simulate native models
+        run: omc scripts/native_smoke.mos
+      - name: Preserve primary native inputs before conversion
+        uses: actions/upload-artifact@v4
+        with:
+          name: modelica-native-inputs
+          path: |
+            m0_*_res.mat
+            m1_*_res.mat
+            m0_*_visual.xml
+            m1_*_visual.xml
+            native-toolchain.txt
+      - name: Export complete native results including geometry parameters
+        timeout-minutes: 3
+        run: timeout 120s python3 -u scripts/export_native_csv.py m0_motorized_pendulum m0_thermal_step m0_msl_double_pendulum m1_thermal_geared_arm
+      - name: Verify physical output independently
+        run: python3 scripts/verify_csv.py
+      - name: Check native transform convention and explicit rejection
+        run: python3 scripts/test_native_scene.py --native
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bundle pinned offline Three.js runtime
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:runtime
+      - name: Build offline browser playback from native data
+        run: python3 scripts/build_preview.py
+      - name: Preserve native results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: modelica-lab-results
+          if-no-files-found: warn
+          path: |
+            m0_*_res.csv
+            m0_*_res.mat
+            m0_*.log
+            m0_*_visual.xml
+            m1_*_res.csv
+            m1_*_res.mat
+            m1_*.log
+            m1_*_visual.xml
+            artifacts/browser-preview.html
+            artifacts/provenance.json
+            artifacts/three-runtime.js
+            artifacts/three-runtime.json
+            artifacts/three.LICENSE.txt
+            native-toolchain.txt
+
+  browser-playback:
+    needs: native-smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: modelica-lab-results
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare pinned browser checker
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Exercise actual offline native playback
+        run: node scripts/check_viewer.cjs artifacts/browser-preview.html
+      - name: Preserve browser screenshots and checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: modelica-browser-checks
+          if-no-files-found: warn
+          path: artifacts/browser-checks/

@@ -1,0 +1,20 @@
+{
+  "name": "domelica-lab-viewer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline rendering and verification of native Modelica scenes",
+  "scripts": {
+    "build:runtime": "node scripts/build_three_runtime.cjs",
+    "check:viewer": "node scripts/check_viewer.cjs artifacts/browser-preview.html"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.56.1"
+  }
+}

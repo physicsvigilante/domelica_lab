@@ -1,0 +1,18 @@
+// Run from the repository root with: omc scripts/install_msl.mos
+print("Domelica Lab - Modelica Standard Library 4.1.0 preparation\n");
+if not loadModel(Modelica, {"4.1.0"}) then
+  print("MSL 4.1.0 not yet available; installing using OpenModelica package manager.\n");
+  getErrorString();
+  if not installPackage(Modelica, "4.1.0", exactMatch=true) then
+    print("ERROR: MSL installation failed.\n");
+    print(getErrorString());
+    exit(1);
+  end if;
+  if not loadModel(Modelica, {"4.1.0"}) then
+    print("ERROR: MSL 4.1.0 still cannot be loaded.\n");
+    print(getErrorString());
+    exit(1);
+  end if;
+end if;
+print("MSL 4.1.0 ready.\n");
+print(getErrorString());
