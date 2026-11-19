@@ -1,0 +1,65 @@
+{
+  "schema": "domelica.experiments/v1",
+  "modelica": {
+    "package": "DomelicaLab/package.mo",
+    "mslVersion": "4.1.0"
+  },
+  "observationManifest": "m6d-four-pulleys-observations.json",
+  "recording": {
+    "kind": "planned-fresh-native-run",
+    "note": "One fresh two-rope four-pulley Modelica experiment. The diagram supplies only A acceleration, all other numeric sizes/masses illustrative."
+  },
+  "experiments": [
+    {
+      "id": "four-pulley-two-rope",
+      "prefix": "m6d_four_pulleys",
+      "model": "DomelicaLab.Examples.FourPulleyTwoRope2D",
+      "title": "Four pulleys and two ropes · find B acceleration",
+      "shortTitle": "P1–P4: two rope constraints",
+      "description": "Given block A accelerates left at 6 m/s². One rope passes around horizontal moving P1; a separate rope connects P1's axle over fixed P2, under moving P3, over fixed P4, and attaches to block B (P3 is also attached to B). Stock MSL ideal transmissions compute P1 and B motion, giving B 1 m/s² upward. All masses, radii and positions are illustrative; the diagram does not provide them.",
+      "camera": {
+        "yaw": 0,
+        "pitch": 0
+      },
+      "series": [
+        {
+          "name": "aLeftDisplacement",
+          "label": "A left displacement",
+          "unit": "m"
+        },
+        {
+          "name": "p1LeftDisplacement",
+          "label": "P1 left displacement",
+          "unit": "m"
+        },
+        {
+          "name": "bRise",
+          "label": "B rise",
+          "unit": "m"
+        },
+        {
+          "name": "tensionS1",
+          "label": "Rope S1 tension",
+          "unit": "N"
+        },
+        {
+          "name": "tensionS2",
+          "label": "Rope S2 tension",
+          "unit": "N"
+        },
+        {
+          "name": "totalEnergy",
+          "label": "Mechanical energy (externally driven)",
+          "unit": "J"
+        }
+      ],
+      "simulation": {
+        "startTime": 0,
+        "stopTime": 1,
+        "numberOfIntervals": 1000,
+        "tolerance": 1e-9,
+        "method": "dassl"
+      }
+    }
+  ]
+}

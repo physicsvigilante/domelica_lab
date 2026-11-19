@@ -1,0 +1,110 @@
+name: M6D Four Pulleys Two Ropes - Native and 2D
+
+on:
+  push:
+    branches: ['experiment/m6d-*']
+    paths:
+      - 'DomelicaLab/**'
+      - 'viewer/m6d-*'
+      - 'viewer/rope2d.template.html'
+      - 'scripts/check_m6d_four_pulleys.py'
+      - 'scripts/check_m6d_four_pulleys.cjs'
+      - 'scripts/test_m6d_two_rope_geometry.py'
+      - '.github/workflows/m6d-two-rope-four-pulley.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m6d-four-pulley-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-physics-and-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Accepted native/3D source preservation
+        run: python3 scripts/check_m4c_reuse.py
+      - name: Fixed/moving/four-pulley geometry unit tests
+        run: python3 -m unittest discover -s scripts -p 'test_*rope*geometry.py' -v
+      - name: Prepare pinned MSL 4.1.0
+        run: omc scripts/install_msl.mos
+      - name: Run four-pulley two-string diagram in native OpenModelica
+        timeout-minutes: 12
+        run: >-
+          python3 scripts/run_experiments.py run
+          --manifest viewer/m6d-four-pulleys-experiments.json
+          --run-dir observation-run/four --timeout 600
+      - name: Check all native force/constraint/energy samples, export observations
+        run: |
+          python3 scripts/check_m6d_four_pulleys.py --csv observation-run/four/m6d_four_pulleys_res.csv --report artifacts/m6d-physics.json
+          python3 scripts/observation_data.py observation-run/four/observations.json observation-run/four artifacts/m6d-observations.json
+      - name: Regression - original fixed and single moving-pulley runs
+        timeout-minutes: 12
+        run: |
+          python3 scripts/run_experiments.py run --manifest viewer/m6c-2d-experiments.json --run-dir observation-run/fixed --timeout 600
+          python3 scripts/run_experiments.py run --manifest viewer/m6c-2d-moving-experiments.json --run-dir observation-run/moving --timeout 600
+          python3 scripts/check_m6b_atwood.py --csv observation-run/fixed/m6b_atwood_res.csv --report artifacts/m6d-fixed-physics.json
+          python3 scripts/check_m6c_moving_pulley.py --csv observation-run/moving/m6c_moving_res.csv --report artifacts/m6d-moving-physics.json
+      - name: Build the same generic SVG template for all three arrangements
+        run: |
+          python3 scripts/build_rope2d.py --csv observation-run/four/m6d_four_pulleys_res.csv --native-manifest observation-run/four/experiments.json --routes viewer/m6d-four-pulleys-routes.json --style viewer/m6d-four-pulleys-style.json --output artifacts/m6d-four-pulleys-dark.html
+          python3 scripts/build_rope2d.py --csv observation-run/four/m6d_four_pulleys_res.csv --native-manifest observation-run/four/experiments.json --routes viewer/m6d-four-pulleys-routes.json --style viewer/m6d-four-pulleys-style-light.json --output artifacts/m6d-four-pulleys-light.html
+          python3 scripts/build_rope2d.py --csv observation-run/fixed/m6b_atwood_res.csv --native-manifest observation-run/fixed/experiments.json --routes viewer/m6c-2d-routes.json --style viewer/m6c-2d-style.json --output artifacts/m6d-fixed-dark.html
+          python3 scripts/build_rope2d.py --csv observation-run/fixed/m6b_atwood_res.csv --native-manifest observation-run/fixed/experiments.json --routes viewer/m6c-2d-routes.json --style viewer/m6c-2d-style-light.json --output artifacts/m6d-fixed-light.html
+          python3 scripts/build_rope2d.py --csv observation-run/moving/m6c_moving_res.csv --native-manifest observation-run/moving/experiments.json --routes viewer/m6c-2d-moving-routes.json --style viewer/m6c-2d-moving-style.json --output artifacts/m6d-moving-dark.html
+          python3 scripts/build_rope2d.py --csv observation-run/moving/m6c_moving_res.csv --native-manifest observation-run/moving/experiments.json --routes viewer/m6c-2d-moving-routes.json --style viewer/m6c-2d-moving-style-light.json --output artifacts/m6d-moving-light.html
+      - name: Preserve native source, MAT/CSV, analysis, offline HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m6d-native-and-html
+          if-no-files-found: warn
+          path: |
+            artifacts/m6d-*.html
+            artifacts/m6d-*.json
+            observation-run/
+
+  browser-recorded-geometry:
+    needs: native-physics-and-geometry
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: m6d-native-and-html
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact Node/browser dependencies
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install chromium
+      - name: Browser check - four pulleys, two strings, all native samples
+        run: node scripts/check_m6d_four_pulleys.cjs artifacts/m6d-four-pulleys-dark.html artifacts/m6d-four-pulleys-light.html artifacts/m6d-browser
+      - name: Browser regression - fixed pulley
+        run: node scripts/check_rope2d.cjs artifacts/m6d-fixed-dark.html artifacts/m6d-fixed-light.html artifacts/m6d-fixed-browser
+      - name: Browser regression - one moving pulley
+        run: node scripts/check_m6c_moving_pulley.cjs artifacts/m6d-moving-dark.html artifacts/m6d-moving-light.html artifacts/m6d-moving-browser
+      - name: Preserve actual browser screenshots and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m6d-browser-checks
+          if-no-files-found: warn
+          path: |
+            artifacts/m6d-browser/
+            artifacts/m6d-fixed-browser/
+            artifacts/m6d-moving-browser/

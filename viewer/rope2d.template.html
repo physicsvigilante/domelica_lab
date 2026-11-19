@@ -69,23 +69,39 @@ svg.style.background=style.background;
 const caption=mk("text",{x:22,y:32,fill:style.foreground,"font-size":15,"font-weight":650});
 caption.textContent="WORLD XY · dimensions in metres";
 const pulleys=new Map(),axles=new Map(),ropes=new Map(),bodies=new Map(),labels=new Map();
+const pulleyLabels=new Map(),ropeLabels=new Map();
 for(const name of Object.keys(D.frames[0].pulleys)){
  const circle=mk("circle",{fill:style.pulley.fill,stroke:style.pulley.stroke,
                             "stroke-width":style.pulley.strokeWidthPx,"data-pulley":name});
  pulleys.set(name,circle);
  axles.set(name,mk("circle",{r:4,fill:style.foreground,opacity:.8,"data-axle":name}));
+ const label=mk("text",{"data-pulley-label":name,fill:style.foreground,"font-size":14,"font-weight":700,"text-anchor":"middle"});
+ label.textContent=name;pulleyLabels.set(name,label);
 }
 for(const name of Object.keys(D.frames[0].ropes)){
  const line=mk("polyline",{fill:"none",stroke:style.rope.stroke,
                 "stroke-width":style.rope.widthPx,"stroke-linecap":"round",
                 "stroke-linejoin":"round","data-rope":name});
  ropes.set(name,line);
+ const label=mk("text",{"data-rope-label":name,fill:style.foreground,"font-size":13,"font-weight":650,"text-anchor":"middle"});
+ label.textContent=name;ropeLabels.set(name,label);
 }
 for(const [name,body] of Object.entries(D.frames[0].bodies)){
  const circle=mk("circle",{r:style.bodyMarkerRadiusPx,fill:style.bodies[name].fill,
              stroke:style.foreground,"stroke-width":1.4,"data-body":name});
  const txt=mk("text",{fill:style.foreground,"font-size":16,"font-weight":600,"data-body-label":name});
  bodies.set(name,circle);labels.set(name,txt);
+}
+// HUD scales to any number of recorded rope constraints and native metrics.
+const readings=document.querySelector(".readings"),sample=document.getElementById("sample");
+const metricExtras=new Map(),lengthExtras=new Map();
+for(const name of Object.keys(D.frames[0].ropes).slice(1)){
+ const output=document.createElement("span");output.dataset.ropeLength=name;
+ readings.insertBefore(output,sample);lengthExtras.set(name,output);
+}
+for(const metric of D.metrics.slice(1)){
+ const output=document.createElement("span");output.dataset.metric=metric.id;
+ readings.insertBefore(output,sample);metricExtras.set(metric.id,output);
 }
 scrub.max=String(D.times.length-1);
 let index=0,playing=false,started=0,elapsed=0,raf=0;
@@ -97,10 +113,14 @@ function draw(i){
    const c=project(p.center),e=pulleys.get(name);
    e.setAttribute("cx",c[0]);e.setAttribute("cy",c[1]);e.setAttribute("r",p.radius*scale);
    axles.get(name).setAttribute("cx",c[0]);axles.get(name).setAttribute("cy",c[1]);
+   const label=pulleyLabels.get(name);
+   label.setAttribute("x",c[0]);label.setAttribute("y",c[1]-p.radius*scale-10);
  }
  for(const [name,r] of Object.entries(frame.ropes)){
    const points=r.points.map(p=>project(p).join(",")).join(" ");
    ropes.get(name).setAttribute("points",points);
+   if(r.points.length>1){const a=project(r.points[0]),b=project(r.points[1]),tag=ropeLabels.get(name);
+     tag.setAttribute("x",(a[0]+b[0])/2);tag.setAttribute("y",(a[1]+b[1])/2-10);}
  }
  for(const [name,b] of Object.entries(frame.bodies)){
    const p=project(b.position),circle=bodies.get(name),text=labels.get(name);
@@ -109,16 +129,28 @@ function draw(i){
    const wheelRadius=Math.max(0,...Object.values(frame.pulleys)
      .filter(w=>Math.hypot(w.center[0]-b.position[0],w.center[1]-b.position[1])<1e-8)
      .map(w=>w.radius*scale));
-   const side=p[0]<=W/2?-1:1,extent=Math.max(style.bodyMarkerRadiusPx,wheelRadius);
+   const extent=Math.max(style.bodyMarkerRadiusPx,wheelRadius);
+   text.textContent=b.label+" · "+Number(b.mass).toLocaleString("en-US",{maximumFractionDigits:3})+" kg";
+   const width=text.getComputedTextLength();
+   let side=p[0]<=W/2?-1:1;
+   if(side>0&&p[0]+extent+12+width>W-12)side=-1;
+   if(side<0&&p[0]-extent-12-width<12)side=1;
    text.setAttribute("text-anchor",side<0?"end":"start");
    text.setAttribute("x",p[0]+side*(extent+12));text.setAttribute("y",p[1]+5);
-   text.textContent=b.label+" · "+Number(b.mass).toLocaleString("en-US",{maximumFractionDigits:3})+" kg";
  }
  document.getElementById("clock").textContent=decimal(D.times[index])+" s";
  document.getElementById("sample").textContent="Native sample "+(index+1)+" / "+D.times.length;
  const metric=D.metrics[0];
  document.getElementById("tension").textContent=metric.label+" · "+decimal(frame.metrics[metric.id])+" "+metric.unit;
- document.getElementById("length").textContent="Rope length · "+Object.values(frame.ropes)[0].length.toFixed(4)+" m";
+ for(const item of D.metrics.slice(1)){
+   metricExtras.get(item.id).textContent=item.label+" · "+decimal(frame.metrics[item.id])+" "+item.unit;
+ }
+ const entries=Object.entries(frame.ropes);
+ document.getElementById("length").textContent=
+   (entries.length===1?"Rope length":"Rope "+entries[0][0]+" length")+" · "+entries[0][1].length.toFixed(4)+" m";
+ for(const [name,path] of entries.slice(1)){
+   lengthExtras.get(name).textContent="Rope "+name+" length · "+path.length.toFixed(4)+" m";
+ }
  scrub.value=String(index);
 }
 function indexAt(t){
