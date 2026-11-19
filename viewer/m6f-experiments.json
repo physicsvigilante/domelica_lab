@@ -1,0 +1,60 @@
+{
+  "schema": "domelica.experiments/v1",
+  "modelica": {
+    "package": "DomelicaLab/package.mo",
+    "mslVersion": "4.1.0"
+  },
+  "observationManifest": "m6f-observations.json",
+  "recording": {
+    "kind": "planned-fresh-native-run",
+    "note": "Only image-specified angle=30deg. Illustrative masses 2kg A, 3kg B; frictionless guides and two independent taut ropes."
+  },
+  "experiments": [
+    {
+      "id": "incline-two-rope",
+      "prefix": "m6f_incline",
+      "model": "DomelicaLab.Examples.InclineMovablePulley2D",
+      "title": "30-degree incline, movable pulley and hanging mass",
+      "shortTitle": "Incline + pulley",
+      "description": "Left anchor S1 passes around massless moving pulley C and attaches to block A. Rope S2 attaches to C's axle, passes over fixed top wheel and ends at hanging block B. Native gravity and MSL lossless transmissions generate motion. 30 degrees is shown; masses 2/3 kg and frictionless guides are labeled illustrative assumptions.",
+      "camera": {
+        "yaw": 0,
+        "pitch": 0
+      },
+      "series": [
+        {
+          "name": "aRise",
+          "label": "A displacement up slope",
+          "unit": "m"
+        },
+        {
+          "name": "cRise",
+          "label": "C displacement up slope",
+          "unit": "m"
+        },
+        {
+          "name": "bDrop",
+          "label": "B displacement downward",
+          "unit": "m"
+        },
+        {
+          "name": "tensionS1",
+          "label": "S1 tension",
+          "unit": "N"
+        },
+        {
+          "name": "tensionS2",
+          "label": "S2 tension",
+          "unit": "N"
+        }
+      ],
+      "simulation": {
+        "startTime": 0,
+        "stopTime": 1,
+        "numberOfIntervals": 500,
+        "tolerance": 1e-9,
+        "method": "dassl"
+      }
+    }
+  ]
+}

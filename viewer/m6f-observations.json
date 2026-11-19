@@ -1,0 +1,36 @@
+{
+  "schema": "domelica.observations/v1",
+  "provenance": {
+    "definitionOrigin": "M6F: one incline pulley image; masses stated as illustrative",
+    "newSimulation": false
+  },
+  "scenes": [
+    {
+      "id": "incline-two-rope",
+      "model": "DomelicaLab.Examples.InclineMovablePulley2D",
+      "csv": "m6f_incline_res.csv",
+      "bodies": [
+        {
+          "id": "A",
+          "label": "Inclined block A",
+          "objectIds": [
+            "blockA.sphere"
+          ]
+        },
+        {
+          "id": "B",
+          "label": "Hanging block B",
+          "objectIds": [
+            "blockB.sphere"
+          ]
+        }
+      ],
+      "notes": [
+        "Two ropes, not one: S1 left anchor→moving C→A; S2 C axle→fixed top→B",
+        "Incline angle 30 degrees is from the diagram. Masses 2kg and 3kg are illustrative; no friction given.",
+        "All native kinematics/force and energy diagnostics from OpenModelica; reused domelica_mecha-derived rope geometry."
+      ],
+      "overlays": []
+    }
+  ]
+}
