@@ -1,0 +1,60 @@
+{
+  "schema": "domelica.experiments/v1",
+  "modelica": {
+    "package": "DomelicaLab/package.mo",
+    "mslVersion": "4.1.0"
+  },
+  "observationManifest": "m6c-2d-moving-observations.json",
+  "recording": {
+    "kind": "planned-fresh-native-run",
+    "note": "M6C-2D-B: one native movable-pulley composition; reuse the numeric geometry and SVG playback layers."
+  },
+  "experiments": [
+    {
+      "id": "moving-pulley",
+      "prefix": "m6c_moving",
+      "model": "DomelicaLab.Examples.MovingPulley2D",
+      "title": "A moving pulley lifts a load",
+      "shortTitle": "Moving pulley",
+      "description": "A ceiling anchor, one load-bearing moving pulley, a fixed redirect and a counterweight. Stock MSL components enforce a taut massless rope; all motion and reactions are native simulation results. The load mass is lumped at the moving axle. Both wheels have no modeled rotational inertia.",
+      "camera": {
+        "yaw": 0,
+        "pitch": 0
+      },
+      "series": [
+        {
+          "name": "loadDisplacement",
+          "label": "Load rise",
+          "unit": "m"
+        },
+        {
+          "name": "counterweightDisplacement",
+          "label": "Counterweight drop",
+          "unit": "m"
+        },
+        {
+          "name": "ropeTension",
+          "label": "Rope tension",
+          "unit": "N"
+        },
+        {
+          "name": "loadSupportForce",
+          "label": "Load support (two strands)",
+          "unit": "N"
+        },
+        {
+          "name": "totalEnergy",
+          "label": "Mechanical energy",
+          "unit": "J"
+        }
+      ],
+      "simulation": {
+        "startTime": 0,
+        "stopTime": 1.2,
+        "numberOfIntervals": 1000,
+        "tolerance": 1e-09,
+        "method": "dassl"
+      }
+    }
+  ]
+}
