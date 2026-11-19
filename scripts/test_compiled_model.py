@@ -60,6 +60,28 @@ class CompiledRunGuards(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "changed"):
                 runner.verify_bundle(bundle)
 
+    def test_generated_sparsity_inputs_are_packaged_and_required(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            work, bundle = root / "work", root / "bundle"
+            native = bundle / "native"
+            work.mkdir(); native.mkdir(parents=True)
+            required = ["cart_compiled_JacA.bin", "cart_compiled_JacLSJac0.bin",
+                        "cart_compiled_JacLSJac1.bin"]
+            for index, name in enumerate(required):
+                (work / name).write_bytes(bytes([index, 0, 255, 0]))
+            (work / "other_model_JacA.bin").write_bytes(b"unrelated")
+            (work / "cart_compiled_12jac.c").write_text("generated source")
+            inventory = runner.copy_native_runtime_data(work, native, "cart_compiled")
+            self.assertEqual(sorted(path.name for path in native.iterdir()), sorted(required))
+            self.assertEqual({entry["file"] for entry in inventory}, {"native/" + name for name in required})
+            runner.write_json(bundle / "build.json", {"schema": "domelica.compiled-model/v1",
+                "compilerInvocations": 1, "filesSHA256": {entry["file"]: entry["sha256"] for entry in inventory}})
+            runner.verify_bundle(bundle)
+            (native / "cart_compiled_JacLSJac0.bin").unlink()
+            with self.assertRaisesRegex(ValueError, "cart_compiled_JacLSJac0.bin"):
+                runner.verify_bundle(bundle)
+
     def test_missing_or_fixed_parameter_metadata_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "init.xml"

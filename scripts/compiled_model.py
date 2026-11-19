@@ -213,6 +213,24 @@ def copy_runtime_support(bundle):
             shutil.copy2(ROOT / name, bundle / name)
 
 
+def copy_native_runtime_data(work, native, prefix):
+    """Keep generated binary data used by native Jacobian/sparsity routines.
+
+    These files are runtime inputs, even though the generated makefile's
+    GENERATEDFILES list does not include them. Copy only this model's binary
+    data; generated C, headers and object files stay in the build directory.
+    """
+    result = []
+    for source in sorted(Path(work).glob(prefix + "_*.bin")):
+        if not source.is_file() or source.is_symlink():
+            raise ValueError(f"Expected a regular generated runtime data file: {source.name}")
+        target = Path(native) / source.name
+        shutil.copy2(source, target)
+        result.append({"file": "native/" + target.name, "sha256": sha(target),
+                       "bytes": target.stat().st_size})
+    return result
+
+
 def collect_notices(bundle, dependencies, compiler, toolchain):
     """Preserve available distribution notices; report missing ones explicitly."""
     destination = bundle / "licenses"
@@ -247,6 +265,15 @@ def collect_notices(bundle, dependencies, compiler, toolchain):
             missing.append({"origin": package, "reason": "Installed copyright notice not found"})
     msl_root = Path(toolchain.get("mslSource", "/unavailable")).parent
     msl_found = False
+    notice_root = msl_root / "Resources" / "Licenses"
+    if notice_root.is_dir():
+        for source in sorted(notice_root.rglob("*")):
+            if source.is_file():
+                target = destination / "MSL-Resources" / source.relative_to(notice_root)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+                found.append({"source": str(source), "file": str(target.relative_to(bundle)), "sha256": sha(target)})
+        msl_found = (notice_root / "LICENSE_ModelicaStandardLibrary.txt").is_file()
     for relative in ("LICENSE", "LICENSE.txt", "LICENSE.md", "Resources/Documentation/License.html",
                      "Resources/Documentation/ModelicaLicense2.html"):
         source = msl_root / relative
@@ -256,7 +283,7 @@ def collect_notices(bundle, dependencies, compiler, toolchain):
             found.append({"source": str(source), "file": str(target.relative_to(bundle)), "sha256": sha(target)})
             msl_found = True
     if not msl_found:
-        # Current MSL embeds its license text in the UsersGuide package.
+        # Older library distributions may embed the notice in UsersGuide.
         source = msl_root / "UsersGuide" / "ModelicaLicense2.mo"
         if not source.is_file():
             source = msl_root / "UsersGuide" / "ModelicaLicense.mo"
@@ -305,6 +332,7 @@ def build(manifest_path, bundle_path, timeout):
         source = work / (prefix + suffix)
         if suffix != "_info.json" or source.is_file():
             shutil.copy2(source, native / source.name)
+    runtime_data = copy_native_runtime_data(work, native, prefix)
     metadata = parameter_metadata(native / (prefix + "_init.xml"))
     dependencies = shared_libraries(native / prefix, native / "lib")
     shutil.copy2(work / "native-toolchain.txt", evidence / "native-toolchain.txt")
@@ -319,6 +347,7 @@ def build(manifest_path, bundle_path, timeout):
         "checkoutRevision": os.environ.get("CHECKOUT_REVISION", ""),
         "runUrl": os.environ.get("NATIVE_RUN_URL", ""), "modelSourceSHA256": model_hashes,
         "parameterMetadata": metadata, "dependencies": dependencies,
+        "runtimeData": runtime_data,
         "notices": notices,
         "platform": {"system": platform.system(), "machine": platform.machine(), "python": platform.python_version()},
         "executable": "native/" + prefix, "initXML": "native/" + prefix + "_init.xml",
@@ -418,7 +447,9 @@ def run_case(bundle, build_report, configuration, output, case, timeout):
     log_text = (case_dir / "native.log").read_text(encoding="utf-8", errors="replace")
     after = sha(executable)
     if process.returncode or not re.search(r"LOG_SUCCESS\s*\|\s*info\s*\|\s*The simulation finished successfully\.", log_text):
-        raise RuntimeError(f"Native run {identity} failed; inspect {case_dir / 'native.log'}")
+        tail = "\n".join(log_text.splitlines()[-30:])[-4000:]
+        raise RuntimeError(f"Native run {identity} failed (exit {process.returncode}); "
+                           f"inspect {case_dir / 'native.log'}\nNative log tail:\n{tail}")
     if before != after or before != build_report["filesSHA256"][build_report["executable"]]:
         raise ValueError("The compiled executable changed between runs")
     result = NativeMatResult(result_path)

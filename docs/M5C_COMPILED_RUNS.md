@@ -26,7 +26,8 @@ counts are outside this first compiled-assembly contract.
 ## What recipients need
 
 The experimental package contains the Linux x86-64 executable, initialization
-and visual XML, its required shared libraries and matching ELF loader, small
+and visual XML, generated runtime data (including Jacobian sparsity files),
+its required shared libraries and matching ELF loader, small
 Python scripts, the observation declarations and the already bundled viewer.
 It includes this project's Modelica sources for provenance; it does not include
 the Modelica Standard Library or a Modelica/C/C++ development toolchain.
