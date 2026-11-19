@@ -1,0 +1,75 @@
+name: M6E Two 2kg Masses Nested Pulley - Native/2D
+
+on:
+  push:
+    branches: ['experiment/m6e-*']
+    paths:
+      - 'DomelicaLab/**'
+      - 'viewer/m6e-*'
+      - 'scripts/check_m6e_physics.py'
+      - 'scripts/test_m6e_rope_geometry.py'
+      - 'scripts/check_m6e_browser.cjs'
+      - '.github/workflows/m6e-nested-pulleys.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preserve existing native source
+        run: python3 scripts/check_m4c_reuse.py
+      - name: Quick tangent/arc check
+        run: python3 -m unittest discover -s scripts -p test_m6e_rope_geometry.py -v
+      - name: Pinned standard library
+        run: omc scripts/install_msl.mos
+      - name: One native 2kg+2kg simulation
+        run: python3 scripts/run_experiments.py run --manifest viewer/m6e-experiments.json --run-dir m6e-run --timeout 300
+      - name: Independent native physics check
+        run: python3 scripts/check_m6e_physics.py --csv m6e-run/m6e_nested_2kg_res.csv --report artifacts/m6e-physics.json
+      - name: Build dark/light offline HTML from that recording
+        run: |
+          python3 scripts/build_rope2d.py --csv m6e-run/m6e_nested_2kg_res.csv --native-manifest m6e-run/experiments.json --routes viewer/m6e-routes.json --style viewer/m6e-style-dark.json --output artifacts/m6e-two-kg-dark.html
+          python3 scripts/build_rope2d.py --csv m6e-run/m6e_nested_2kg_res.csv --native-manifest m6e-run/experiments.json --routes viewer/m6e-routes.json --style viewer/m6e-style-light.json --output artifacts/m6e-two-kg-light.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m6e-native-and-html
+          path: |
+            m6e-run/
+            artifacts/m6e-*.json
+            artifacts/m6e-two-kg-*.html
+
+  browser:
+    needs: native
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: m6e-native-and-html
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Chromium
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install chromium
+      - name: One focused recorded SVG smoke check
+        run: node scripts/check_m6e_browser.cjs artifacts/m6e-two-kg-dark.html artifacts/m6e-two-kg-light.html artifacts/m6e-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m6e-browser-checks
+          path: artifacts/m6e-browser/

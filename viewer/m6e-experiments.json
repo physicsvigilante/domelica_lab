@@ -1,0 +1,60 @@
+{
+  "schema": "domelica.experiments/v1",
+  "modelica": {
+    "package": "DomelicaLab/package.mo",
+    "mslVersion": "4.1.0"
+  },
+  "observationManifest": "m6e-observations.json",
+  "recording": {
+    "kind": "planned-fresh-native-run",
+    "note": "Single rope: A→C→B-pulley→top fixed→C axle. A and B are given 2kg; C 1kg illustrative."
+  },
+  "experiments": [
+    {
+      "id": "nested-pulleys-two-kg",
+      "prefix": "m6e_nested_2kg",
+      "model": "DomelicaLab.Examples.NestedPulleyTwoKg2D",
+      "title": "Two 2 kg masses with nested moving pulleys",
+      "shortTitle": "Nested pulleys",
+      "description": "Literal single-rope tracing from image. A=2 kg, B=2 kg. Moving C carriage is assigned illustrative 1 kg because its mass is unspecified and the massless limit gives zero tensile reaction. Physics is solved natively by gravity and a reusable three-coordinate ideal inextensible-rope constraint.",
+      "camera": {
+        "yaw": 0,
+        "pitch": 0
+      },
+      "series": [
+        {
+          "name": "aDrop",
+          "label": "A downward displacement",
+          "unit": "m"
+        },
+        {
+          "name": "bDrop",
+          "label": "B downward displacement",
+          "unit": "m"
+        },
+        {
+          "name": "cDrop",
+          "label": "C downward displacement",
+          "unit": "m"
+        },
+        {
+          "name": "ropeTension",
+          "label": "Single-rope tension",
+          "unit": "N"
+        },
+        {
+          "name": "totalEnergy",
+          "label": "Mechanical energy",
+          "unit": "J"
+        }
+      ],
+      "simulation": {
+        "startTime": 0,
+        "stopTime": 0.3,
+        "numberOfIntervals": 300,
+        "tolerance": 1e-9,
+        "method": "dassl"
+      }
+    }
+  ]
+}

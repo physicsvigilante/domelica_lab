@@ -1,0 +1,36 @@
+{
+  "schema": "domelica.observations/v1",
+  "provenance": {
+    "definitionOrigin": "M6E single-rope native observations, 2 kg A/B, explicit C carriage",
+    "newSimulation": false
+  },
+  "scenes": [
+    {
+      "id": "nested-pulleys-two-kg",
+      "model": "DomelicaLab.Examples.NestedPulleyTwoKg2D",
+      "csv": "m6e_nested_2kg_res.csv",
+      "bodies": [
+        {
+          "id": "A",
+          "label": "Block A",
+          "objectIds": [
+            "bodyA.sphere"
+          ]
+        },
+        {
+          "id": "B",
+          "label": "Block B",
+          "objectIds": [
+            "bodyB.sphere"
+          ]
+        }
+      ],
+      "notes": [
+        "Single continuous rope A→C→B wheel→top wheel→C axle.",
+        "A and B are 2 kg from the user. C carriage inertia is not specified and is explicitly assumed 1 kg for this animation.",
+        "Full native force and motion data; no browser physics solver."
+      ],
+      "overlays": []
+    }
+  ]
+}

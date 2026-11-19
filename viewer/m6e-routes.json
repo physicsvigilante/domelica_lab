@@ -1,0 +1,145 @@
+{
+  "schema": "domelica.rope-routes-2d/v1",
+  "plane": "xy",
+  "recording": {
+    "experimentId": "nested-pulleys-two-kg",
+    "model": "DomelicaLab.Examples.NestedPulleyTwoKg2D",
+    "csv": "m6e_nested_2kg_res.csv"
+  },
+  "attachments": {
+    "A": [
+      "aPosition[1]",
+      "aPosition[2]"
+    ],
+    "Caxle": [
+      "cPosition[1]",
+      "cPosition[2]"
+    ],
+    "B": [
+      "bPosition[1]",
+      "bPosition[2]"
+    ]
+  },
+  "pulleys": {
+    "C": {
+      "centerColumns": [
+        "cPosition[1]",
+        "cPosition[2]"
+      ],
+      "radiusColumn": "radiusC"
+    },
+    "Bwheel": {
+      "centerColumns": [
+        "bWheelCenter[1]",
+        "bWheelCenter[2]"
+      ],
+      "radiusColumn": "radiusB"
+    },
+    "Top": {
+      "centerColumns": [
+        "fixedWheelCenter[1]",
+        "fixedWheelCenter[2]"
+      ],
+      "radiusColumn": "radiusTop"
+    }
+  },
+  "ropes": [
+    {
+      "id": "continuous-rope",
+      "lengthPolicy": "constant",
+      "tolerance": 0.000001,
+      "nodes": [
+        {
+          "kind": "attachment",
+          "ref": "A"
+        },
+        {
+          "kind": "pulley",
+          "ref": "C",
+          "incomingSide": 1,
+          "outgoingSide": 1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "pulley",
+          "ref": "Bwheel",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "counterclockwise"
+        },
+        {
+          "kind": "pulley",
+          "ref": "Top",
+          "incomingSide": 1,
+          "outgoingSide": 1,
+          "wrap": "counterclockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "Caxle"
+        }
+      ]
+    }
+  ],
+  "bodies": [
+    {
+      "id": "A",
+      "at": "A",
+      "label": "Block A",
+      "massColumn": "massA"
+    },
+    {
+      "id": "B",
+      "at": "B",
+      "label": "Block B",
+      "massColumn": "massB"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "T",
+      "column": "ropeTension",
+      "label": "Rope tension",
+      "unit": "N"
+    },
+    {
+      "id": "aA",
+      "column": "aDownAcceleration",
+      "label": "A acceleration down",
+      "unit": "m/s²"
+    },
+    {
+      "id": "aB",
+      "column": "bDownAcceleration",
+      "label": "B acceleration down",
+      "unit": "m/s²"
+    },
+    {
+      "id": "aC",
+      "column": "cDownAcceleration",
+      "label": "C acceleration down",
+      "unit": "m/s²"
+    },
+    {
+      "id": "massC",
+      "column": "carrierMassC",
+      "label": "Assumed C-carriage mass",
+      "unit": "kg"
+    }
+  ],
+  "rigidLinks": [
+    {
+      "id": "Bwheel-to-B",
+      "points": [
+        [
+          "bWheelCenter[1]",
+          "bWheelCenter[2]"
+        ],
+        [
+          "bPosition[1]",
+          "bPosition[2]"
+        ]
+      ]
+    }
+  ]
+}
