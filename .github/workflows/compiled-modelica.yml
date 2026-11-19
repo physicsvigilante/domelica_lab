@@ -2,10 +2,16 @@ name: Compiled Parameter Lab
 
 on:
   push:
-    branches: [main, 'experiment/m5c-*']
+    branches: [main, 'experiment/m5c-*', 'experiment/m5d-*']
     paths:
       - 'DomelicaLab/**'
       - 'scripts/compiled_model.py'
+      - 'scripts/serve_compiled_lab.py'
+      - 'scripts/check_local_service.py'
+      - 'scripts/test_serve_compiled_lab.py'
+      - 'scripts/check_parameter_form.cjs'
+      - 'viewer/parameter-lab.html'
+      - 'viewer/parameter-lab.js'
       - 'scripts/native_mat.py'
       - 'scripts/test_native_mat.py'
       - 'scripts/test_compiled_model.py'
@@ -48,6 +54,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check reader and request validation
         run: python3 -m unittest discover -s scripts -p 'test_*compiled*.py'
+      - name: Check local parameter HTTP guard rules
+        run: python3 -m unittest discover -s scripts -p test_serve_compiled_lab.py
       - name: Check native MAT serialization
         run: python3 -m unittest discover -s scripts -p test_native_mat.py
       - name: Prepare Modelica Standard Library
@@ -104,6 +112,8 @@ jobs:
           python3 compiled-model/scripts/build_observation_lab.py
           --manifest observation-run/experiments.json --results-dir observation-run
           --output artifacts/compiled-parameter-lab.html
+      - name: Exercise a fresh HTTP-triggered native run without development tools
+        run: python3 compiled-model/scripts/check_local_service.py --bundle compiled-model --output local-http-checks
       - name: Preserve fresh results and runtime evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -115,6 +125,7 @@ jobs:
             artifacts/compiled-parameter-lab.html
             artifacts/compiled-parameter-lab.json
             artifacts/compiled-parameter-lab_build.json
+            local-http-checks/
 
   check-result-reader:
     needs: run-without-compiler
@@ -157,6 +168,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Exercise all three fresh recordings in the shared viewer
         run: node scripts/check_observation_lab.cjs artifacts/compiled-parameter-lab.html artifacts/compiled-browser-checks
+      - name: Exercise browser parameter inputs and native-run request format
+        run: node scripts/check_parameter_form.cjs
       - name: Preserve browser checks and screenshots
         if: always()
         uses: actions/upload-artifact@v4

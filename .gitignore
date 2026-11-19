@@ -17,6 +17,8 @@
 /observation-plan/
 /compiled-model/
 /compiled-runs/
+/parameter-runs/
+/local-http-checks/
 /compiled-model-linux-x86_64.tar.gz
 
 # Python
