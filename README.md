@@ -67,6 +67,17 @@ recorded playback available when WebGL2 is unavailable. The workflow publishes
 native results and a separate report from actual 3D/fallback browser checks.
 See [the observation lab and manifest runner](docs/M5_OBSERVATION_LAB.md).
 
+### Unfamiliar topology: two spring-coupled pendulums (M6A)
+
+Two fixed, independently rotating pendulums have their point-mass bobs joined
+by a single spring. The spring transfers force and energy while both angles are
+solved natively. This is a *new* Modelica assembly and declarative M6 manifest,
+using the accepted M5 runner, force-observation layer and Three.js viewer without
+changing their source. The M6A workflow produces one offline viewer with the two
+original accepted arrangements freshly rerun plus this new topology. See the
+[M6A composability experiment](docs/M6A_COUPLED_PENDULUMS.md).
+
+
 ## Principles
 
 - **Modelica defines physics and geometry.** Standard-library components supply the physical laws.
