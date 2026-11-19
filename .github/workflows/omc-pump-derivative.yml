@@ -1,0 +1,127 @@
+name: OMC quadraticFlow differentiation diagnostic
+on:
+  push:
+    branches: [diagnostic/omc-quadraticflow-derivative]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: 1.27.0
+            image: openmodelica/openmodelica:v1.27.0-ompython
+          - label: 1.27.1
+            image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare library and record compiler version
+        run: |
+          omc scripts/install_msl.mos
+          omc --version | tee version.txt
+          echo '${{ matrix.image }}' >> version.txt
+      - name: Run four native standalone probes
+        run: omc diagnostics/omc-pump-derivative/probe.mos > omc-probe.log 2>&1
+      - name: Independent numerical verification
+        run: |
+          export OMC_VERSION="$(head -1 version.txt)"
+          export OMC_IMAGE='${{ matrix.image }}'
+          python3 diagnostics/omc-pump-derivative/check.py
+      - name: Retain complete diagnostic evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omc-pump-probe-${{ matrix.label }}
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            version.txt
+            omc-probe.log
+            probe_*.csv
+            probe-report.json
+            diagnostics/omc-pump-derivative/
+  current-stable:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install newest available stable OpenModelica from signed official APT
+        run: |
+          set -eu
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ca-certificates curl gnupg
+          curl -fsSL https://build.openmodelica.org/apt/openmodelica.asc | sudo gpg --dearmor -o /usr/share/keyrings/openmodelica-keyring.gpg
+          echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/openmodelica-keyring.gpg] https://build.openmodelica.org/apt noble stable' | sudo tee /etc/apt/sources.list.d/openmodelica.list
+          sudo apt-get update -qq
+          apt-cache policy omc | tee apt-policy.txt
+          sudo apt-get install -y --no-install-recommends omc
+          omc --version | tee version.txt
+      - name: Prepare library and run standalone probes
+        run: |
+          omc scripts/install_msl.mos
+          omc diagnostics/omc-pump-derivative/probe.mos > omc-probe.log 2>&1
+      - name: Independent numerical verification
+        run: |
+          export OMC_VERSION="$(head -1 version.txt)"
+          export OMC_IMAGE='apt:noble-stable'
+          python3 diagnostics/omc-pump-derivative/check.py
+      - name: Retain complete diagnostic evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omc-pump-probe-current-stable
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            apt-policy.txt
+            version.txt
+            omc-probe.log
+            probe_*.csv
+            probe-report.json
+            diagnostics/omc-pump-derivative/
+
+  nightly:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install newest available nightly OpenModelica from signed official APT
+        run: |
+          set -eu
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ca-certificates curl gnupg
+          curl -fsSL https://build.openmodelica.org/apt/openmodelica.asc | sudo gpg --dearmor -o /usr/share/keyrings/openmodelica-keyring.gpg
+          echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/openmodelica-keyring.gpg] https://build.openmodelica.org/apt noble nightly' | sudo tee /etc/apt/sources.list.d/openmodelica.list
+          sudo apt-get update -qq
+          apt-cache policy omc | tee apt-policy.txt
+          sudo apt-get install -y --no-install-recommends omc
+          omc --version | tee version.txt
+      - name: Prepare library and run standalone probes
+        run: |
+          omc scripts/install_msl.mos
+          omc diagnostics/omc-pump-derivative/probe.mos > omc-probe.log 2>&1
+      - name: Independent numerical verification
+        run: |
+          export OMC_VERSION="$(head -1 version.txt)"
+          export OMC_IMAGE='apt:noble-nightly'
+          python3 diagnostics/omc-pump-derivative/check.py
+      - name: Retain complete diagnostic evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omc-pump-probe-nightly
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            apt-policy.txt
+            version.txt
+            omc-probe.log
+            probe_*.csv
+            probe-report.json
+            diagnostics/omc-pump-derivative/
