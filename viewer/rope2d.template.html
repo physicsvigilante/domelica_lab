@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Domelica · 2D recorded rope animation</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#111d2b;color:#edf5ff}
+main{max-width:1020px;margin:0 auto;padding:24px 18px 36px}
+header{display:flex;flex-direction:column;gap:6px;margin-bottom:15px}
+.eyebrow{font-size:.72rem;font-weight:750;letter-spacing:.16em;text-transform:uppercase;color:#8bafc7}
+h1{font-size:clamp(1.3rem,3.5vw,1.9rem);margin:0;letter-spacing:-.025em}
+.sub{margin:0;color:#9db3c4;font-size:.91rem;line-height:1.5}
+.stage{border:1px solid #345062;border-radius:17px;overflow:hidden;background:#142638}
+svg{display:block;width:100%;height:auto;aspect-ratio:880/520}
+.controls{display:flex;align-items:center;gap:15px;padding:14px 16px;background:#22374b;flex-wrap:wrap}
+button{cursor:pointer;border:1px solid #58728c;border-radius:8px;background:#31516a;color:white;padding:8px 16px;font-weight:650}
+button:focus-visible,input:focus-visible{outline:2px solid #8adfdc;outline-offset:3px}
+input[type=range]{min-width:130px;flex:1;accent-color:#75d3cc}
+.clock{font-variant-numeric:tabular-nums;min-width:65px;text-align:right;font-weight:700}
+.readings{display:flex;gap:24px;flex-wrap:wrap;padding:10px 16px 16px;background:#22374b;color:#dbe8ef;font-size:.88rem}
+small{color:#9fb4c5}
+footer{margin-top:13px;color:#91a9bd;font-size:.79rem;line-height:1.5}
+@media(max-width:520px){main{padding:12px 8px}header{padding:0 5px}.controls{gap:8px}.readings{gap:12px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="eyebrow">Domelica · Recorded Modelica simulation</div>
+  <h1>Ideal fixed pulley · 2D geometry</h1>
+  <p class="sub">Native OpenModelica motion → certified tangent and arc geometry → independent SVG style. This is recorded playback, not a dynamics solver.</p>
+</header>
+<div class="stage">
+  <svg id="diagram" role="img" aria-label="Two masses connected by a taut rope over a fixed pulley" viewBox="0 0 880 520"></svg>
+  <div class="controls">
+    <button id="play" type="button">Play</button>
+    <input id="scrub" type="range" min="0" max="0" value="0" aria-label="Seek recorded simulation frame">
+    <span id="clock" class="clock">0.00 s</span>
+  </div>
+  <div class="readings">
+    <span id="tension">Tension · —</span>
+    <span id="length">Rope length · —</span>
+    <span id="sample"></span>
+  </div>
+</div>
+<footer>
+  Movements and tensions are native results; rope arcs are reconstructed from the recorded physical positions and radius.
+  The wheel is an ideal, inertialess visual object, not simulated rolling contact.
+  <div id="provenance"></div>
+</footer>
+</main>
+<script id="recording" type="application/json">__RECORDING_JSON__</script>
+<script>
+"use strict";
+(() => {
+const D=JSON.parse(document.getElementById("recording").textContent);
+if(D.schema!=="domelica.rope-playback-2d/v1")throw new Error("Unsupported 2D recording");
+const svg=document.getElementById("diagram"),scrub=document.getElementById("scrub"),play=document.getElementById("play");
+const NS="http://www.w3.org/2000/svg",W=880,H=520,style=D.style;
+const mk=(kind,attrs={})=>{const e=document.createElementNS(NS,kind);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));svg.appendChild(e);return e;};
+const [minX,minY,maxX,maxY]=D.bounds,dx=maxX-minX,dy=maxY-minY;
+if(!(dx>0&&dy>0))throw new Error("Invalid recorded XY bounds");
+const scale=Math.min((W-180)/dx,(H-112)/dy),midX=(minX+maxX)/2,midY=(minY+maxY)/2;
+const project=p=>[W/2+(p[0]-midX)*scale,H/2-(p[1]-midY)*scale];
+svg.style.background=style.background;
+const caption=mk("text",{x:22,y:32,fill:style.foreground,"font-size":15,"font-weight":650});
+caption.textContent="WORLD XY · dimensions in metres";
+const pulleys=new Map(),ropes=new Map(),bodies=new Map(),labels=new Map();
+for(const name of Object.keys(D.frames[0].pulleys)){
+ const circle=mk("circle",{fill:style.pulley.fill,stroke:style.pulley.stroke,
+                            "stroke-width":style.pulley.strokeWidthPx,"data-pulley":name});
+ pulleys.set(name,circle);
+}
+for(const name of Object.keys(D.frames[0].ropes)){
+ const line=mk("polyline",{fill:"none",stroke:style.rope.stroke,
+                "stroke-width":style.rope.widthPx,"stroke-linecap":"round",
+                "stroke-linejoin":"round","data-rope":name});
+ ropes.set(name,line);
+}
+for(const [name,body] of Object.entries(D.frames[0].bodies)){
+ const circle=mk("circle",{r:style.bodyMarkerRadiusPx,fill:style.bodies[name].fill,
+             stroke:style.foreground,"stroke-width":1.4,"data-body":name});
+ const txt=mk("text",{fill:style.foreground,"font-size":16,"font-weight":600,"text-anchor":"middle"});
+ bodies.set(name,circle);labels.set(name,txt);
+}
+const axle=mk("circle",{r:4,fill:style.foreground,opacity:.8});
+scrub.max=String(D.times.length-1);
+let index=0,playing=false,started=0,elapsed=0,raf=0;
+const decimal=n=>Number(n).toFixed(2);
+function draw(i){
+ index=Math.max(0,Math.min(D.times.length-1,i));
+ const frame=D.frames[index];
+ for(const [name,p] of Object.entries(frame.pulleys)){
+   const c=project(p.center),e=pulleys.get(name);
+   e.setAttribute("cx",c[0]);e.setAttribute("cy",c[1]);e.setAttribute("r",p.radius*scale);
+ }
+ for(const [name,r] of Object.entries(frame.ropes)){
+   const points=r.points.map(p=>project(p).join(",")).join(" ");
+   ropes.get(name).setAttribute("points",points);
+ }
+ for(const [name,b] of Object.entries(frame.bodies)){
+   const p=project(b.position),circle=bodies.get(name),text=labels.get(name);
+   circle.setAttribute("cx",p[0]);circle.setAttribute("cy",p[1]);
+   text.setAttribute("x",p[0]);text.setAttribute("y",p[1]+38);
+   text.textContent=b.label+" · "+Number(b.mass).toFixed(0)+" kg";
+ }
+ const firstPulley=Object.values(frame.pulleys)[0],ax=project(firstPulley.center);
+ axle.setAttribute("cx",ax[0]);axle.setAttribute("cy",ax[1]);
+ document.getElementById("clock").textContent=decimal(D.times[index])+" s";
+ document.getElementById("sample").textContent="Native sample "+(index+1)+" / "+D.times.length;
+ const metric=D.metrics[0];
+ document.getElementById("tension").textContent=metric.label+" · "+decimal(frame.metrics[metric.id])+" "+metric.unit;
+ document.getElementById("length").textContent="Rope length · "+Object.values(frame.ropes)[0].length.toFixed(4)+" m";
+ scrub.value=String(index);
+}
+function indexAt(t){
+ let lo=0,hi=D.times.length;
+ while(lo<hi){let m=(lo+hi)>>1;if(D.times[m]<=t)lo=m+1;else hi=m;}
+ return Math.max(0,lo-1);
+}
+function pause(){
+ if(!playing)return;
+ playing=false;cancelAnimationFrame(raf);play.textContent="Play";
+}
+function step(now){
+ if(!playing)return;
+ const t=elapsed+(now-started)/1000;
+ if(t>=D.times.at(-1)){draw(D.times.length-1);pause();return;}
+ draw(indexAt(t));raf=requestAnimationFrame(step);
+}
+play.addEventListener("click",()=>{
+ if(playing){elapsed=D.times[index];pause();return;}
+ if(index===D.times.length-1){index=0;elapsed=0;}else elapsed=D.times[index];
+ started=performance.now();playing=true;play.textContent="Pause";raf=requestAnimationFrame(step);
+});
+scrub.addEventListener("input",()=>{pause();draw(Number(scrub.value));elapsed=D.times[index];});
+document.getElementById("provenance").textContent="Native CSV SHA-256: "+D.provenance.csvSHA256.slice(0,16)+"… · source "+D.provenance.sourceCommit.slice(0,10);
+draw(0);
+window.__rope2d=Object.freeze({seek:i=>{pause();draw(i);},getState:()=>({
+ index,time:D.times[index],playing,bounds:D.bounds,frame:D.frames[index],
+ style:D.style,source:D.provenance,scale
+})});
+})();
+</script>
+</body>
+</html>

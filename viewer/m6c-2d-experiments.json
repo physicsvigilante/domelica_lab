@@ -1,0 +1,59 @@
+{
+  "schema": "domelica.experiments/v1",
+  "modelica": {
+    "package": "DomelicaLab/package.mo",
+    "mslVersion": "4.1.0"
+  },
+  "observationManifest": "m6c-2d-observations.json",
+  "renderer": {
+    "runtime": "artifacts/three-runtime.js",
+    "sha256": "0189ca18ffd85d5ce74cc4851ead56b0b2a753fede6b067769bed49929bb2293"
+  },
+  "recording": {
+    "kind": "planned-fresh-native-run",
+    "note": "One native Q68 simulation only; 2D geometry and styling are independent postprocessors"
+  },
+  "experiments": [
+    {
+      "id": "atwood-fixed-pulley",
+      "prefix": "m6b_atwood",
+      "model": "DomelicaLab.Examples.AtwoodFixedPulley3D",
+      "title": "Q68 · Two unequal masses move over a fixed pulley",
+      "shortTitle": "Atwood pulley",
+      "description": "Exercise Q68: two unequal point masses on an ideal light inextensible string, over a smooth massless fixed pulley. The 13 kg and 15 kg illustrative values reproduce the question's mass ratio; the native motion yields a 1.4 m rise of the lighter mass in two seconds. The changing-length rope legs are native visual geometry, while the massless pulley is a nonrotating display.",
+      "camera": {
+        "yaw": 0.16,
+        "pitch": 0.13
+      },
+      "series": [
+        {
+          "name": "lightDisplacement",
+          "label": "Light bob rise",
+          "unit": "m"
+        },
+        {
+          "name": "heavyDisplacement",
+          "label": "Heavy bob drop",
+          "unit": "m"
+        },
+        {
+          "name": "lightTension",
+          "label": "Native rope tension",
+          "unit": "N"
+        },
+        {
+          "name": "totalEnergy",
+          "label": "Total mechanical energy",
+          "unit": "J"
+        }
+      ],
+      "simulation": {
+        "startTime": 0,
+        "stopTime": 2,
+        "numberOfIntervals": 1000,
+        "tolerance": 1e-9,
+        "method": "dassl"
+      }
+    }
+  ]
+}

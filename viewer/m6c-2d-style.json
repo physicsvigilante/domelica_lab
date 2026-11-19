@@ -1,0 +1,23 @@
+{
+  "schema": "domelica.rope-style-2d/v1",
+  "background": "#101e2d",
+  "foreground": "#eff6fc",
+  "rope": {
+    "stroke": "#d1f2f0",
+    "widthPx": 4
+  },
+  "pulley": {
+    "fill": "#647d96",
+    "stroke": "#dae9f6",
+    "strokeWidthPx": 3
+  },
+  "bodyMarkerRadiusPx": 17,
+  "bodies": {
+    "light": {
+      "fill": "#46bde2"
+    },
+    "heavy": {
+      "fill": "#f3a86c"
+    }
+  }
+}
