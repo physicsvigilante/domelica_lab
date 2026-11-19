@@ -11,3 +11,4 @@ MovingWedge3D
 SpringWedge3D
 CartPendulumSpring3D
 ReleasedSpringChain3D
+SpringCoupledPendulums3D

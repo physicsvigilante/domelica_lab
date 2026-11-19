@@ -1,0 +1,1436 @@
+{
+  "schema": "domelica.observations/v1",
+  "provenance": {
+    "definitionOrigin": "M6A extends the two existing M5 observations in a separate fresh-run manifest; the original M5 manifest and accepted native recordings remain unchanged.",
+    "newSimulation": false,
+    "note": "All observation sources must be bound to a newly completed native run."
+  },
+  "scenes": [
+    {
+      "id": "cart-pendulum-spring",
+      "model": "DomelicaLab.Examples.CartPendulumSpring3D",
+      "csv": "m4c_cart_pendulum_res.csv",
+      "bodies": [
+        {
+          "id": "cart",
+          "label": "Cart",
+          "objectIds": [
+            "cartBody.frameTranslation.shape"
+          ]
+        },
+        {
+          "id": "bob",
+          "label": "Bob",
+          "objectIds": [
+            "bob.sphere"
+          ]
+        }
+      ],
+      "notes": [
+        "BodyBox center of mass equals cartPosition for this authored model; it must not be assumed for arbitrary bodies.",
+        "The ideal guide can exert a force and a couple. View the torque quantity as well when interpreting the cart free body.",
+        "Guide force and guide couple act on the cart at cartGuide.frame_b; the hinge force acts at pivotPosition.",
+        "The rod is massless and the bob is a PointMass. The displayed sphere has no additional rotational inertia."
+      ],
+      "overlays": [
+        {
+          "id": "spring-cart",
+          "label": "Spring → cart",
+          "kind": "force",
+          "unit": "N",
+          "body": "cart",
+          "point": {
+            "columns": [
+              "springCartPosition[1]",
+              "springCartPosition[2]",
+              "springCartPosition[3]"
+            ],
+            "label": "Spring attachment on cart",
+            "reference": "application-point"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "-Frames.resolve1(wallSpring.frame_b.R, wallSpring.frame_b.f)",
+            "columns": [
+              "springForceOnCart[1]",
+              "springForceOnCart[2]",
+              "springForceOnCart[3]"
+            ]
+          },
+          "signConvention": "Force exerted by the wall spring on the cart; the native spring connector force is INTO the spring, so the model alias negates it.",
+          "defaultVisible": true,
+          "color": "#45c9af",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "springForceOnCart[1]",
+              "springForceOnCart[2]",
+              "springForceOnCart[3]"
+            ]
+          }
+        },
+        {
+          "id": "hinge-cart",
+          "label": "Hinge → cart",
+          "kind": "force",
+          "unit": "N",
+          "body": "cart",
+          "point": {
+            "columns": [
+              "pivotPosition[1]",
+              "pivotPosition[2]",
+              "pivotPosition[3]"
+            ],
+            "label": "Hinge on cart",
+            "reference": "application-point"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "-Frames.resolve1(hinge.frame_a.R, hinge.frame_a.f)",
+            "columns": [
+              "pendulumForceOnCart[1]",
+              "pendulumForceOnCart[2]",
+              "pendulumForceOnCart[3]"
+            ]
+          },
+          "signConvention": "Force exerted by the pendulum through the hinge on the cart; opposite to the force INTO hinge.frame_a.",
+          "defaultVisible": true,
+          "color": "#df9d53",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "pendulumForceOnCart[1]",
+              "pendulumForceOnCart[2]",
+              "pendulumForceOnCart[3]"
+            ]
+          }
+        },
+        {
+          "id": "guide-cart",
+          "label": "Guide → cart",
+          "kind": "force",
+          "unit": "N",
+          "body": "cart",
+          "point": {
+            "columns": [
+              "cartPosition[1]",
+              "cartPosition[2]",
+              "cartPosition[3]"
+            ],
+            "label": "Guide frame on cart",
+            "reference": "application-point"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "-Frames.resolve1(cartGuide.frame_b.R, cartGuide.frame_b.f)",
+            "columns": [
+              "railReaction[1]",
+              "railReaction[2]",
+              "railReaction[3]"
+            ]
+          },
+          "signConvention": "Bilateral guide reaction on the cart. This is a constraint reaction, not a unilateral contact normal.",
+          "defaultVisible": true,
+          "color": "#5a9ee4",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "railReaction[1]",
+              "railReaction[2]",
+              "railReaction[3]"
+            ]
+          }
+        },
+        {
+          "id": "weight-cart",
+          "label": "Weight → cart",
+          "kind": "force",
+          "unit": "N",
+          "body": "cart",
+          "point": {
+            "columns": [
+              "cartPosition[1]",
+              "cartPosition[2]",
+              "cartPosition[3]"
+            ],
+            "label": "Cart center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "derived",
+            "expression": "cartBody.m * world.g * world.n / length(world.n)",
+            "columns": [
+              "cartBody.m",
+              "world.g",
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          },
+          "signConvention": "Weight on the named body in uniform gravity; world.n specifies the gravity direction. A displayed quantity derived from native parameters, not a saved force output.",
+          "defaultVisible": true,
+          "color": "#d4ad42",
+          "vector": {
+            "op": "uniformGravity",
+            "massColumn": "cartBody.m",
+            "gColumn": "world.g",
+            "directionColumns": [
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          }
+        },
+        {
+          "id": "rod-bob",
+          "label": "Rod → bob",
+          "kind": "force",
+          "unit": "N",
+          "body": "bob",
+          "point": {
+            "columns": [
+              "bobPosition[1]",
+              "bobPosition[2]",
+              "bobPosition[3]"
+            ],
+            "label": "Point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "Frames.resolve1(bob.frame_a.R, bob.frame_a.f)",
+            "columns": [
+              "rodForceOnBob[1]",
+              "rodForceOnBob[2]",
+              "rodForceOnBob[3]"
+            ]
+          },
+          "signConvention": "Force INTO the PointMass connector is the force ON the bob; keep the connector sign.",
+          "defaultVisible": true,
+          "color": "#d97ca9",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "rodForceOnBob[1]",
+              "rodForceOnBob[2]",
+              "rodForceOnBob[3]"
+            ]
+          }
+        },
+        {
+          "id": "weight-bob",
+          "label": "Weight → bob",
+          "kind": "force",
+          "unit": "N",
+          "body": "bob",
+          "point": {
+            "columns": [
+              "bobPosition[1]",
+              "bobPosition[2]",
+              "bobPosition[3]"
+            ],
+            "label": "Point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "derived",
+            "expression": "bob.m * world.g * world.n / length(world.n)",
+            "columns": [
+              "bob.m",
+              "world.g",
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          },
+          "signConvention": "Weight on the named body in uniform gravity; world.n specifies the gravity direction. A displayed quantity derived from native parameters, not a saved force output.",
+          "defaultVisible": true,
+          "color": "#d4ad42",
+          "vector": {
+            "op": "uniformGravity",
+            "massColumn": "bob.m",
+            "gColumn": "world.g",
+            "directionColumns": [
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          }
+        },
+        {
+          "id": "velocity-cart",
+          "label": "Cart velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "cart",
+          "point": {
+            "columns": [
+              "cartPosition[1]",
+              "cartPosition[2]",
+              "cartPosition[3]"
+            ],
+            "label": "Cart center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "cartVelocity",
+            "columns": [
+              "cartVelocity[1]",
+              "cartVelocity[2]",
+              "cartVelocity[3]"
+            ]
+          },
+          "signConvention": "World x right, y up, z out of the initial motion plane; signed components use the right-handed world axes.",
+          "defaultVisible": true,
+          "color": "#53ad9c",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "cartVelocity[1]",
+              "cartVelocity[2]",
+              "cartVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "velocity-bob",
+          "label": "Bob velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "bob",
+          "point": {
+            "columns": [
+              "bobPosition[1]",
+              "bobPosition[2]",
+              "bobPosition[3]"
+            ],
+            "label": "Point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "bobVelocity",
+            "columns": [
+              "bobVelocity[1]",
+              "bobVelocity[2]",
+              "bobVelocity[3]"
+            ]
+          },
+          "signConvention": "World x right, y up, z out of the initial motion plane; signed components use the right-handed world axes.",
+          "defaultVisible": true,
+          "color": "#b18de2",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "bobVelocity[1]",
+              "bobVelocity[2]",
+              "bobVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "acceleration-cart",
+          "label": "Cart acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "cart",
+          "point": {
+            "columns": [
+              "cartPosition[1]",
+              "cartPosition[2]",
+              "cartPosition[3]"
+            ],
+            "label": "Cart center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "cartBody.a_0",
+            "columns": [
+              "cartBody.a_0[1]",
+              "cartBody.a_0[2]",
+              "cartBody.a_0[3]"
+            ]
+          },
+          "signConvention": "World x right, y up, z out of the initial motion plane; signed components use the right-handed world axes.",
+          "defaultVisible": true,
+          "color": "#df945b",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "cartBody.a_0[1]",
+              "cartBody.a_0[2]",
+              "cartBody.a_0[3]"
+            ]
+          }
+        },
+        {
+          "id": "acceleration-bob",
+          "label": "Bob acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "bob",
+          "point": {
+            "columns": [
+              "bobPosition[1]",
+              "bobPosition[2]",
+              "bobPosition[3]"
+            ],
+            "label": "Point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "bobAcceleration",
+            "columns": [
+              "bobAcceleration[1]",
+              "bobAcceleration[2]",
+              "bobAcceleration[3]"
+            ]
+          },
+          "signConvention": "World x right, y up, z out of the initial motion plane; signed components use the right-handed world axes.",
+          "defaultVisible": true,
+          "color": "#cb7495",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "bobAcceleration[1]",
+              "bobAcceleration[2]",
+              "bobAcceleration[3]"
+            ]
+          }
+        },
+        {
+          "id": "torque-guide-cart",
+          "label": "Guide couple → cart",
+          "kind": "torque",
+          "unit": "N*m",
+          "body": "cart",
+          "point": {
+            "columns": [
+              "cartPosition[1]",
+              "cartPosition[2]",
+              "cartPosition[3]"
+            ],
+            "label": "Guide frame on cart",
+            "reference": "couple-reference"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "-Frames.resolve1(cartGuide.frame_b.R, cartGuide.frame_b.t)",
+            "columns": [
+              "railTorque[1]",
+              "railTorque[2]",
+              "railTorque[3]"
+            ]
+          },
+          "signConvention": "Moment exerted by the ideal guide on the cart, resolved in world axes. Axial vector direction follows the right-hand rule; it is a couple, not an extra linear force.",
+          "defaultVisible": true,
+          "color": "#b6a0df",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "railTorque[1]",
+              "railTorque[2]",
+              "railTorque[3]"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "released-spring-chain",
+      "model": "DomelicaLab.Examples.ReleasedSpringChain3D",
+      "csv": "m4c_pdf_composition_res.csv",
+      "bodies": [
+        {
+          "id": "top",
+          "label": "Top block",
+          "objectIds": [
+            "topBody.frameTranslation.shape"
+          ]
+        },
+        {
+          "id": "middle",
+          "label": "Middle block",
+          "objectIds": [
+            "middleBody.frameTranslation.shape"
+          ]
+        },
+        {
+          "id": "bottom",
+          "label": "Bottom block",
+          "objectIds": [
+            "bottomBody.frameTranslation.shape"
+          ]
+        }
+      ],
+      "notes": [
+        "Each BodyBox frame_a coincides with its center of mass in this specific model.",
+        "The springs are massless; negate their connector flow forces to obtain force ON each attached block.",
+        "R.T maps world vectors into the connector frame; transpose(R.T) maps connector force into the world frame.",
+        "FreeMotion joints provide no support force. The drawn upper marker is disconnected scenery.",
+        "This recorded run is symmetric and nonrotating, but the metadata export uses each saved full 3 by 3 rotation matrix instead of assuming identity."
+      ],
+      "overlays": [
+        {
+          "id": "upper-top",
+          "label": "Upper spring → top",
+          "kind": "force",
+          "unit": "N",
+          "body": "top",
+          "point": {
+            "columns": [
+              "upperStart[1]",
+              "upperStart[2]",
+              "upperStart[3]"
+            ],
+            "label": "Upper spring attachment on top block",
+            "reference": "application-point"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native-transform",
+            "expression": "-transpose(upperSpring.frame_a.R.T) * upperSpring.frame_a.f",
+            "columns": [
+              "upperSpring.frame_a.f[1]",
+              "upperSpring.frame_a.f[2]",
+              "upperSpring.frame_a.f[3]",
+              "upperSpring.frame_a.R.T[1,1]",
+              "upperSpring.frame_a.R.T[1,2]",
+              "upperSpring.frame_a.R.T[1,3]",
+              "upperSpring.frame_a.R.T[2,1]",
+              "upperSpring.frame_a.R.T[2,2]",
+              "upperSpring.frame_a.R.T[2,3]",
+              "upperSpring.frame_a.R.T[3,1]",
+              "upperSpring.frame_a.R.T[3,2]",
+              "upperSpring.frame_a.R.T[3,3]"
+            ]
+          },
+          "signConvention": "Native connector flow force is INTO the spring. Negate it to obtain force ON the named block, and resolve from its connector frame to world coordinates using the saved rotation matrix.",
+          "defaultVisible": true,
+          "color": "#629cdd",
+          "vector": {
+            "op": "resolve1",
+            "vectorColumns": [
+              "upperSpring.frame_a.f[1]",
+              "upperSpring.frame_a.f[2]",
+              "upperSpring.frame_a.f[3]"
+            ],
+            "matrixPrefix": "upperSpring.frame_a.R.T",
+            "sign": -1
+          }
+        },
+        {
+          "id": "upper-middle",
+          "label": "Upper spring → middle",
+          "kind": "force",
+          "unit": "N",
+          "body": "middle",
+          "point": {
+            "columns": [
+              "upperEnd[1]",
+              "upperEnd[2]",
+              "upperEnd[3]"
+            ],
+            "label": "Upper spring attachment on middle block",
+            "reference": "application-point"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native-transform",
+            "expression": "-transpose(upperSpring.frame_b.R.T) * upperSpring.frame_b.f",
+            "columns": [
+              "upperSpring.frame_b.f[1]",
+              "upperSpring.frame_b.f[2]",
+              "upperSpring.frame_b.f[3]",
+              "upperSpring.frame_b.R.T[1,1]",
+              "upperSpring.frame_b.R.T[1,2]",
+              "upperSpring.frame_b.R.T[1,3]",
+              "upperSpring.frame_b.R.T[2,1]",
+              "upperSpring.frame_b.R.T[2,2]",
+              "upperSpring.frame_b.R.T[2,3]",
+              "upperSpring.frame_b.R.T[3,1]",
+              "upperSpring.frame_b.R.T[3,2]",
+              "upperSpring.frame_b.R.T[3,3]"
+            ]
+          },
+          "signConvention": "Native connector flow force is INTO the spring. Negate it to obtain force ON the named block, and resolve from its connector frame to world coordinates using the saved rotation matrix.",
+          "defaultVisible": true,
+          "color": "#629cdd",
+          "vector": {
+            "op": "resolve1",
+            "vectorColumns": [
+              "upperSpring.frame_b.f[1]",
+              "upperSpring.frame_b.f[2]",
+              "upperSpring.frame_b.f[3]"
+            ],
+            "matrixPrefix": "upperSpring.frame_b.R.T",
+            "sign": -1
+          }
+        },
+        {
+          "id": "lower-middle",
+          "label": "Lower spring → middle",
+          "kind": "force",
+          "unit": "N",
+          "body": "middle",
+          "point": {
+            "columns": [
+              "lowerStart[1]",
+              "lowerStart[2]",
+              "lowerStart[3]"
+            ],
+            "label": "Lower spring attachment on middle block",
+            "reference": "application-point"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native-transform",
+            "expression": "-transpose(lowerSpring.frame_a.R.T) * lowerSpring.frame_a.f",
+            "columns": [
+              "lowerSpring.frame_a.f[1]",
+              "lowerSpring.frame_a.f[2]",
+              "lowerSpring.frame_a.f[3]",
+              "lowerSpring.frame_a.R.T[1,1]",
+              "lowerSpring.frame_a.R.T[1,2]",
+              "lowerSpring.frame_a.R.T[1,3]",
+              "lowerSpring.frame_a.R.T[2,1]",
+              "lowerSpring.frame_a.R.T[2,2]",
+              "lowerSpring.frame_a.R.T[2,3]",
+              "lowerSpring.frame_a.R.T[3,1]",
+              "lowerSpring.frame_a.R.T[3,2]",
+              "lowerSpring.frame_a.R.T[3,3]"
+            ]
+          },
+          "signConvention": "Native connector flow force is INTO the spring. Negate it to obtain force ON the named block, and resolve from its connector frame to world coordinates using the saved rotation matrix.",
+          "defaultVisible": true,
+          "color": "#ad8bdb",
+          "vector": {
+            "op": "resolve1",
+            "vectorColumns": [
+              "lowerSpring.frame_a.f[1]",
+              "lowerSpring.frame_a.f[2]",
+              "lowerSpring.frame_a.f[3]"
+            ],
+            "matrixPrefix": "lowerSpring.frame_a.R.T",
+            "sign": -1
+          }
+        },
+        {
+          "id": "lower-bottom",
+          "label": "Lower spring → bottom",
+          "kind": "force",
+          "unit": "N",
+          "body": "bottom",
+          "point": {
+            "columns": [
+              "lowerEnd[1]",
+              "lowerEnd[2]",
+              "lowerEnd[3]"
+            ],
+            "label": "Lower spring attachment on bottom block",
+            "reference": "application-point"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native-transform",
+            "expression": "-transpose(lowerSpring.frame_b.R.T) * lowerSpring.frame_b.f",
+            "columns": [
+              "lowerSpring.frame_b.f[1]",
+              "lowerSpring.frame_b.f[2]",
+              "lowerSpring.frame_b.f[3]",
+              "lowerSpring.frame_b.R.T[1,1]",
+              "lowerSpring.frame_b.R.T[1,2]",
+              "lowerSpring.frame_b.R.T[1,3]",
+              "lowerSpring.frame_b.R.T[2,1]",
+              "lowerSpring.frame_b.R.T[2,2]",
+              "lowerSpring.frame_b.R.T[2,3]",
+              "lowerSpring.frame_b.R.T[3,1]",
+              "lowerSpring.frame_b.R.T[3,2]",
+              "lowerSpring.frame_b.R.T[3,3]"
+            ]
+          },
+          "signConvention": "Native connector flow force is INTO the spring. Negate it to obtain force ON the named block, and resolve from its connector frame to world coordinates using the saved rotation matrix.",
+          "defaultVisible": true,
+          "color": "#ad8bdb",
+          "vector": {
+            "op": "resolve1",
+            "vectorColumns": [
+              "lowerSpring.frame_b.f[1]",
+              "lowerSpring.frame_b.f[2]",
+              "lowerSpring.frame_b.f[3]"
+            ],
+            "matrixPrefix": "lowerSpring.frame_b.R.T",
+            "sign": -1
+          }
+        },
+        {
+          "id": "weight-top",
+          "label": "Weight → top",
+          "kind": "force",
+          "unit": "N",
+          "body": "top",
+          "point": {
+            "columns": [
+              "topPosition[1]",
+              "topPosition[2]",
+              "topPosition[3]"
+            ],
+            "label": "Top block center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "derived",
+            "expression": "topBody.m * world.g * world.n / length(world.n)",
+            "columns": [
+              "topBody.m",
+              "world.g",
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          },
+          "signConvention": "Weight on the named body in uniform gravity; world.n specifies the gravity direction. A displayed quantity derived from native parameters, not a saved force output.",
+          "defaultVisible": true,
+          "color": "#d4ad42",
+          "vector": {
+            "op": "uniformGravity",
+            "massColumn": "topBody.m",
+            "gColumn": "world.g",
+            "directionColumns": [
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          }
+        },
+        {
+          "id": "weight-middle",
+          "label": "Weight → middle",
+          "kind": "force",
+          "unit": "N",
+          "body": "middle",
+          "point": {
+            "columns": [
+              "middlePosition[1]",
+              "middlePosition[2]",
+              "middlePosition[3]"
+            ],
+            "label": "Middle block center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "derived",
+            "expression": "middleBody.m * world.g * world.n / length(world.n)",
+            "columns": [
+              "middleBody.m",
+              "world.g",
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          },
+          "signConvention": "Weight on the named body in uniform gravity; world.n specifies the gravity direction. A displayed quantity derived from native parameters, not a saved force output.",
+          "defaultVisible": true,
+          "color": "#d4ad42",
+          "vector": {
+            "op": "uniformGravity",
+            "massColumn": "middleBody.m",
+            "gColumn": "world.g",
+            "directionColumns": [
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          }
+        },
+        {
+          "id": "weight-bottom",
+          "label": "Weight → bottom",
+          "kind": "force",
+          "unit": "N",
+          "body": "bottom",
+          "point": {
+            "columns": [
+              "bottomPosition[1]",
+              "bottomPosition[2]",
+              "bottomPosition[3]"
+            ],
+            "label": "Bottom block center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "derived",
+            "expression": "bottomBody.m * world.g * world.n / length(world.n)",
+            "columns": [
+              "bottomBody.m",
+              "world.g",
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          },
+          "signConvention": "Weight on the named body in uniform gravity; world.n specifies the gravity direction. A displayed quantity derived from native parameters, not a saved force output.",
+          "defaultVisible": true,
+          "color": "#d4ad42",
+          "vector": {
+            "op": "uniformGravity",
+            "massColumn": "bottomBody.m",
+            "gColumn": "world.g",
+            "directionColumns": [
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          }
+        },
+        {
+          "id": "velocity-top",
+          "label": "Top block velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "top",
+          "point": {
+            "columns": [
+              "topPosition[1]",
+              "topPosition[2]",
+              "topPosition[3]"
+            ],
+            "label": "Top block center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "topVelocity",
+            "columns": [
+              "topVelocity[1]",
+              "topVelocity[2]",
+              "topVelocity[3]"
+            ]
+          },
+          "signConvention": "World x right, y up, z out of the initial motion plane; signed components use the right-handed world axes.",
+          "defaultVisible": true,
+          "color": "#df9d53",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "topVelocity[1]",
+              "topVelocity[2]",
+              "topVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "velocity-middle",
+          "label": "Middle block velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "middle",
+          "point": {
+            "columns": [
+              "middlePosition[1]",
+              "middlePosition[2]",
+              "middlePosition[3]"
+            ],
+            "label": "Middle block center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "middleVelocity",
+            "columns": [
+              "middleVelocity[1]",
+              "middleVelocity[2]",
+              "middleVelocity[3]"
+            ]
+          },
+          "signConvention": "World x right, y up, z out of the initial motion plane; signed components use the right-handed world axes.",
+          "defaultVisible": true,
+          "color": "#5a9ee4",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "middleVelocity[1]",
+              "middleVelocity[2]",
+              "middleVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "velocity-bottom",
+          "label": "Bottom block velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "bottom",
+          "point": {
+            "columns": [
+              "bottomPosition[1]",
+              "bottomPosition[2]",
+              "bottomPosition[3]"
+            ],
+            "label": "Bottom block center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "bottomVelocity",
+            "columns": [
+              "bottomVelocity[1]",
+              "bottomVelocity[2]",
+              "bottomVelocity[3]"
+            ]
+          },
+          "signConvention": "World x right, y up, z out of the initial motion plane; signed components use the right-handed world axes.",
+          "defaultVisible": true,
+          "color": "#68bc86",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "bottomVelocity[1]",
+              "bottomVelocity[2]",
+              "bottomVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "acceleration-top",
+          "label": "Top block acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "top",
+          "point": {
+            "columns": [
+              "topPosition[1]",
+              "topPosition[2]",
+              "topPosition[3]"
+            ],
+            "label": "Top block center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "topAcceleration",
+            "columns": [
+              "topAcceleration[1]",
+              "topAcceleration[2]",
+              "topAcceleration[3]"
+            ]
+          },
+          "signConvention": "World x right, y up, z out of the initial motion plane; signed components use the right-handed world axes.",
+          "defaultVisible": true,
+          "color": "#df9d53",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "topAcceleration[1]",
+              "topAcceleration[2]",
+              "topAcceleration[3]"
+            ]
+          }
+        },
+        {
+          "id": "acceleration-middle",
+          "label": "Middle block acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "middle",
+          "point": {
+            "columns": [
+              "middlePosition[1]",
+              "middlePosition[2]",
+              "middlePosition[3]"
+            ],
+            "label": "Middle block center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "middleAcceleration",
+            "columns": [
+              "middleAcceleration[1]",
+              "middleAcceleration[2]",
+              "middleAcceleration[3]"
+            ]
+          },
+          "signConvention": "World x right, y up, z out of the initial motion plane; signed components use the right-handed world axes.",
+          "defaultVisible": true,
+          "color": "#5a9ee4",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "middleAcceleration[1]",
+              "middleAcceleration[2]",
+              "middleAcceleration[3]"
+            ]
+          }
+        },
+        {
+          "id": "acceleration-bottom",
+          "label": "Bottom block acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "bottom",
+          "point": {
+            "columns": [
+              "bottomPosition[1]",
+              "bottomPosition[2]",
+              "bottomPosition[3]"
+            ],
+            "label": "Bottom block center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "bottomAcceleration",
+            "columns": [
+              "bottomAcceleration[1]",
+              "bottomAcceleration[2]",
+              "bottomAcceleration[3]"
+            ]
+          },
+          "signConvention": "World x right, y up, z out of the initial motion plane; signed components use the right-handed world axes.",
+          "defaultVisible": true,
+          "color": "#68bc86",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "bottomAcceleration[1]",
+              "bottomAcceleration[2]",
+              "bottomAcceleration[3]"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "spring-coupled-pendulums",
+      "model": "DomelicaLab.Examples.SpringCoupledPendulums3D",
+      "csv": "m6a_coupled_pendulums_res.csv",
+      "bodies": [
+        {
+          "id": "left",
+          "label": "Left bob",
+          "objectIds": [
+            "leftBob.sphere"
+          ]
+        },
+        {
+          "id": "right",
+          "label": "Right bob",
+          "objectIds": [
+            "rightBob.sphere"
+          ]
+        }
+      ],
+      "notes": [
+        "Two separate fixed Revolute joints, two massless FixedTranslation rods, two PointMass bobs and one spring are composed entirely from standard Modelica MultiBody components.",
+        "The spring joins the two bob frames directly. It exerts equal and opposite forces. Neither angle is prescribed.",
+        "The rod and spring arrows are native Modelica connector forces resolved into world axes and explicitly negated to denote forces ON each bob.",
+        "Weight overlays are derived from saved bob mass, world.g and world.n. The spring and rods are massless; the displayed bob spheres are not extra inertia.",
+        "Geometry includes a fixed support beam and floor as unconnected visual references; contact and spring-coil collision are not simulated."
+      ],
+      "overlays": [
+        {
+          "id": "left-spring",
+          "label": "Coupling spring → left bob",
+          "kind": "force",
+          "unit": "N",
+          "body": "left",
+          "point": {
+            "columns": [
+              "leftPosition[1]",
+              "leftPosition[2]",
+              "leftPosition[3]"
+            ],
+            "label": "Center of left point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "-Frames.resolve1(couplingSpring.frame_a.R, couplingSpring.frame_a.f)",
+            "columns": [
+              "leftSpringOnBob[1]",
+              "leftSpringOnBob[2]",
+              "leftSpringOnBob[3]"
+            ]
+          },
+          "signConvention": "Force ON the point-mass bob due to the massless spring, opposite the signed connector flow into the spring, resolved in world coordinates.",
+          "defaultVisible": true,
+          "color": "#59b6af",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "leftSpringOnBob[1]",
+              "leftSpringOnBob[2]",
+              "leftSpringOnBob[3]"
+            ]
+          }
+        },
+        {
+          "id": "left-rod",
+          "label": "Rigid rod → left bob",
+          "kind": "force",
+          "unit": "N",
+          "body": "left",
+          "point": {
+            "columns": [
+              "leftPosition[1]",
+              "leftPosition[2]",
+              "leftPosition[3]"
+            ],
+            "label": "Center of left point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "-Frames.resolve1(leftRod.frame_b.R, leftRod.frame_b.f)",
+            "columns": [
+              "leftRodOnBob[1]",
+              "leftRodOnBob[2]",
+              "leftRodOnBob[3]"
+            ]
+          },
+          "signConvention": "Constraint force ON the bob from its massless rod, opposite the native connector flow force into the rod at frame_b. Not an independently applied drive.",
+          "defaultVisible": true,
+          "color": "#80b6e2",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "leftRodOnBob[1]",
+              "leftRodOnBob[2]",
+              "leftRodOnBob[3]"
+            ]
+          }
+        },
+        {
+          "id": "left-weight",
+          "label": "Gravity → left bob",
+          "kind": "force",
+          "unit": "N",
+          "body": "left",
+          "point": {
+            "columns": [
+              "leftPosition[1]",
+              "leftPosition[2]",
+              "leftPosition[3]"
+            ],
+            "label": "left point-mass center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "derived",
+            "expression": "leftBob.m * world.g * world.n / length(world.n)",
+            "columns": [
+              "leftBob.m",
+              "world.g",
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          },
+          "signConvention": "Weight ON the bob in the declared world gravity direction. This overlay is computed from recorded native mass and uniform gravity parameters, not an independently native force column.",
+          "defaultVisible": true,
+          "color": "#d9af59",
+          "vector": {
+            "op": "uniformGravity",
+            "massColumn": "leftBob.m",
+            "gColumn": "world.g",
+            "directionColumns": [
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          }
+        },
+        {
+          "id": "left-velocity",
+          "label": "Left bob velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "left",
+          "point": {
+            "columns": [
+              "leftPosition[1]",
+              "leftPosition[2]",
+              "leftPosition[3]"
+            ],
+            "label": "Center of left point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "leftBob.v_0",
+            "columns": [
+              "leftVelocity[1]",
+              "leftVelocity[2]",
+              "leftVelocity[3]"
+            ]
+          },
+          "signConvention": "Recorded world-coordinate linear velocity of the point mass; no prescribed motion.",
+          "defaultVisible": true,
+          "color": "#43a59c",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "leftVelocity[1]",
+              "leftVelocity[2]",
+              "leftVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "left-acceleration",
+          "label": "Left bob acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "left",
+          "point": {
+            "columns": [
+              "leftPosition[1]",
+              "leftPosition[2]",
+              "leftPosition[3]"
+            ],
+            "label": "Center of left point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "leftBob.a_0",
+            "columns": [
+              "leftAcceleration[1]",
+              "leftAcceleration[2]",
+              "leftAcceleration[3]"
+            ]
+          },
+          "signConvention": "Recorded world-coordinate linear acceleration of the point mass; computed by native dynamics.",
+          "defaultVisible": true,
+          "color": "#ea9665",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "leftAcceleration[1]",
+              "leftAcceleration[2]",
+              "leftAcceleration[3]"
+            ]
+          }
+        },
+        {
+          "id": "right-spring",
+          "label": "Coupling spring → right bob",
+          "kind": "force",
+          "unit": "N",
+          "body": "right",
+          "point": {
+            "columns": [
+              "rightPosition[1]",
+              "rightPosition[2]",
+              "rightPosition[3]"
+            ],
+            "label": "Center of right point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "-Frames.resolve1(couplingSpring.frame_b.R, couplingSpring.frame_b.f)",
+            "columns": [
+              "rightSpringOnBob[1]",
+              "rightSpringOnBob[2]",
+              "rightSpringOnBob[3]"
+            ]
+          },
+          "signConvention": "Force ON the point-mass bob due to the massless spring, opposite the signed connector flow into the spring, resolved in world coordinates.",
+          "defaultVisible": true,
+          "color": "#a5cf6c",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "rightSpringOnBob[1]",
+              "rightSpringOnBob[2]",
+              "rightSpringOnBob[3]"
+            ]
+          }
+        },
+        {
+          "id": "right-rod",
+          "label": "Rigid rod → right bob",
+          "kind": "force",
+          "unit": "N",
+          "body": "right",
+          "point": {
+            "columns": [
+              "rightPosition[1]",
+              "rightPosition[2]",
+              "rightPosition[3]"
+            ],
+            "label": "Center of right point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "-Frames.resolve1(rightRod.frame_b.R, rightRod.frame_b.f)",
+            "columns": [
+              "rightRodOnBob[1]",
+              "rightRodOnBob[2]",
+              "rightRodOnBob[3]"
+            ]
+          },
+          "signConvention": "Constraint force ON the bob from its massless rod, opposite the native connector flow force into the rod at frame_b. Not an independently applied drive.",
+          "defaultVisible": true,
+          "color": "#d68d9a",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "rightRodOnBob[1]",
+              "rightRodOnBob[2]",
+              "rightRodOnBob[3]"
+            ]
+          }
+        },
+        {
+          "id": "right-weight",
+          "label": "Gravity → right bob",
+          "kind": "force",
+          "unit": "N",
+          "body": "right",
+          "point": {
+            "columns": [
+              "rightPosition[1]",
+              "rightPosition[2]",
+              "rightPosition[3]"
+            ],
+            "label": "right point-mass center of mass",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "derived",
+            "expression": "rightBob.m * world.g * world.n / length(world.n)",
+            "columns": [
+              "rightBob.m",
+              "world.g",
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          },
+          "signConvention": "Weight ON the bob in the declared world gravity direction. This overlay is computed from recorded native mass and uniform gravity parameters, not an independently native force column.",
+          "defaultVisible": true,
+          "color": "#d9af59",
+          "vector": {
+            "op": "uniformGravity",
+            "massColumn": "rightBob.m",
+            "gColumn": "world.g",
+            "directionColumns": [
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          }
+        },
+        {
+          "id": "right-velocity",
+          "label": "Right bob velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "right",
+          "point": {
+            "columns": [
+              "rightPosition[1]",
+              "rightPosition[2]",
+              "rightPosition[3]"
+            ],
+            "label": "Center of right point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "rightBob.v_0",
+            "columns": [
+              "rightVelocity[1]",
+              "rightVelocity[2]",
+              "rightVelocity[3]"
+            ]
+          },
+          "signConvention": "Recorded world-coordinate linear velocity of the point mass; no prescribed motion.",
+          "defaultVisible": true,
+          "color": "#b58cd7",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "rightVelocity[1]",
+              "rightVelocity[2]",
+              "rightVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "right-acceleration",
+          "label": "Right bob acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "right",
+          "point": {
+            "columns": [
+              "rightPosition[1]",
+              "rightPosition[2]",
+              "rightPosition[3]"
+            ],
+            "label": "Center of right point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "rightBob.a_0",
+            "columns": [
+              "rightAcceleration[1]",
+              "rightAcceleration[2]",
+              "rightAcceleration[3]"
+            ]
+          },
+          "signConvention": "Recorded world-coordinate linear acceleration of the point mass; computed by native dynamics.",
+          "defaultVisible": true,
+          "color": "#de719a",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "rightAcceleration[1]",
+              "rightAcceleration[2]",
+              "rightAcceleration[3]"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
