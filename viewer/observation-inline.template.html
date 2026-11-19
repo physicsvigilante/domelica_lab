@@ -1,0 +1,150 @@
+<div id="domelica-motion-observations">
+  <style>
+    #domelica-motion-observations{color:var(--foreground)}
+    #domelica-motion-observations .motion-canvas{display:block;width:100%;height:410px}
+    #domelica-motion-observations .motion-time{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    #domelica-motion-observations .motion-time .motion-scrub{flex:1;min-width:130px}
+    #domelica-motion-observations .motion-labels{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    #domelica-motion-observations .motion-detail{min-height:2.4em;overflow-wrap:anywhere}
+    #domelica-motion-observations .motion-field{min-width:150px;flex:1}
+    #domelica-motion-observations .motion-scale{min-width:160px;flex:1}
+    #domelica-motion-observations .motion-legend{display:flex;flex-wrap:wrap;gap:8px 16px}
+    #domelica-motion-observations .motion-legend label{display:flex;align-items:center;gap:5px}
+    #domelica-motion-observations .motion-swatch{display:inline-block;width:10px;height:10px;border-radius:50%}
+    @media(max-width:480px){#domelica-motion-observations .motion-canvas{height:360px}}
+  </style>
+  <h3>Motion and the forces behind it</h3>
+  <div class="viz-controls">
+    <label class="form-label motion-field">System
+      <select class="form-select" data-control="scene" aria-label="Choose native recording"></select>
+    </label>
+    <label class="form-label motion-field">Show
+      <select class="form-select" data-control="quantity" aria-label="Choose observation quantity"></select>
+    </label>
+    <label class="form-label motion-field">Body
+      <select class="form-select" data-control="body" aria-label="Choose receiving or observed body"></select>
+    </label>
+  </div>
+  <canvas class="motion-canvas" role="img" aria-label="XY projection of native Modelica motion with sampled vector arrows">Native Modelica motion and force vectors.</canvas>
+  <div class="motion-time">
+    <button type="button" class="btn btn-primary" data-control="play">Play</button>
+    <label class="form-label motion-scrub"><span class="sr-only">Native simulation sample</span><input type="range" class="form-range" data-control="scrub" min="0" max="1" step="1" value="0" aria-label="Native simulation sample"></label>
+    <output data-control="time" class="tabular-nums">0.000 s</output>
+    <label class="form-label"><span class="sr-only">Playback speed</span><select class="form-select" data-control="speed" aria-label="Playback speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+  </div>
+  <div class="viz-controls">
+    <label class="form-label motion-scale">Arrow scale <output class="tabular-nums" data-control="scale-value"></output>
+      <input type="range" class="form-range" data-control="scale" min="0" max="100" step="1" value="50" aria-label="Common arrow scale">
+    </label>
+    <label class="form-label motion-field">Inspect
+      <select class="form-select" data-control="inspect" aria-label="Inspect an observation"></select>
+    </label>
+  </div>
+  <div class="motion-legend text-small" data-control="legend"></div>
+  <p class="motion-detail text-small tabular-nums" data-control="detail" aria-live="off"></p>
+  <div class="motion-labels text-small text-muted"><span data-control="mode">Recorded OpenModelica results · XY projection</span><span data-control="samples"></span></div>
+  <p class="text-small text-destructive" data-control="error" role="alert" hidden></p>
+  <span class="sr-only" data-control="announcement" aria-live="polite"></span>
+</div>
+<script>
+__OBSERVATION_LAYER__
+__NATIVE_CANVAS__
+(async()=>{
+  const root=document.getElementById("domelica-motion-observations"), get=name=>root.querySelector('[data-control="'+name+'"]');
+  try{
+    const encoded="__COMPRESSED_DATA__";
+    const bytes=Uint8Array.from(atob(encoded),ch=>ch.charCodeAt(0));
+    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    const data=JSON.parse(await new Response(stream).text());
+    const canvas=root.querySelector("canvas"), renderer=DomelicaNativeCanvas.create(canvas);
+    let scene,index=0,playing=false,playTime=0,last=0,bounds,colors={};
+    const quantityLabels={force:"Forces",velocity:"Velocity",acceleration:"Acceleration",torque:"Torque"};
+    const modes={native:"native result","native-transform":"native vector → world axes",derived:"derived from native data"};
+    const fmt=v=>v===0?"0":(Math.abs(v)<.001||Math.abs(v)>=10000?v.toExponential(3):v.toFixed(3));
+    const layer=DomelicaObservationLayer.create({onChange:()=>{bounds=layer.extendBounds(scene.bounds);draw();}});
+    function cssColor(name){
+      const probe=document.createElement("span");probe.style.color="var("+name+")";probe.hidden=true;root.append(probe);
+      const color=getComputedStyle(probe).color;probe.remove();return color;
+    }
+    function theme(){
+      return{foreground:cssColor("--foreground"),muted:cssColor("--muted-foreground"),bodyFill:cssColor("--secondary"),bodyStroke:cssColor("--muted-foreground")};
+    }
+    function updateColors(){
+      colors={};for(const [j,o]of scene.overlays.entries())colors[o.id]=cssColor("--viz-series-"+(j%6+1));
+    }
+    function fillSelect(select,items,value){
+      select.replaceChildren();for(const item of items){const option=document.createElement("option");option.value=item.id;option.textContent=item.label;select.append(option);}select.value=value;
+    }
+    function setScene(id){
+      scene=data.scenes.find(s=>s.id===id);playing=false;index=0;playTime=scene.times[0];last=0;
+      get("scene").value=id;
+      layer.loadScene(scene);bounds=layer.extendBounds(scene.bounds);updateColors();
+      const state=layer.getState();
+      fillSelect(get("quantity"),state.availableKinds.map(k=>({id:k,label:quantityLabels[k]})),state.kind);
+      fillSelect(get("body"),[{id:"all",label:"All bodies"},...scene.bodies],"all");
+      get("scrub").max=String(scene.times.length-1);get("scrub").value="0";
+      get("speed").value=scene.times.at(-1)-scene.times[0]<1?"0.25":"1";
+      get("samples").textContent=scene.times.length.toLocaleString()+" native samples";
+      refreshControls();resize();announce();
+    }
+    function refreshControls(){
+      const state=layer.getState(),observations=scene.overlays.filter(o=>o.kind===state.kind&&(state.body==="all"||o.body===state.body));
+      const previous=get("inspect").value;
+      fillSelect(get("inspect"),observations.map(o=>({id:o.id,label:o.label})),observations.some(o=>o.id===previous)?previous:observations[0]?.id||"");
+      get("scale").value=String(50+20*Math.log2(state.scale/state.baseScale));
+      get("scale-value").textContent=fmt(state.scale)+" "+state.scaleUnit;
+      const legend=get("legend");legend.replaceChildren();
+      for(const o of observations){
+        const label=document.createElement("label");label.className="form-check";
+        const input=document.createElement("input");input.type="checkbox";input.className="form-check-input";input.checked=state.enabled.includes(o.id);
+        input.setAttribute("aria-label","Show "+o.label);input.addEventListener("change",()=>layer.setEnabled(o.id,input.checked));
+        const swatch=document.createElement("span");swatch.className="motion-swatch";swatch.style.background=colors[o.id];
+        const text=document.createElement("span");text.className="form-check-label";text.textContent=o.label;
+        label.append(input,swatch,text);legend.append(label);
+      }
+      get("mode").textContent=state.kind==="torque"?"XY · ⊙ +Z / ⊗ −Z · torque axis, right-hand rule; ring size is symbolic":"Recorded OpenModelica results · XY projection";
+      draw();
+    }
+    function draw(){
+      if(!scene)return;layer.update(index);
+      const active=layer.getActiveSamples().map(o=>({...o,color:colors[o.id]}));
+      renderer.render({scene,index,overlays:active,bounds,theme:theme()});
+      get("scrub").value=String(index);get("time").textContent=scene.times[index].toFixed(3)+" / "+scene.times.at(-1).toFixed(3)+" s";
+      get("play").textContent=playing?"Pause":index===scene.times.length-1?"Replay":"Play";
+      const selected=scene.overlays.find(o=>o.id===get("inspect").value);
+      if(selected){
+        const vector=selected.vectors[selected.vectors.length===1?0:index];
+        get("detail").textContent=selected.label+" · "+modes[selected.source.mode]+" · ("+vector.map(fmt).join(", ")+") "+selected.unit;
+        get("detail").setAttribute("data-tooltip",selected.source.expression+"; "+selected.point.label+"; "+selected.signConvention);
+      }else get("detail").textContent="No observations of this quantity for the selected body.";
+    }
+    function resize(){const r=canvas.getBoundingClientRect();renderer.resize(r.width,r.height,window.devicePixelRatio||1);draw();}
+    function announce(){get("announcement").textContent=(playing?"Playing ":"Paused ")+scene.id+" at "+scene.times[index].toFixed(3)+" seconds.";}
+    function toggle(){if(!playing&&index===scene.times.length-1){index=0;playTime=scene.times[0];}playing=!playing;last=0;draw();announce();}
+    function seek(value){playing=false;index=Math.max(0,Math.min(scene.times.length-1,Math.round(value)));playTime=scene.times[index];last=0;draw();}
+    fillSelect(get("scene"),data.scenes.map(s=>({id:s.id,label:s.shortTitle||s.title})),data.scenes[0].id);
+    get("scene").addEventListener("change",()=>setScene(get("scene").value));
+    get("quantity").addEventListener("change",()=>{layer.setKind(get("quantity").value);refreshControls();});
+    get("body").addEventListener("change",()=>{layer.setBody(get("body").value);refreshControls();});
+    get("scale").addEventListener("input",()=>{const s=layer.getState();layer.setScale(s.baseScale*Math.pow(2,(Number(get("scale").value)-50)/20));get("scale-value").textContent=fmt(layer.getState().scale)+" "+s.scaleUnit;});
+    get("inspect").addEventListener("change",draw);get("play").addEventListener("click",toggle);
+    get("scrub").addEventListener("input",()=>seek(Number(get("scrub").value)));get("scrub").addEventListener("change",announce);
+    const reduced=matchMedia("(prefers-reduced-motion: reduce)");reduced.addEventListener("change",e=>{if(e.matches){playing=false;draw();}});
+    document.addEventListener("visibilitychange",()=>{last=0;});
+    new ResizeObserver(resize).observe(canvas);
+    new MutationObserver(()=>{if(scene){updateColors();refreshControls();}}).observe(document.documentElement,{attributes:true,attributeFilter:["class","style","data-theme"]});
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{updateColors();refreshControls();});
+    function tick(now){
+      if(playing&&last&&!document.hidden){
+        playTime=Math.min(scene.times.at(-1),playTime+Math.min(.1,(now-last)/1000)*Number(get("speed").value));
+        while(index+1<scene.times.length&&scene.times[index+1]<=playTime)index++;
+        if(playTime>=scene.times.at(-1))playing=false;draw();
+      }
+      last=now;requestAnimationFrame(tick);
+    }
+    setScene(data.scenes[0].id);
+    window.__domelicaInline={available:true,getState:()=>({sceneId:scene.id,index,time:scene.times[index],playing,observation:layer.getState(),render:renderer.getState()}),seek,changeScene:setScene,toggle};
+    requestAnimationFrame(tick);
+  }catch(error){get("error").hidden=false;get("error").textContent="Playback could not start: "+error.message;window.__domelicaInline={available:false,error:error.message};}
+})();
+</script>

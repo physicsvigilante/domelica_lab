@@ -1,0 +1,126 @@
+{
+  "schema": "domelica.experiments/v1",
+  "modelica": {
+    "package": "DomelicaLab/package.mo",
+    "mslVersion": "4.1.0"
+  },
+  "observationManifest": "observations.json",
+  "renderer": {
+    "runtime": "artifacts/three-runtime.js",
+    "sha256": "0189ca18ffd85d5ce74cc4851ead56b0b2a753fede6b067769bed49929bb2293"
+  },
+  "recording": {
+    "kind": "existing-native-recording",
+    "compiler": "OpenModelica 1.27.1",
+    "sourceCommit": "2391387201f6d4feffbcd4e8cafdf0d6430fdfc1",
+    "sourceTree": "1c8741ed3ab8c08ce63b886f551d631093c169d7",
+    "runUrl": "https://github.com/physicsvigilante/domelica_lab/actions/runs/44370469180",
+    "toolchain": {
+      "compiler": "OpenModelica 1.27.1",
+      "mslVersion": "4.1.0",
+      "mslSource": "/github/home/.openmodelica/libraries/Modelica 4.1.0+maint.om/package.mo"
+    },
+    "inputsSHA256": {
+      "m4c-native-toolchain.txt": "df8791b2557129826b9925b68854bdc8c4b89fa6879a8538f0184782c4b8174a",
+      "m4c_cart_pendulum.log": "5a85889a51668a4914b30b01757a9f0dd6aa37c67b5ee8ba869f384a5451b06a",
+      "m4c_cart_pendulum_res.csv": "e98f3c1e5c14b6ffcdab181fd1b8313db77d9884f0082ac128afced460782690",
+      "m4c_cart_pendulum_res.mat": "d94468cecd1953459827fc0e7b4bf3de8400018cc80a592ac053339a85695df1",
+      "m4c_cart_pendulum_visual.xml": "fa7ac0166ed797207ef6dd388fa7d4004848e420f8febd963bd7f0216b4c7c9a",
+      "m4c_pdf_composition.log": "5a85889a51668a4914b30b01757a9f0dd6aa37c67b5ee8ba869f384a5451b06a",
+      "m4c_pdf_composition_res.csv": "f5694b1c617ec968bafedce20ef2ce26d2842d1a37980a6b160f6d2c61d6d74a",
+      "m4c_pdf_composition_res.mat": "0993dc677fc981f740d6fa867872a0290400e4554c4ee63ff67370e8ea84e4a7",
+      "m4c_pdf_composition_visual.xml": "4c641f9d0197cf009722a686d303530c626bda563dd80182e1a087049751c2cd"
+    },
+    "warnings": [
+      "Six nonfatal StateSelect warnings remain for the nominal nonrotating released chain."
+    ],
+    "limitations": [
+      "Cart point-mass bob and massless rod; ideal springs/joints.",
+      "Chain begins immediately after release; no cutting event, contact, impacts or damping."
+    ]
+  },
+  "experiments": [
+    {
+      "id": "cart-pendulum-spring",
+      "prefix": "m4c_cart_pendulum",
+      "model": "DomelicaLab.Examples.CartPendulumSpring3D",
+      "title": "A pendulum moves its spring-mounted cart",
+      "description": "Release a 1 kg pendulum bob from 35\u00b0 on a 2 kg sliding cart attached to a 20 N/m wall spring. The cart translates while the unactuated hinge rotates. A massless rigid rod joins the pivot to the point mass; its sphere shows position and adds no rotational inertia. The six-second recording uses ideal joints and an undamped spring.",
+      "camera": {
+        "yaw": 0.2,
+        "pitch": 0.16
+      },
+      "series": [
+        {
+          "name": "cartDisplacement",
+          "label": "Cart displacement",
+          "unit": "m"
+        },
+        {
+          "name": "pendulumAngle",
+          "label": "Pendulum angle from downward",
+          "unit": "rad"
+        },
+        {
+          "name": "springForce",
+          "label": "Signed spring extension force",
+          "unit": "N"
+        },
+        {
+          "name": "bobPosition[2]",
+          "label": "Bob height",
+          "unit": "m"
+        }
+      ],
+      "simulation": {
+        "startTime": 0,
+        "stopTime": 6,
+        "numberOfIntervals": 1200,
+        "tolerance": 1e-09,
+        "method": "dassl"
+      },
+      "shortTitle": "Cart and pendulum"
+    },
+    {
+      "id": "released-spring-chain",
+      "prefix": "m4c_pdf_composition",
+      "model": "DomelicaLab.Examples.ReleasedSpringChain3D",
+      "title": "Q192 \u00b7 Three blocks fall with two springs",
+      "description": "Watch three identical blocks after the top thread is cut. The springs retain their hanging-equilibrium stretch at release, so the blocks begin with different accelerations and the springs oscillate as the system falls. The 1 kg blocks, 100 N/m springs, dimensions and 0.8-second interval are illustrative choices. The support marker is a stationary visual reference; no support remains attached.",
+      "camera": {
+        "yaw": 0.2,
+        "pitch": 0.12
+      },
+      "series": [
+        {
+          "name": "topHeight",
+          "label": "Top block height",
+          "unit": "m"
+        },
+        {
+          "name": "bottomHeight",
+          "label": "Bottom block height",
+          "unit": "m"
+        },
+        {
+          "name": "upperTension",
+          "label": "Upper spring signed tension",
+          "unit": "N"
+        },
+        {
+          "name": "lowerTension",
+          "label": "Lower spring signed tension",
+          "unit": "N"
+        }
+      ],
+      "simulation": {
+        "startTime": 0,
+        "stopTime": 0.8,
+        "numberOfIntervals": 800,
+        "tolerance": 1e-09,
+        "method": "dassl"
+      },
+      "shortTitle": "Released spring chain"
+    }
+  ]
+}

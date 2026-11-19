@@ -1,0 +1,115 @@
+name: Native Observation Lab
+
+on:
+  push:
+    branches: [main, 'experiment/m5-*']
+    paths:
+      - 'DomelicaLab/**'
+      - 'scripts/run_experiments.py'
+      - 'scripts/build_observation_lab.py'
+      - 'scripts/observation_data.py'
+      - 'scripts/export_native_csv.py'
+      - 'scripts/native_scene.py'
+      - 'scripts/native_motion_scene.py'
+      - 'scripts/install_msl.mos'
+      - 'scripts/build_three_runtime.cjs'
+      - 'scripts/check_observation*.cjs'
+      - 'viewer/observation-experiments.json'
+      - 'viewer/observations.json'
+      - 'viewer/observation-layer.js'
+      - 'viewer/native-canvas.js'
+      - 'viewer/observation.template.html'
+      - 'viewer/motion-spring.js'
+      - 'viewer/three-runtime.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/observation-modelica.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: observation-motion-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Modelica Standard Library
+        run: omc scripts/install_msl.mos
+      - name: Run manifest experiments and export native results
+        timeout-minutes: 12
+        run: >-
+          python3 scripts/run_experiments.py run
+          --manifest viewer/observation-experiments.json
+          --run-dir observation-run
+          --timeout 600
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build offline runtime and observation viewer
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:runtime
+          python3 scripts/build_observation_lab.py --manifest observation-run/experiments.json --results-dir observation-run --output artifacts/observation-lab.html
+      - name: Preserve native recording and observation build
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: observation-lab-results
+          if-no-files-found: warn
+          path: |
+            observation-run/*_res.mat
+            observation-run/*_res.csv
+            observation-run/*_visual.xml
+            observation-run/*.log
+            observation-run/native-toolchain.txt
+            observation-run/run_native.mos
+            observation-run/run-plan.json
+            observation-run/experiments.json
+            observation-run/observations.json
+            observation-run/source/
+            artifacts/observation-lab.html
+            artifacts/observation-lab.json
+            artifacts/observation-lab_build.json
+            artifacts/three-runtime.js
+            artifacts/three-runtime.json
+            artifacts/three.LICENSE.txt
+
+  browser-observation:
+    needs: native-observation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: observation-lab-results
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser checks
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Exercise native motion and observation controls
+        run: node scripts/check_observation_lab.cjs artifacts/observation-lab.html artifacts/observation-checks
+      - name: Preserve browser report and inspection frames
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: observation-browser-checks
+          if-no-files-found: warn
+          path: artifacts/observation-checks/

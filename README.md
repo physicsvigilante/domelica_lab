@@ -14,6 +14,7 @@ A **Modelica-first multiphysics laboratory** for composing physical systems, run
 | **Visible motion (M4)** | A block sliding through a diagonal groove on an incline, and a block oscillating between two fixed springs, composed from existing MSL components |
 | **Coupled motion (M4B)** | A block on a freely translating wedge, followed by a spring carried by that wedge; two interacting bodies reuse the existing native viewer |
 | **Further compositions (M4C)** | A carriage, pendulum and wall spring couple translation to rotation; three free bodies connected by two springs fall after support removal |
+| **Native observations (M5)** | One reusable layer overlays force, velocity, acceleration and torque on the cart–pendulum and released chain, with explicit source, frame, units and body ownership |
 
 The armature is reusable Modelica code. `ThermalArmatureDrive` extends it by exposing the standard resistor's heat port; the original component is unchanged. The browser reads native geometry and transforms and has no physics solver or model-specific pendulum drawing.
 
@@ -52,6 +53,19 @@ The **coupled-lab-results** artifact contains `artifacts/coupled-preview.html`, 
 The **Native Composition Motion Lab** workflow adds `CartPendulumSpring3D` and `ReleasedSpringChain3D` (the arrangement in Q192, PDF page 26). Both assemble existing standard-library components. The cart and pendulum exchange motion while the wall spring acts; the released chain's center of mass falls while its internal springs oscillate.
 
 The **composition-lab-results** artifact contains the single offline `artifacts/composition-preview.html`, native results, independent trajectory/force/energy checks and provenance. The existing native scene exporters and complete motion viewer remain unchanged. See [the composition scope and reproduction guide](docs/M4C_COMPOSITIONS.md).
+
+### See forces and motion together
+
+The **Native Observation Lab** workflow uses a shared experiment manifest to run
+the cart–pendulum and released chain, then builds `artifacts/observation-lab.html`.
+Choose a quantity and body, toggle individual arrows, inspect signed native
+components and adjust a common physical display scale. Native connector values,
+coordinate conversions and derived weight arrows are labeled separately.
+
+The same observation modules serve both scenes. A Canvas XY projection keeps
+recorded playback available when WebGL2 is unavailable. The workflow publishes
+native results and a separate report from actual 3D/fallback browser checks.
+See [the observation lab and manifest runner](docs/M5_OBSERVATION_LAB.md).
 
 ## Principles
 
