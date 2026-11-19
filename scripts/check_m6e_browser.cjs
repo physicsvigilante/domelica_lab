@@ -4,7 +4,7 @@
 const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
 const {pathToFileURL}=require("node:url"),{chromium}=require("playwright");
 if(process.argv.length!==5)throw new Error("Pass dark HTML, light HTML, output directory");
-const [dark,light,out]=process.argv.slice(2).map(path.resolve);
+const [dark,light,out]=process.argv.slice(2).map(p=>path.resolve(p));
 fs.mkdirSync(out,{recursive:true});
 const parse=p=>{let s=fs.readFileSync(p,"utf8");let m=s.match(/<script id="recording" type="application\/json">([\s\S]*?)<\/script>/);assert.ok(m);return JSON.parse(m[1])};
 const a=parse(dark),b=parse(light);
