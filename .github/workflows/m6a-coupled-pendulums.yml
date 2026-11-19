@@ -94,7 +94,7 @@ jobs:
       - name: Prepare pinned Chromium and browser checker
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Verify three Modelica-recorded scenes in the unchanged M5 viewer
         run: node scripts/check_observation_lab.cjs artifacts/m6a-observation-lab.html artifacts/m6a-browser-checks
       - name: Preserve browser report and screenshots
