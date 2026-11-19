@@ -148,7 +148,12 @@ function draw(i){
    if(side>0&&p[0]+extent+12+width>W-12)side=-1;
    if(side<0&&p[0]-extent-12-width<12)side=1;
    text.setAttribute("text-anchor",side<0?"end":"start");
-   text.setAttribute("x",p[0]+side*(extent+12));text.setAttribute("y",p[1]+5);
+   // Keep captions clear of physical rigid-carrier strokes by moving them
+   // beneath a body attached to a recorded carrier polyline.
+   const hasCarrier=Object.values(frame.rigidLinks||{}).some(points=>
+     points.some(p0=>Math.hypot(p0[0]-b.position[0],p0[1]-b.position[1])<1e-8));
+   text.setAttribute("x",p[0]+side*(extent+12));
+   text.setAttribute("y",p[1]+(hasCarrier?extent+23:5));
  }
  document.getElementById("clock").textContent=decimal(D.times[index])+" s";
  document.getElementById("sample").textContent="Native sample "+(index+1)+" / "+D.times.length;

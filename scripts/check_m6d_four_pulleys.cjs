@@ -119,6 +119,8 @@ const close=(a,b,tol=1e-6)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Ma
          const bounds=qs('[data-body-label="'+name+'"]').getBBox();
          check(bounds.x>=0&&bounds.x+bounds.width<=W&&
                bounds.y>=0&&bounds.y+bounds.height<=H,"Clipped body label "+name);
+         if(name==="B")check(bounds.y>project(frame.rigidLinks["P3-to-B"][1])[1]+2,
+             "Carriage stroke must not run through block B label");
        }
        for(const metric of D.metrics.slice(1)){
          const rendered=qs('[data-metric="'+metric.id+'"]');
