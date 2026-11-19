@@ -34,8 +34,9 @@ def require(condition, message):
 def validate_route(route):
     require(route.get("schema") == "domelica.rope-routes-2d/v1", "Unknown route contract")
     require(route.get("plane") == "xy", "Only Modelica world XY plane admitted in first slice")
-    require(set(route) == {"schema", "plane", "recording", "attachments", "pulleys",
-                           "ropes", "bodies", "metrics"}, "Unexpected route fields")
+    core = {"schema", "plane", "recording", "attachments", "pulleys",
+            "ropes", "bodies", "metrics"}
+    require(set(route) in (core, core | {"rigidLinks"}), "Unexpected route fields")
     require(route["ropes"] and route["bodies"] and route["pulleys"], "Empty scene")
     for nodes in (item["nodes"] for item in route["ropes"]):
         for node in nodes:
@@ -52,6 +53,16 @@ def validate_route(route):
         require(body["at"] in route["attachments"], "Unknown body attachment")
     for pulley in route["pulleys"].values():
         require(set(pulley) == {"centerColumns", "radiusColumn"}, "Unknown pulley attributes")
+    link_ids = set()
+    for link in route.get("rigidLinks", []):
+        require(set(link) == {"id", "points"}, "Rigid-link fields must be declarative")
+        require(isinstance(link["id"], str) and link["id"] and link["id"] not in link_ids,
+                "Duplicate or empty rigid link ID")
+        link_ids.add(link["id"])
+        require(2 <= len(link["points"]) <= 32, "Rigid link requires 2..32 native points")
+        for columns in link["points"]:
+            require(len(columns) == 2 and all(isinstance(c, str) and c for c in columns),
+                    "Rigid-link XY point requires two native columns")
 
 
 def validate_style(style, body_ids):
@@ -102,6 +113,9 @@ def generate(csv_path, native_path, route_path, style_path):
         required.add(body["massColumn"])
     for metric in config["metrics"]:
         required.add(metric["column"])
+    for link in config.get("rigidLinks", []):
+        for columns in link["points"]:
+            required.update(columns)
 
     with Path(csv_path).open(newline="", encoding="utf-8") as stream:
         reader = csv.DictReader(stream)
@@ -119,6 +133,7 @@ def generate(csv_path, native_path, route_path, style_path):
     frames = []
     bounds = []
     base_lengths = {}
+    rigid_reference_lengths = {}
     maxima = {item["id"]: 0 for item in config["ropes"]}
     for row in raw:
         t = number(row, "time")
@@ -149,9 +164,25 @@ def generate(csv_path, native_path, route_path, style_path):
         for p in pulleys.values():
             c, r = p["center"], p["radius"]
             bounds.extend([(c[0]-r,c[1]-r),(c[0]+r,c[1]+r)])
-        frames.append({"pulleys": pulleys, "bodies": bodies, "ropes": routes,
-                       "metrics": {metric["id"]: number(row, metric["column"])
-                                   for metric in config["metrics"]}})
+        # Rigid visual connections are sampled from Modelica, never invented
+        # or used to impose mechanical constraints in the geometry layer.
+        links = {}
+        for link in config.get("rigidLinks", []):
+            points = [[number(row, c) for c in columns] for columns in link["points"]]
+            lengths = [math.dist(a, b) for a, b in zip(points, points[1:])]
+            require(all(length > 1e-9 for length in lengths),
+                    "Degenerate native rigid-link segment: " + link["id"])
+            reference = rigid_reference_lengths.setdefault(link["id"], lengths)
+            require(all(abs(a-b) < 1e-6 for a, b in zip(lengths, reference)),
+                    "Native rigid link changed length: " + link["id"])
+            links[link["id"]] = points
+            bounds.extend(points)
+        frame = {"pulleys": pulleys, "bodies": bodies, "ropes": routes,
+                 "metrics": {metric["id"]: number(row, metric["column"])
+                             for metric in config["metrics"]}}
+        if links:
+            frame["rigidLinks"] = links
+        frames.append(frame)
     require(len({item["id"] for item in config["ropes"]}) == len(config["ropes"]), "Duplicate rope IDs")
     require(times[-1] > times[0], "Empty native time interval")
     data = {"schema": "domelica.rope-playback-2d/v1",

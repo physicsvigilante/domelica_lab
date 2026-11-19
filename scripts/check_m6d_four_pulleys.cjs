@@ -32,6 +32,11 @@ const close=(a,b,tol=1e-6)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Ma
  assert.deepEqual(Object.keys(D.frames[0].pulleys),["P1","P2","P3","P4"]);
  assert.deepEqual(Object.keys(D.frames[0].ropes),["S1","S2"]);
  assert.deepEqual(Object.keys(D.frames[0].bodies),["A","B"]);
+ assert.deepEqual(Object.keys(D.frames[0].rigidLinks),["P3-to-B"]);
+ const baseLink=D.frames[0].rigidLinks["P3-to-B"];
+ assert.equal(baseLink.length,3);
+ assert.deepEqual(baseLink[0],D.frames[0].pulleys.P3.center);
+ assert.deepEqual(baseLink.at(-1),D.frames[0].bodies.B.position);
  const first=D.frames[0],last=D.frames.at(-1);
  assert.ok(last.pulleys.P1.center[0]<first.pulleys.P1.center[0]-1);
  assert.ok(last.pulleys.P3.center[1]>first.pulleys.P3.center[1]+.3);
@@ -70,6 +75,7 @@ const close=(a,b,tol=1e-6)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Ma
      check(document.querySelectorAll("[data-pulley]").length===4,"Four pulley circles");
      check(document.querySelectorAll("[data-axle]").length===4,"Four independent axle glyphs");
      check(document.querySelectorAll("[data-pulley-label]").length===4,"Pulley identities");
+     check(document.querySelectorAll("[data-rigid-link]").length===1,"One native-owned rigid carriage link");
      check(document.querySelectorAll("[data-rope-label]").length===2,"Two rope identities");
      check(document.querySelectorAll("[data-metric]").length===D.metrics.length-1,"All native metrics visible");
      check(document.querySelectorAll("[data-rope-length]").length===1,"Both rope lengths visible");
@@ -86,6 +92,17 @@ const close=(a,b,tol=1e-6)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Ma
          const axle=xy(qs('[data-axle="'+name+'"]'));
          axle.forEach((n,i)=>close(n,center[i],"Pulley axle follows center "+name));
          check(qs('[data-pulley-label="'+name+'"]').textContent===name,"Pulley label matches native ID");
+       }
+       for(const [name,nodes] of Object.entries(frame.rigidLinks||{})){
+         const drawn=qs('[data-rigid-link="'+name+'"]').getAttribute("points").trim().split(/\s+/)
+                    .map(value=>value.split(",").map(Number));
+         check(drawn.length===nodes.length,"Complete rigid-link positions");
+         for(let j=0;j<nodes.length;j++)project(nodes[j])
+           .forEach((n,i)=>close(drawn[j][i],n,"Native rigid-link point "+j));
+         frame.pulleys.P3.center.forEach((n,i)=>close(nodes[0][i],n,"P3 carrier starts at axle"));
+         frame.bodies.B.position.forEach((n,i)=>close(nodes.at(-1)[i],n,"P3 carrier ends at B"));
+         close(Math.hypot(nodes[0][0]-nodes[1][0],nodes[0][1]-nodes[1][1]),1,"Rigid vertical carriage span");
+         close(Math.hypot(nodes[1][0]-nodes[2][0],nodes[1][1]-nodes[2][1]),1.1,"Rigid horizontal carriage span");
        }
        for(const [name,rope] of Object.entries(frame.ropes)){
          const path=qs('[data-rope="'+name+'"]').getAttribute("points").trim().split(/\s+/)

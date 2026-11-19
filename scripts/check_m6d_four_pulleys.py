@@ -80,6 +80,7 @@ def check(path: Path):
             "p1Center":(x1,yP1,0),
             "p2Center":(xP2,yP2,0),
             "p3Center":(p3X,yB+offset,0),
+            "p3CarrierBase":(p3X,yB,0),
             "p4Center":(p4X,yP4,0),
             "wallAnchor":(xWall,yP1+r1,0),
         }

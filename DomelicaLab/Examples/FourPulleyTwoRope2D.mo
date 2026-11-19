@@ -103,6 +103,8 @@ model FourPulleyTwoRope2D
   SI.Position p1Center[3]=p1Slide.frame_b.r_0;
   SI.Position p2Center[3]={p2X,p2Y,0};
   SI.Position p3Center[3]={p3X,bPosition[2]+p3HeightAboveB,0};
+  SI.Position p3CarrierBase[3]={p3X,bPosition[2],0}
+    "Massless rigid carrier elbow, fixed in block B local frame; display only";
   SI.Position p4Center[3]={p4X,p4Y,0};
   SI.Velocity aVelocity[3]=bodyA.v_0;
   SI.Velocity bVelocity[3]=bodyB.v_0;

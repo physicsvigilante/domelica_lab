@@ -159,5 +159,24 @@
       "label": "Applied force on A, left",
       "unit": "N"
     }
+  ],
+  "rigidLinks": [
+    {
+      "id": "P3-to-B",
+      "points": [
+        [
+          "p3Center[1]",
+          "p3Center[2]"
+        ],
+        [
+          "p3CarrierBase[1]",
+          "p3CarrierBase[2]"
+        ],
+        [
+          "bPosition[1]",
+          "bPosition[2]"
+        ]
+      ]
+    }
   ]
 }

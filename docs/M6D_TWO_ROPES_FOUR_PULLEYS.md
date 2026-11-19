@@ -55,7 +55,9 @@ constraint power and work/energy at **every sampled time**.
 
 The 2D local tangent and circular-arc algorithms were previously adapted
 from physicsvigilante/domelica_mecha. This milestone reuses
-scripts/rope2d_geometry.py and scripts/build_rope2d.py **byte-for-byte**.
+scripts/rope2d_geometry.py **byte-for-byte**. A small generic extension
+in scripts/build_rope2d.py now supports optional native-position rigid
+carrier polylines, with segment lengths verified at every recorded frame.
 
 The route manifest viewer/m6d-four-pulleys-routes.json gives two ordered
 rope routes, each pulley center and radius as a native Modelica column,
@@ -72,9 +74,12 @@ Changing a rope path cannot change OpenModelica's solution.
 
 ## Presentation and styling
 
-The existing SVG renderer is extended only with reusable capabilities:
-any number of pulley/rope labels and HUD values, and edge-aware body
-labels. There are no P1/P2/P3/P4-specific drawing branches. The
+The SVG renderer is extended only with reusable capabilities:
+any number of pulley/rope labels and HUD values, edge-aware body
+labels, and optional rigid-link polylines driven by native position columns.
+One explicit P3-to-B carriage link is authored as three Modelica points
+(P3 axle, the native elbow on B, B center) and checked for fixed segment
+lengths. It makes the carried pulley-to-block connection visible. There are no P1/P2/P3/P4-specific drawing branches. The
 dark/light palettes and recorded geometry remain separate.
 
 The existing Three.js viewer, Modelica runner, native geometry exporter,

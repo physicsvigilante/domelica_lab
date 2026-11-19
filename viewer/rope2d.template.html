@@ -70,6 +70,15 @@ const caption=mk("text",{x:22,y:32,fill:style.foreground,"font-size":15,"font-we
 caption.textContent="WORLD XY · dimensions in metres";
 const pulleys=new Map(),axles=new Map(),ropes=new Map(),bodies=new Map(),labels=new Map();
 const pulleyLabels=new Map(),ropeLabels=new Map();
+// Optional, solver-authoritative rigid attachment polylines, rendered behind
+// wheels/strings. Styling controls stroke only; lengths come from the record.
+const rigidLinks=new Map();
+for(const name of Object.keys(D.frames[0].rigidLinks||{})){
+ rigidLinks.set(name,mk("polyline",{fill:"none",stroke:style.pulley.stroke,
+    "stroke-width":Math.max(1,style.pulley.strokeWidthPx),
+    "stroke-linecap":"round","stroke-linejoin":"round",opacity:.72,
+    "data-rigid-link":name}));
+}
 for(const name of Object.keys(D.frames[0].pulleys)){
  const circle=mk("circle",{fill:style.pulley.fill,stroke:style.pulley.stroke,
                             "stroke-width":style.pulley.strokeWidthPx,"data-pulley":name});
@@ -109,6 +118,9 @@ const decimal=n=>Number(n).toFixed(2);
 function draw(i){
  index=Math.max(0,Math.min(D.times.length-1,i));
  const frame=D.frames[index];
+ for(const [name,points] of Object.entries(frame.rigidLinks||{})){
+   rigidLinks.get(name).setAttribute("points",points.map(p=>project(p).join(",")).join(" "));
+ }
  for(const [name,p] of Object.entries(frame.pulleys)){
    const c=project(p.center),e=pulleys.get(name);
    e.setAttribute("cx",c[0]);e.setAttribute("cy",c[1]);e.setAttribute("r",p.radius*scale);
