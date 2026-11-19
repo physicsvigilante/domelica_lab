@@ -1,0 +1,20 @@
+{
+  "schema": "domelica.observations/v1",
+  "provenance": {
+    "definitionOrigin": "M6I bare-minimum elastic ball–rod impact demo",
+    "newSimulation": false
+  },
+  "scenes": [
+    {
+      "id": "free-rod-elastic-impact",
+      "model": "DomelicaLab.Examples.FreeRodElasticBallImpact2D",
+      "csv": "m6i_free_rod_res.csv",
+      "bodies": [],
+      "overlays": [],
+      "notes": [
+        "No pivot: the uniform rod translates and rotates after the ball strikes its lower end.",
+        "Only first elastic impact modeled. Modelica reinit updates velocities at an instantaneous event. Geometry exported natively."
+      ]
+    }
+  ]
+}

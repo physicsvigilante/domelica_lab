@@ -1,0 +1,60 @@
+{
+  "schema": "domelica.experiments/v1",
+  "modelica": {
+    "package": "DomelicaLab/package.mo",
+    "mslVersion": "4.1.0"
+  },
+  "observationManifest": "m6i-observations.json",
+  "recording": {
+    "kind": "planned-fresh-native-run",
+    "note": "Illustrative mass=1kg each, L=2m, v0=2m/s, e=1. Single native elastic impact event, no recontact."
+  },
+  "experiments": [
+    {
+      "id": "free-rod-elastic-impact",
+      "prefix": "m6i_free_rod",
+      "model": "DomelicaLab.Examples.FreeRodElasticBallImpact2D",
+      "title": "Ball strikes freely moving rod — equal mass and elastic impact",
+      "shortTitle": "Elastic ball–rod collision",
+      "description": "One instantaneous elastic impact at a free uniform rod's lower end. Both mass 1kg, v0=2m/s, L=2m illustrative. No gravity or pivot. OpenModelica integrates translation and rotation after event.",
+      "camera": {
+        "yaw": 0,
+        "pitch": 0
+      },
+      "series": [
+        {
+          "name": "ballV",
+          "label": "Ball horizontal velocity",
+          "unit": "m/s"
+        },
+        {
+          "name": "rodVx",
+          "label": "Rod COM horizontal velocity",
+          "unit": "m/s"
+        },
+        {
+          "name": "rodOmega",
+          "label": "Rod angular velocity",
+          "unit": "rad/s"
+        },
+        {
+          "name": "rodAngle",
+          "label": "Rod angle",
+          "unit": "rad"
+        },
+        {
+          "name": "kineticEnergy",
+          "label": "Kinetic energy",
+          "unit": "J"
+        }
+      ],
+      "simulation": {
+        "startTime": 0,
+        "stopTime": 1.5,
+        "numberOfIntervals": 600,
+        "tolerance": 1e-9,
+        "method": "dassl"
+      }
+    }
+  ]
+}

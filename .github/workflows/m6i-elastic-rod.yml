@@ -1,0 +1,54 @@
+name: M6I Minimal Native Ball-Rod Elastic Collision
+
+on:
+  push:
+    branches: ['experiment/m6i-*']
+    paths:
+      - 'DomelicaLab/**'
+      - 'viewer/m6i-*'
+      - 'scripts/build_m6i_rod_html.py'
+      - '.github/workflows/m6i-elastic-rod.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulate-and-animate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Modelica Standard Library
+        run: omc scripts/install_msl.mos
+      - name: One real OpenModelica elastic impact simulation
+        run: >-
+          python3 scripts/run_experiments.py run
+          --manifest viewer/m6i-experiments.json
+          --run-dir m6i-run --timeout 360
+      - name: Build self-contained 2D playback directly from native coordinates
+        run: >-
+          python3 scripts/build_m6i_rod_html.py
+          --csv m6i-run/m6i_free_rod_res.csv
+          --output artifacts/m6i-elastic-ball-rod.html
+      - name: Publish native result and offline HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m6i-native-rod-impact
+          if-no-files-found: warn
+          path: |
+            artifacts/m6i-elastic-ball-rod.html
+            m6i-run/m6i_free_rod_res.csv
+            m6i-run/m6i_free_rod_res.mat
+            m6i-run/native-run.log
+            m6i-run/experiments.json
+            m6i-run/run_native.mos
+            m6i-run/source/
