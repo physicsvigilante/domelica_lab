@@ -196,8 +196,10 @@ def shared_libraries(executable, library_dir):
 def copy_runtime_support(bundle):
     files = [
         "scripts/compiled_model.py", "scripts/native_mat.py", "scripts/build_observation_lab.py",
+        "scripts/serve_compiled_lab.py", "scripts/check_local_service.py",
         "scripts/observation_data.py", "scripts/native_scene.py", "scripts/native_motion_scene.py",
         "viewer/observation.template.html", "viewer/observation-layer.js", "viewer/native-canvas.js",
+        "viewer/parameter-lab.html", "viewer/parameter-lab.js",
         "viewer/motion-spring.js", "artifacts/three-runtime.js", "artifacts/three-runtime.json",
         "artifacts/three.LICENSE.txt",
         "docs/M5C_COMPILED_RUNS.md",

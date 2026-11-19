@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Domelica Lab · Interactive Parameter Runs</title>
+<style>
+:root{color-scheme:dark;--bg:#101b28;--panel:#172839;--border:#355168;--ink:#ebf5fc;--muted:#aac1d0;--accent:#63ccdf}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,sans-serif}
+header{padding:22px max(22px,calc((100vw - 1350px)/2));border-bottom:1px solid var(--border)}h1{font-size:26px;letter-spacing:-.04em;margin:0}h2{font-size:17px;margin:0 0 12px}p{color:var(--muted);margin:8px 0}
+main{margin:0 auto;max-width:1350px;padding:18px 22px;display:grid;grid-template-columns:minmax(250px,310px) 1fr;gap:18px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px}.field{margin-bottom:15px}.field label{display:block;font-weight:650;font-size:13px;margin-bottom:6px}
+.field input{width:100%;background:#0b1926;color:var(--ink);border:1px solid #507087;border-radius:9px;padding:10px;font:inherit}.unit{font-size:12px;color:var(--muted)}button{border:0;border-radius:9px;font:inherit;font-weight:750;padding:12px 14px;cursor:pointer;background:var(--accent);color:#08252c;width:100%}button:disabled{opacity:.6;cursor:wait}
+#status{min-height:3em;overflow-wrap:anywhere}#result[hidden]{display:none}#result{width:100%;border:0;min-height:760px;border-radius:10px;background:#0a1620}#download{display:none;color:#9ce9f6;margin-top:10px}#download.visible{display:inline-block}.hint{font-size:12px}
+@media(max-width:820px){main{grid-template-columns:1fr;padding:12px}.panel{padding:15px}#result{min-height:700px}h1{font-size:22px}}
+</style>
+<script src="/app.js" defer></script>
+</head>
+<body>
+<header><h1>Interactive mechanics · parameter exploration</h1><p>Choose valid numerical inputs. The same compiled mechanical assembly calculates a new trajectory on your computer.</p></header>
+<main>
+  <section class="panel" aria-label="Simulation controls">
+    <h2>Physical parameters</h2>
+    <form id="controls"><div id="inputs"></div><button id="run" type="submit">Run fresh simulation</button></form>
+    <p id="status" role="status" aria-live="polite">Loading eligible parameters…</p>
+    <a id="download" download="domelica-simulation.html">Save standalone recording</a>
+    <p class="hint">Each run starts the native solver again; this is not a precomputed preset or browser physics approximation. Changing the mechanism's connections still requires compilation.</p>
+  </section>
+  <section class="panel" aria-label="Simulation viewer">
+    <h2>Native 3D motion and forces</h2><p id="viewer-placeholder">Run a simulation to view new motion and force results here.</p>
+    <iframe id="result" title="Fresh native simulation and observations" hidden></iframe>
+  </section>
+</main>
+</body>
+</html>

@@ -81,6 +81,17 @@ MAT adapter removes the compiler dependency from result export. This is a
 qualified fixed-assembly runtime, with a separate build step for new physical
 arrangements. See [the package, commands and acceptance scope](docs/M5C_COMPILED_RUNS.md).
 
+### Change numbers from a local HTML page (M5D)
+
+The same precompiled cart–pendulum–spring runtime can serve a small page at
+`http://127.0.0.1:8765/`. Enter arbitrary qualified positive masses and spring
+stiffness, choose the initial angle in degrees, then press **Run fresh simulation**.
+The local Python bridge launches a new native run without the Modelica compiler,
+exports the results and shows the existing 3D/force viewer in the same page.
+It also offers a downloadable standalone recording. The first package targets
+Linux x86-64 with Python 3.10+, not a browser-only solver or a public server.
+See [M5D HTML-to-runtime setup and safety](docs/M5D_INTERACTIVE_PARAMETERS.md).
+
 ## Principles
 
 - **Modelica defines physics and geometry.** Standard-library components supply the physical laws.
