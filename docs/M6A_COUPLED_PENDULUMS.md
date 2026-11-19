@@ -57,11 +57,11 @@ equations, Python branches or scene-graph objects.
 In the pinned OpenModelica 1.27.1 plus MSL 4.1.0 environment:
 
     omc scripts/install_msl.mos
-    python3 scripts/run_experiments.py run --manifest viewer/m6a-experiments.json --run-dir m6a-run
-    python3 scripts/check_m6a_physics.py --csv m6a-run/m6a_coupled_pendulums_res.csv --report artifacts/m6a-physics-check.json
+    python3 scripts/run_experiments.py run --manifest viewer/m6a-experiments.json --run-dir observation-run
+    python3 scripts/check_m6a_physics.py --csv observation-run/m6a_coupled_pendulums_res.csv --report artifacts/m6a-physics-check.json
     npm ci --ignore-scripts --no-audit --no-fund
     npm run build:runtime
-    python3 scripts/build_observation_lab.py --manifest m6a-run/experiments.json --results-dir m6a-run --output artifacts/m6a-observation-lab.html
+    python3 scripts/build_observation_lab.py --manifest observation-run/experiments.json --results-dir observation-run --output artifacts/m6a-observation-lab.html
 
 Open the resulting standalone HTML offline. It replays recorded Modelica
 motion, forces, velocities and accelerations; viewing does not solve.

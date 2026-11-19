@@ -39,11 +39,11 @@ jobs:
         run: >-
           python3 scripts/run_experiments.py run
           --manifest viewer/m6a-experiments.json
-          --run-dir m6a-run --timeout 600
+          --run-dir observation-run --timeout 600
       - name: Focused coupling, connector force and energy checks
         run: >-
           python3 scripts/check_m6a_physics.py
-          --csv m6a-run/m6a_coupled_pendulums_res.csv
+          --csv observation-run/m6a_coupled_pendulums_res.csv
           --report artifacts/m6a-physics-check.json
       - uses: actions/setup-node@v4
         with:
@@ -52,7 +52,7 @@ jobs:
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm run build:runtime
-          python3 scripts/build_observation_lab.py --manifest m6a-run/experiments.json --results-dir m6a-run --output artifacts/m6a-observation-lab.html
+          python3 scripts/build_observation_lab.py --manifest observation-run/experiments.json --results-dir observation-run --output artifacts/m6a-observation-lab.html
       - name: Preserve native evidence and standalone HTML
         if: always()
         uses: actions/upload-artifact@v4
@@ -60,16 +60,16 @@ jobs:
           name: m6a-native-results
           if-no-files-found: warn
           path: |
-            m6a-run/*_res.mat
-            m6a-run/*_res.csv
-            m6a-run/*_visual.xml
-            m6a-run/*.log
-            m6a-run/native-toolchain.txt
-            m6a-run/run_native.mos
-            m6a-run/run-plan.json
-            m6a-run/experiments.json
-            m6a-run/observations.json
-            m6a-run/source/
+            observation-run/*_res.mat
+            observation-run/*_res.csv
+            observation-run/*_visual.xml
+            observation-run/*.log
+            observation-run/native-toolchain.txt
+            observation-run/run_native.mos
+            observation-run/run-plan.json
+            observation-run/experiments.json
+            observation-run/observations.json
+            observation-run/source/
             artifacts/m6a-observation-lab.html
             artifacts/m6a-observation-lab.json
             artifacts/m6a-observation-lab_build.json
