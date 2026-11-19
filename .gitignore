@@ -15,6 +15,9 @@
 /native-toolchain.txt
 /observation-run/
 /observation-plan/
+/compiled-model/
+/compiled-runs/
+/compiled-model-linux-x86_64.tar.gz
 
 # Python
 __pycache__/

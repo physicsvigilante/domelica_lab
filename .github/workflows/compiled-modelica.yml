@@ -1,0 +1,166 @@
+name: Compiled Parameter Lab
+
+on:
+  push:
+    branches: [main, 'experiment/m5c-*']
+    paths:
+      - 'DomelicaLab/**'
+      - 'scripts/compiled_model.py'
+      - 'scripts/native_mat.py'
+      - 'scripts/test_native_mat.py'
+      - 'scripts/test_compiled_model.py'
+      - 'scripts/check_compiled_runs.py'
+      - 'scripts/build_observation_lab.py'
+      - 'scripts/observation_data.py'
+      - 'scripts/native_scene.py'
+      - 'scripts/native_motion_scene.py'
+      - 'scripts/check_observation_lab.cjs'
+      - 'viewer/compiled-experiments.json'
+      - 'viewer/observations.json'
+      - 'viewer/observation-layer.js'
+      - 'viewer/native-canvas.js'
+      - 'viewer/observation.template.html'
+      - 'viewer/motion-spring.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/compiled-modelica.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compiled-parameter-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check reader and request validation
+        run: python3 -m unittest discover -s scripts -p 'test_*compiled*.py'
+      - name: Check native MAT serialization
+        run: python3 -m unittest discover -s scripts -p test_native_mat.py
+      - name: Prepare Modelica Standard Library
+        run: omc scripts/install_msl.mos
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bundle the existing viewer runtime
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:runtime
+      - name: Compile the assembled model once
+        run: python3 scripts/compiled_model.py build --manifest viewer/compiled-experiments.json --bundle compiled-model
+      - name: Preserve executable permissions in the runtime package
+        run: tar -czf compiled-model-linux-x86_64.tar.gz compiled-model
+      - name: Preserve compiled package and build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-model-linux-x86_64
+          if-no-files-found: warn
+          path: |
+            compiled-model-linux-x86_64.tar.gz
+            compiled-model/build.json
+            compiled-model/evidence/
+            compiled-model/native/cart_compiled_init.xml
+            compiled-model-build/cart_compiled_init.xml
+            compiled-model-build/cart_compiled.makefile
+
+  run-without-compiler:
+    needs: build-model
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    container:
+      image: python:3.12-slim-bookworm
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: compiled-model-linux-x86_64
+          path: incoming
+      - name: Unpack the compiled runtime
+        run: tar -xzf incoming/compiled-model-linux-x86_64.tar.gz
+      - name: Run three fresh parameter sets without development tools
+        run: >-
+          python3 compiled-model/scripts/compiled_model.py presets
+          --bundle compiled-model --output-dir observation-run --require-no-compiler
+      - name: Build the existing motion and force viewer without development tools
+        run: >-
+          python3 compiled-model/scripts/build_observation_lab.py
+          --manifest observation-run/experiments.json --results-dir observation-run
+          --output artifacts/compiled-parameter-lab.html
+      - name: Preserve fresh results and runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-parameter-results
+          if-no-files-found: warn
+          path: |
+            observation-run/
+            artifacts/compiled-parameter-lab.html
+            artifacts/compiled-parameter-lab.json
+            artifacts/compiled-parameter-lab_build.json
+
+  check-result-reader:
+    needs: run-without-compiler
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: compiled-parameter-results
+          path: .
+      - name: Compare one fresh native result with the established OpenModelica reader
+        run: python3 scripts/check_compiled_runs.py --results-dir observation-run --output artifacts/compiled-data-checks.json
+      - name: Preserve serialization and parameter checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-data-checks
+          path: artifacts/compiled-data-checks.json
+          if-no-files-found: warn
+
+  browser-compiled:
+    needs: run-without-compiler
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: compiled-parameter-results
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare the existing browser checker
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Exercise all three fresh recordings in the shared viewer
+        run: node scripts/check_observation_lab.cjs artifacts/compiled-parameter-lab.html artifacts/compiled-browser-checks
+      - name: Preserve browser checks and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-browser-checks
+          path: artifacts/compiled-browser-checks/
+          if-no-files-found: warn
