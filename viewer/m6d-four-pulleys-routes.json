@@ -1,0 +1,182 @@
+{
+  "schema": "domelica.rope-routes-2d/v1",
+  "plane": "xy",
+  "recording": {
+    "experimentId": "four-pulley-two-rope",
+    "model": "DomelicaLab.Examples.FourPulleyTwoRope2D",
+    "csv": "m6d_four_pulleys_res.csv"
+  },
+  "attachments": {
+    "wall": [
+      "wallAnchor[1]",
+      "wallAnchor[2]"
+    ],
+    "A": [
+      "aPosition[1]",
+      "aPosition[2]"
+    ],
+    "P1axle": [
+      "p1Center[1]",
+      "p1Center[2]"
+    ],
+    "B": [
+      "bPosition[1]",
+      "bPosition[2]"
+    ]
+  },
+  "pulleys": {
+    "P1": {
+      "centerColumns": [
+        "p1Center[1]",
+        "p1Center[2]"
+      ],
+      "radiusColumn": "r1"
+    },
+    "P2": {
+      "centerColumns": [
+        "p2Center[1]",
+        "p2Center[2]"
+      ],
+      "radiusColumn": "r2"
+    },
+    "P3": {
+      "centerColumns": [
+        "p3Center[1]",
+        "p3Center[2]"
+      ],
+      "radiusColumn": "r3"
+    },
+    "P4": {
+      "centerColumns": [
+        "p4Center[1]",
+        "p4Center[2]"
+      ],
+      "radiusColumn": "r4"
+    }
+  },
+  "ropes": [
+    {
+      "id": "S1",
+      "nodes": [
+        {
+          "kind": "attachment",
+          "ref": "wall"
+        },
+        {
+          "kind": "pulley",
+          "ref": "P1",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "A"
+        }
+      ],
+      "lengthPolicy": "constant",
+      "tolerance": 0.000001
+    },
+    {
+      "id": "S2",
+      "nodes": [
+        {
+          "kind": "attachment",
+          "ref": "P1axle"
+        },
+        {
+          "kind": "pulley",
+          "ref": "P2",
+          "incomingSide": 1,
+          "outgoingSide": 1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "pulley",
+          "ref": "P3",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "counterclockwise"
+        },
+        {
+          "kind": "pulley",
+          "ref": "P4",
+          "incomingSide": -1,
+          "outgoingSide": -1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "B"
+        }
+      ],
+      "lengthPolicy": "constant",
+      "tolerance": 0.000001
+    }
+  ],
+  "bodies": [
+    {
+      "id": "A",
+      "at": "A",
+      "label": "Block A",
+      "massColumn": "massA"
+    },
+    {
+      "id": "B",
+      "at": "B",
+      "label": "Block B",
+      "massColumn": "massB"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "aA",
+      "column": "aLeftAcceleration",
+      "label": "A acceleration left",
+      "unit": "m/s²"
+    },
+    {
+      "id": "aB",
+      "column": "bUpAcceleration",
+      "label": "B acceleration up",
+      "unit": "m/s²"
+    },
+    {
+      "id": "T1",
+      "column": "tensionS1",
+      "label": "Rope S1 tension",
+      "unit": "N"
+    },
+    {
+      "id": "T2",
+      "column": "tensionS2",
+      "label": "Rope S2 tension",
+      "unit": "N"
+    },
+    {
+      "id": "drive",
+      "column": "leftDriveForce",
+      "label": "Applied force on A, left",
+      "unit": "N"
+    }
+  ],
+  "rigidLinks": [
+    {
+      "id": "P3-to-B",
+      "points": [
+        [
+          "p3Center[1]",
+          "p3Center[2]"
+        ],
+        [
+          "p3CarrierBase[1]",
+          "p3CarrierBase[2]"
+        ],
+        [
+          "bPosition[1]",
+          "bPosition[2]"
+        ]
+      ]
+    }
+  ]
+}

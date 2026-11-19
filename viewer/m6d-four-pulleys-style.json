@@ -1,0 +1,49 @@
+{
+  "schema": "domelica.rope-style-2d/v1",
+  "background": "#101e2d",
+  "foreground": "#eff6fc",
+  "rope": {
+    "stroke": "#d1f2f0",
+    "widthPx": 4
+  },
+  "pulley": {
+    "fill": "#647d96",
+    "stroke": "#dae9f6",
+    "strokeWidthPx": 3
+  },
+  "bodyMarkerRadiusPx": 16,
+  "bodies": {
+    "A": {
+      "fill": "#46bde2"
+    },
+    "B": {
+      "fill": "#f3a86c"
+    }
+  },
+  "bodySymbols": {
+    "A": {
+      "kind": "box",
+      "widthPx": 52,
+      "heightPx": 32
+    },
+    "B": {
+      "kind": "box",
+      "widthPx": 98,
+      "heightPx": 42
+    }
+  },
+  "supportMarks": [
+    {
+      "id": "wall-support",
+      "kind": "wall",
+      "ref": "wall",
+      "sizePx": 64
+    },
+    {
+      "id": "ceiling-P4",
+      "kind": "ceiling",
+      "ref": "P4",
+      "sizePx": 76
+    }
+  ]
+}

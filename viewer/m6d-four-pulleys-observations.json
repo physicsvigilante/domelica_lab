@@ -1,0 +1,298 @@
+{
+  "schema": "domelica.observations/v1",
+  "provenance": {
+    "definitionOrigin": "M6D 2D two-rope, four-pulley native observation mapping",
+    "newSimulation": false
+  },
+  "scenes": [
+    {
+      "id": "four-pulley-two-rope",
+      "model": "DomelicaLab.Examples.FourPulleyTwoRope2D",
+      "csv": "m6d_four_pulleys_res.csv",
+      "bodies": [
+        {
+          "id": "A",
+          "label": "Block A, externally accelerated left",
+          "objectIds": [
+            "bodyA.sphere"
+          ]
+        },
+        {
+          "id": "B",
+          "label": "Block B with attached P3",
+          "objectIds": [
+            "bodyB.sphere"
+          ]
+        }
+      ],
+      "notes": [
+        "Two independent ideal ropes: S1 = wall→P1→A; S2 = P1 axle→P2→P3→P4→B.",
+        "P1 and P3 are movable; P2 and P4 are fixed. P3 is rigidly carried by B.",
+        "The diagram specifies A's acceleration of 6 m/s² left. Other numeric masses and geometry are illustrative.",
+        "Stock MSL acceleration source drives only A. B and P1 acceleration and connector tensions are solved by native ideal transmissions.",
+        "The bounded run assumes positive rope tensions, smooth massless pulleys, no slack, impact or pulley spin."
+      ],
+      "overlays": [
+        {
+          "id": "B-force",
+          "label": "Three rope segments on B",
+          "kind": "force",
+          "unit": "N",
+          "body": "B",
+          "point": {
+            "columns": [
+              "bPosition[1]",
+              "bPosition[2]",
+              "bPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "bRopeForce",
+            "columns": [
+              "bRopeForce[1]",
+              "bRopeForce[2]",
+              "bRopeForce[3]"
+            ]
+          },
+          "signConvention": "World +y is upward; connector forces act ON the named body.",
+          "defaultVisible": true,
+          "color": "#49b8d7",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "bRopeForce[1]",
+              "bRopeForce[2]",
+              "bRopeForce[3]"
+            ]
+          }
+        },
+        {
+          "id": "B-velocity",
+          "label": "Velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "B",
+          "point": {
+            "columns": [
+              "bPosition[1]",
+              "bPosition[2]",
+              "bPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "bVelocity",
+            "columns": [
+              "bVelocity[1]",
+              "bVelocity[2]",
+              "bVelocity[3]"
+            ]
+          },
+          "signConvention": "Native world vector, with +y upward.",
+          "defaultVisible": false,
+          "color": "#8fd099",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "bVelocity[1]",
+              "bVelocity[2]",
+              "bVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "B-acceleration",
+          "label": "Acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "B",
+          "point": {
+            "columns": [
+              "bPosition[1]",
+              "bPosition[2]",
+              "bPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "bAcceleration",
+            "columns": [
+              "bAcceleration[1]",
+              "bAcceleration[2]",
+              "bAcceleration[3]"
+            ]
+          },
+          "signConvention": "Native world vector, with +y upward.",
+          "defaultVisible": false,
+          "color": "#e5b86b",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "bAcceleration[1]",
+              "bAcceleration[2]",
+              "bAcceleration[3]"
+            ]
+          }
+        },
+        {
+          "id": "A-force",
+          "label": "S1 rope tension on A",
+          "kind": "force",
+          "unit": "N",
+          "body": "A",
+          "point": {
+            "columns": [
+              "aPosition[1]",
+              "aPosition[2]",
+              "aPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "aRopeForce",
+            "columns": [
+              "aRopeForce[1]",
+              "aRopeForce[2]",
+              "aRopeForce[3]"
+            ]
+          },
+          "signConvention": "World +y is upward; connector forces act ON the named body.",
+          "defaultVisible": true,
+          "color": "#49b8d7",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "aRopeForce[1]",
+              "aRopeForce[2]",
+              "aRopeForce[3]"
+            ]
+          }
+        },
+        {
+          "id": "A-velocity",
+          "label": "Velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "A",
+          "point": {
+            "columns": [
+              "aPosition[1]",
+              "aPosition[2]",
+              "aPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "aVelocity",
+            "columns": [
+              "aVelocity[1]",
+              "aVelocity[2]",
+              "aVelocity[3]"
+            ]
+          },
+          "signConvention": "Native world vector, with +y upward.",
+          "defaultVisible": false,
+          "color": "#8fd099",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "aVelocity[1]",
+              "aVelocity[2]",
+              "aVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "A-acceleration",
+          "label": "Acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "A",
+          "point": {
+            "columns": [
+              "aPosition[1]",
+              "aPosition[2]",
+              "aPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "aAcceleration",
+            "columns": [
+              "aAcceleration[1]",
+              "aAcceleration[2]",
+              "aAcceleration[3]"
+            ]
+          },
+          "signConvention": "Native world vector, with +y upward.",
+          "defaultVisible": false,
+          "color": "#e5b86b",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "aAcceleration[1]",
+              "aAcceleration[2]",
+              "aAcceleration[3]"
+            ]
+          }
+        },
+        {
+          "id": "A-drive",
+          "label": "External drive on A (given acceleration)",
+          "kind": "force",
+          "unit": "N",
+          "body": "A",
+          "point": {
+            "columns": [
+              "aPosition[1]",
+              "aPosition[2]",
+              "aPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "aExternalForce",
+            "columns": [
+              "aExternalForce[1]",
+              "aExternalForce[2]",
+              "aExternalForce[3]"
+            ]
+          },
+          "signConvention": "World +y is upward; connector forces act ON the named body.",
+          "defaultVisible": true,
+          "color": "#d76d83",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "aExternalForce[1]",
+              "aExternalForce[2]",
+              "aExternalForce[3]"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

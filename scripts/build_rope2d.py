@@ -34,8 +34,9 @@ def require(condition, message):
 def validate_route(route):
     require(route.get("schema") == "domelica.rope-routes-2d/v1", "Unknown route contract")
     require(route.get("plane") == "xy", "Only Modelica world XY plane admitted in first slice")
-    require(set(route) == {"schema", "plane", "recording", "attachments", "pulleys",
-                           "ropes", "bodies", "metrics"}, "Unexpected route fields")
+    core = {"schema", "plane", "recording", "attachments", "pulleys",
+            "ropes", "bodies", "metrics"}
+    require(set(route) in (core, core | {"rigidLinks"}), "Unexpected route fields")
     require(route["ropes"] and route["bodies"] and route["pulleys"], "Empty scene")
     for nodes in (item["nodes"] for item in route["ropes"]):
         for node in nodes:
@@ -52,12 +53,24 @@ def validate_route(route):
         require(body["at"] in route["attachments"], "Unknown body attachment")
     for pulley in route["pulleys"].values():
         require(set(pulley) == {"centerColumns", "radiusColumn"}, "Unknown pulley attributes")
+    link_ids = set()
+    for link in route.get("rigidLinks", []):
+        require(set(link) == {"id", "points"}, "Rigid-link fields must be declarative")
+        require(isinstance(link["id"], str) and link["id"] and link["id"] not in link_ids,
+                "Duplicate or empty rigid link ID")
+        link_ids.add(link["id"])
+        require(2 <= len(link["points"]) <= 32, "Rigid link requires 2..32 native points")
+        for columns in link["points"]:
+            require(len(columns) == 2 and all(isinstance(c, str) and c for c in columns),
+                    "Rigid-link XY point requires two native columns")
 
 
-def validate_style(style, body_ids):
+def validate_style(style, body_ids, attachment_ids, pulley_ids):
     require(style.get("schema") == "domelica.rope-style-2d/v1", "Unknown style contract")
-    require(set(style) == {"schema", "background", "foreground", "rope",
-                           "pulley", "bodyMarkerRadiusPx", "bodies"}, "Style cannot supply physical geometry")
+    required = {"schema", "background", "foreground", "rope",
+                "pulley", "bodyMarkerRadiusPx", "bodies"}
+    allowed = required | {"bodySymbols", "supportMarks"}
+    require(required <= set(style) <= allowed, "Style cannot supply physical geometry")
     require(set(style["rope"]) == {"stroke", "widthPx"}, "Invalid rope style")
     require(set(style["pulley"]) == {"fill", "stroke", "strokeWidthPx"}, "Invalid pulley style")
     require(set(style["bodies"]) == set(body_ids), "Style bodies must match physical bodies")
@@ -70,14 +83,44 @@ def validate_style(style, body_ids):
         require(set(item) == {"fill"}, "Body style cannot contain physical geometry")
     for value in [style["rope"]["widthPx"], style["pulley"]["strokeWidthPx"],
                   style["bodyMarkerRadiusPx"]]:
-        require(isinstance(value, (int, float)) and math.isfinite(value) and 0 < value < 50,
+        require(type(value) in (int, float) and math.isfinite(value) and 0 < value < 50,
                 "Invalid decorative pixel width")
+    # Purely decorative glyph dimensions are in screen pixels, never SI metres.
+    # The block remains a point mass, positioned exclusively by native results.
+    body_symbols = style.get("bodySymbols", {})
+    require(isinstance(body_symbols, dict) and set(body_symbols) <= set(body_ids),
+            "Unknown body-symbol owner")
+    for symbol in body_symbols.values():
+        require(isinstance(symbol, dict) and set(symbol) == {"kind", "widthPx", "heightPx"}
+                and symbol["kind"] == "box", "Unsupported body symbol")
+        for name in ("widthPx", "heightPx"):
+            size = symbol[name]
+            require(type(size) in (int, float) and math.isfinite(size) and 12 <= size <= 150,
+                    "Invalid decorative body pixel dimension")
+    support_marks = style.get("supportMarks", [])
+    require(isinstance(support_marks, list) and len(support_marks) <= 16,
+            "Too many decorative support marks")
+    seen = set()
+    for mark in support_marks:
+        require(isinstance(mark, dict) and set(mark) == {"id", "kind", "ref", "sizePx"},
+                "Unsupported support-mark fields")
+        require(isinstance(mark["id"], str) and mark["id"] and mark["id"] not in seen,
+                "Duplicate or empty support-mark ID")
+        seen.add(mark["id"])
+        kind, ref = mark["kind"], mark["ref"]
+        require((kind == "wall" and ref in attachment_ids)
+                or (kind == "ceiling" and ref in pulley_ids),
+                "Support mark must reference a native attachment or pulley")
+        size = mark["sizePx"]
+        require(type(size) in (int, float) and math.isfinite(size) and 16 <= size <= 130,
+                "Invalid decorative support span")
 
 
 def generate(csv_path, native_path, route_path, style_path):
     config, style = read_json(route_path), read_json(style_path)
     validate_route(config)
-    validate_style(style, [b["id"] for b in config["bodies"]])
+    validate_style(style, [b["id"] for b in config["bodies"]],
+                   set(config["attachments"]), set(config["pulleys"]))
     record = read_json(native_path)
     native = record.get("recording", {})
     require(native.get("kind") == "fresh-native-run", "Require a fresh native recording manifest")
@@ -102,6 +145,9 @@ def generate(csv_path, native_path, route_path, style_path):
         required.add(body["massColumn"])
     for metric in config["metrics"]:
         required.add(metric["column"])
+    for link in config.get("rigidLinks", []):
+        for columns in link["points"]:
+            required.update(columns)
 
     with Path(csv_path).open(newline="", encoding="utf-8") as stream:
         reader = csv.DictReader(stream)
@@ -119,6 +165,7 @@ def generate(csv_path, native_path, route_path, style_path):
     frames = []
     bounds = []
     base_lengths = {}
+    rigid_reference_lengths = {}
     maxima = {item["id"]: 0 for item in config["ropes"]}
     for row in raw:
         t = number(row, "time")
@@ -149,9 +196,26 @@ def generate(csv_path, native_path, route_path, style_path):
         for p in pulleys.values():
             c, r = p["center"], p["radius"]
             bounds.extend([(c[0]-r,c[1]-r),(c[0]+r,c[1]+r)])
-        frames.append({"pulleys": pulleys, "bodies": bodies, "ropes": routes,
-                       "metrics": {metric["id"]: number(row, metric["column"])
-                                   for metric in config["metrics"]}})
+        # Rigid visual connections are sampled from Modelica, never invented
+        # or used to impose mechanical constraints in the geometry layer.
+        links = {}
+        for link in config.get("rigidLinks", []):
+            points = [[number(row, c) for c in columns] for columns in link["points"]]
+            lengths = [math.dist(a, b) for a, b in zip(points, points[1:])]
+            require(all(length > 1e-9 for length in lengths),
+                    "Degenerate native rigid-link segment: " + link["id"])
+            reference = rigid_reference_lengths.setdefault(link["id"], lengths)
+            require(all(abs(a-b) < 1e-6 for a, b in zip(lengths, reference)),
+                    "Native rigid link changed length: " + link["id"])
+            links[link["id"]] = points
+            bounds.extend(points)
+        frame = {"pulleys": pulleys, "attachments": attachments,
+                 "bodies": bodies, "ropes": routes,
+                 "metrics": {metric["id"]: number(row, metric["column"])
+                             for metric in config["metrics"]}}
+        if links:
+            frame["rigidLinks"] = links
+        frames.append(frame)
     require(len({item["id"] for item in config["ropes"]}) == len(config["ropes"]), "Duplicate rope IDs")
     require(times[-1] > times[0], "Empty native time interval")
     data = {"schema": "domelica.rope-playback-2d/v1",
