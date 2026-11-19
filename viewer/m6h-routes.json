@@ -1,0 +1,122 @@
+{
+  "schema": "domelica.rope-routes-2d/v1",
+  "plane": "xy",
+  "recording": {
+    "experimentId": "spring-floor-liftoff",
+    "model": "DomelicaLab.Examples.SpringPulleyFloorLiftOff2D",
+    "csv": "m6h_spring_floor_res.csv"
+  },
+  "attachments": {
+    "left": [
+      "ropeLeftPosition[1]",
+      "ropeLeftPosition[2]"
+    ],
+    "A": [
+      "aPosition[1]",
+      "aPosition[2]"
+    ],
+    "B": [
+      "bPosition[1]",
+      "bPosition[2]"
+    ],
+    "floor": [
+      "floorAnchor[1]",
+      "floorAnchor[2]"
+    ]
+  },
+  "pulleys": {
+    "Top": {
+      "centerColumns": [
+        "pulleyCenter[1]",
+        "pulleyCenter[2]"
+      ],
+      "radiusColumn": "pulleyRadius"
+    }
+  },
+  "ropes": [
+    {
+      "id": "rope",
+      "nodes": [
+        {
+          "kind": "attachment",
+          "ref": "left"
+        },
+        {
+          "kind": "pulley",
+          "ref": "Top",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "B"
+        }
+      ],
+      "lengthPolicy": "constant",
+      "tolerance": 0.000001
+    }
+  ],
+  "bodies": [
+    {
+      "id": "A",
+      "at": "A",
+      "label": "A",
+      "massColumn": "massA"
+    },
+    {
+      "id": "B",
+      "at": "B",
+      "label": "B",
+      "massColumn": "massB"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "tension",
+      "column": "ropeTension",
+      "label": "Rope tension",
+      "unit": "N"
+    },
+    {
+      "id": "spring",
+      "column": "springForce",
+      "label": "Spring pull on A",
+      "unit": "N"
+    },
+    {
+      "id": "normal",
+      "column": "floorNormal",
+      "label": "Floor normal",
+      "unit": "N"
+    },
+    {
+      "id": "aLift",
+      "column": "aLift",
+      "label": "A lift",
+      "unit": "m"
+    },
+    {
+      "id": "bDrop",
+      "column": "bDrop",
+      "label": "B drop",
+      "unit": "m"
+    }
+  ],
+  "springs": [
+    {
+      "id": "A-spring",
+      "points": [
+        [
+          "aPosition[1]",
+          "aPosition[2]"
+        ],
+        [
+          "ropeLeftPosition[1]",
+          "ropeLeftPosition[2]"
+        ]
+      ],
+      "restLengthColumn": "springFreeLength"
+    }
+  ]
+}

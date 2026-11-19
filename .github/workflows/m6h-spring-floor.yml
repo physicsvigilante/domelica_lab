@@ -1,0 +1,79 @@
+name: M6H 8kg/4.5kg Spring Pulley Inelastic Floor (10s)
+
+on:
+  push:
+    branches: ['experiment/m6h-*']
+    paths:
+      - 'DomelicaLab/**'
+      - 'viewer/m6h-*'
+      - 'viewer/rope2d.template.html'
+      - 'scripts/build_rope2d.py'
+      - 'scripts/check_m6h_physics.py'
+      - 'scripts/check_m6h_browser.cjs'
+      - '.github/workflows/m6h-spring-floor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preserve accepted historical source files
+        run: python3 scripts/check_m4c_reuse.py
+      - name: Install exact MSL 4.1.0
+        run: omc scripts/install_msl.mos
+      - name: Run one 10-second native spring/hard-stop model
+        timeout-minutes: 10
+        run: python3 scripts/run_experiments.py run --manifest viewer/m6h-experiments.json --run-dir m6h-run --timeout 550
+      - name: Focused 10s lift-off, zero-restitution impact and physics acceptance
+        run: python3 scripts/check_m6h_physics.py --csv m6h-run/m6h_spring_floor_res.csv --report artifacts/m6h-physics.json
+      - name: Build two standalone animations from the same native results
+        run: |
+          python3 scripts/build_rope2d.py --csv m6h-run/m6h_spring_floor_res.csv --native-manifest m6h-run/experiments.json --routes viewer/m6h-routes.json --style viewer/m6h-style-dark.json --output artifacts/m6h-spring-floor-dark.html
+          python3 scripts/build_rope2d.py --csv m6h-run/m6h_spring_floor_res.csv --native-manifest m6h-run/experiments.json --routes viewer/m6h-routes.json --style viewer/m6h-style-light.json --output artifacts/m6h-spring-floor-light.html
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m6h-native-and-html
+          if-no-files-found: warn
+          path: |
+            artifacts/m6h-*.html
+            artifacts/m6h-physics.json
+            m6h-run/
+
+  browser:
+    needs: native
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: m6h-native-and-html
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing browser dependencies
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install chromium
+      - name: Focused actual spring/floor SVG and recorded playback smoke
+        run: node scripts/check_m6h_browser.cjs artifacts/m6h-spring-floor-dark.html artifacts/m6h-spring-floor-light.html artifacts/m6h-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m6h-browser-checks
+          if-no-files-found: warn
+          path: artifacts/m6h-browser/
