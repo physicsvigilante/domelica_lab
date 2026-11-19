@@ -1,0 +1,92 @@
+{
+  "schema": "domelica.rope-routes-2d/v1",
+  "plane": "xy",
+  "recording": {
+    "experimentId": "moving-pulley",
+    "model": "DomelicaLab.Examples.MovingPulley2D",
+    "csv": "m6c_moving_res.csv"
+  },
+  "attachments": {
+    "anchor": [
+      "anchorPosition[1]",
+      "anchorPosition[2]"
+    ],
+    "load": [
+      "loadPosition[1]",
+      "loadPosition[2]"
+    ],
+    "counterweight": [
+      "counterweightPosition[1]",
+      "counterweightPosition[2]"
+    ]
+  },
+  "pulleys": {
+    "moving": {
+      "centerColumns": [
+        "movingPulleyCenter[1]",
+        "movingPulleyCenter[2]"
+      ],
+      "radiusColumn": "pulleyRadius"
+    },
+    "fixed": {
+      "centerColumns": [
+        "fixedPulleyCenter[1]",
+        "fixedPulleyCenter[2]"
+      ],
+      "radiusColumn": "pulleyRadius"
+    }
+  },
+  "ropes": [
+    {
+      "id": "rope",
+      "nodes": [
+        {
+          "kind": "attachment",
+          "ref": "anchor"
+        },
+        {
+          "kind": "pulley",
+          "ref": "moving",
+          "incomingSide": -1,
+          "outgoingSide": -1,
+          "wrap": "counterclockwise"
+        },
+        {
+          "kind": "pulley",
+          "ref": "fixed",
+          "incomingSide": -1,
+          "outgoingSide": -1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "counterweight"
+        }
+      ],
+      "lengthPolicy": "constant",
+      "tolerance": 1e-06
+    }
+  ],
+  "bodies": [
+    {
+      "id": "load",
+      "at": "load",
+      "label": "Load at axle",
+      "massColumn": "loadMass"
+    },
+    {
+      "id": "counterweight",
+      "at": "counterweight",
+      "label": "Counterweight",
+      "massColumn": "counterweightMass"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "tension",
+      "column": "ropeTension",
+      "label": "Rope tension",
+      "unit": "N"
+    }
+  ]
+}

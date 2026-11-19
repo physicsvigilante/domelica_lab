@@ -30,11 +30,11 @@ footer{margin-top:13px;color:#91a9bd;font-size:.79rem;line-height:1.5}
 <main>
 <header>
   <div class="eyebrow">Domelica · Recorded Modelica simulation</div>
-  <h1>Ideal fixed pulley · 2D geometry</h1>
-  <p class="sub">Native OpenModelica motion → certified tangent and arc geometry → independent SVG style. This is recorded playback, not a dynamics solver.</p>
+  <h1>Rope and pulley motion · 2D</h1>
+  <p class="sub">Play or scrub the recorded motion. Rope paths follow the recorded pulley centers, radii and attachment points.</p>
 </header>
 <div class="stage">
-  <svg id="diagram" role="img" aria-label="Two masses connected by a taut rope over a fixed pulley" viewBox="0 0 880 520"></svg>
+  <svg id="diagram" role="img" aria-label="Recorded masses, pulleys and connecting rope in the XY plane" viewBox="0 0 880 520"></svg>
   <div class="controls">
     <button id="play" type="button">Play</button>
     <input id="scrub" type="range" min="0" max="0" value="0" aria-label="Seek recorded simulation frame">
@@ -47,8 +47,8 @@ footer{margin-top:13px;color:#91a9bd;font-size:.79rem;line-height:1.5}
   </div>
 </div>
 <footer>
-  Movements and tensions are native results; rope arcs are reconstructed from the recorded physical positions and radius.
-  The wheel is an ideal, inertialess visual object, not simulated rolling contact.
+  Positions and tensions come from the native Modelica simulation. The wheels represent ideal pulleys;
+  rolling contact and wheel inertia are not simulated.
   <div id="provenance"></div>
 </footer>
 </main>
@@ -68,11 +68,12 @@ const project=p=>[W/2+(p[0]-midX)*scale,H/2-(p[1]-midY)*scale];
 svg.style.background=style.background;
 const caption=mk("text",{x:22,y:32,fill:style.foreground,"font-size":15,"font-weight":650});
 caption.textContent="WORLD XY · dimensions in metres";
-const pulleys=new Map(),ropes=new Map(),bodies=new Map(),labels=new Map();
+const pulleys=new Map(),axles=new Map(),ropes=new Map(),bodies=new Map(),labels=new Map();
 for(const name of Object.keys(D.frames[0].pulleys)){
  const circle=mk("circle",{fill:style.pulley.fill,stroke:style.pulley.stroke,
                             "stroke-width":style.pulley.strokeWidthPx,"data-pulley":name});
  pulleys.set(name,circle);
+ axles.set(name,mk("circle",{r:4,fill:style.foreground,opacity:.8,"data-axle":name}));
 }
 for(const name of Object.keys(D.frames[0].ropes)){
  const line=mk("polyline",{fill:"none",stroke:style.rope.stroke,
@@ -83,10 +84,9 @@ for(const name of Object.keys(D.frames[0].ropes)){
 for(const [name,body] of Object.entries(D.frames[0].bodies)){
  const circle=mk("circle",{r:style.bodyMarkerRadiusPx,fill:style.bodies[name].fill,
              stroke:style.foreground,"stroke-width":1.4,"data-body":name});
- const txt=mk("text",{fill:style.foreground,"font-size":16,"font-weight":600,"text-anchor":"middle"});
+ const txt=mk("text",{fill:style.foreground,"font-size":16,"font-weight":600,"data-body-label":name});
  bodies.set(name,circle);labels.set(name,txt);
 }
-const axle=mk("circle",{r:4,fill:style.foreground,opacity:.8});
 scrub.max=String(D.times.length-1);
 let index=0,playing=false,started=0,elapsed=0,raf=0;
 const decimal=n=>Number(n).toFixed(2);
@@ -96,6 +96,7 @@ function draw(i){
  for(const [name,p] of Object.entries(frame.pulleys)){
    const c=project(p.center),e=pulleys.get(name);
    e.setAttribute("cx",c[0]);e.setAttribute("cy",c[1]);e.setAttribute("r",p.radius*scale);
+   axles.get(name).setAttribute("cx",c[0]);axles.get(name).setAttribute("cy",c[1]);
  }
  for(const [name,r] of Object.entries(frame.ropes)){
    const points=r.points.map(p=>project(p).join(",")).join(" ");
@@ -104,11 +105,15 @@ function draw(i){
  for(const [name,b] of Object.entries(frame.bodies)){
    const p=project(b.position),circle=bodies.get(name),text=labels.get(name);
    circle.setAttribute("cx",p[0]);circle.setAttribute("cy",p[1]);
-   text.setAttribute("x",p[0]);text.setAttribute("y",p[1]+38);
-   text.textContent=b.label+" · "+Number(b.mass).toFixed(0)+" kg";
+   // Put labels outside an axle-mounted body and its wheel, using only geometry.
+   const wheelRadius=Math.max(0,...Object.values(frame.pulleys)
+     .filter(w=>Math.hypot(w.center[0]-b.position[0],w.center[1]-b.position[1])<1e-8)
+     .map(w=>w.radius*scale));
+   const side=p[0]<=W/2?-1:1,extent=Math.max(style.bodyMarkerRadiusPx,wheelRadius);
+   text.setAttribute("text-anchor",side<0?"end":"start");
+   text.setAttribute("x",p[0]+side*(extent+12));text.setAttribute("y",p[1]+5);
+   text.textContent=b.label+" · "+Number(b.mass).toLocaleString("en-US",{maximumFractionDigits:3})+" kg";
  }
- const firstPulley=Object.values(frame.pulleys)[0],ax=project(firstPulley.center);
- axle.setAttribute("cx",ax[0]);axle.setAttribute("cy",ax[1]);
  document.getElementById("clock").textContent=decimal(D.times[index])+" s";
  document.getElementById("sample").textContent="Native sample "+(index+1)+" / "+D.times.length;
  const metric=D.metrics[0];

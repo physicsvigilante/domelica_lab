@@ -11,6 +11,9 @@ on:
       - 'scripts/build_rope2d.py'
       - 'scripts/test_rope2d_geometry.py'
       - 'scripts/check_rope2d.cjs'
+      - 'scripts/check_m6c_moving_pulley.py'
+      - 'scripts/check_m6c_moving_pulley.cjs'
+      - 'scripts/test_m6c_moving_rope_geometry.py'
       - '.github/workflows/m6c-2d-rope-layers.yml'
   workflow_dispatch:
 
@@ -37,7 +40,9 @@ jobs:
       - name: Preserve accepted existing physics and viewer sources
         run: python3 scripts/check_m4c_reuse.py
       - name: Pure geometric unit tests
-        run: python3 -m unittest discover -s scripts -p test_rope2d_geometry.py -v
+        run: |
+          python3 -m unittest discover -s scripts -p test_rope2d_geometry.py -v
+          python3 -m unittest discover -s scripts -p test_m6c_moving_rope_geometry.py -v
       - name: Install pinned native Modelica Standard Library
         run: omc scripts/install_msl.mos
       - name: Fresh native Q68 Atwood run through existing runner
@@ -46,15 +51,27 @@ jobs:
           python3 scripts/run_experiments.py run
           --manifest viewer/m6c-2d-experiments.json
           --run-dir observation-run --timeout 600
+      - name: Fresh native moving-pulley run through the same runner
+        timeout-minutes: 12
+        run: >-
+          python3 scripts/run_experiments.py run
+          --manifest viewer/m6c-2d-moving-experiments.json
+          --run-dir observation-run/moving --timeout 600
       - name: Independent Q68 nominal analytical physics checks
         run: >-
           python3 scripts/check_m6b_atwood.py
           --csv observation-run/m6b_atwood_res.csv
           --report artifacts/m6c-physics.json
-      - name: Generate dark and light 2D HTML from identical native run
+      - name: Independent moving-pulley force, motion and energy checks
+        run: |
+          python3 scripts/check_m6c_moving_pulley.py --csv observation-run/moving/m6c_moving_res.csv --report artifacts/m6c-moving-physics.json
+          python3 scripts/observation_data.py observation-run/moving/observations.json observation-run/moving artifacts/m6c-moving-observations.json
+      - name: Generate both examples and both styles using the same 2D builder
         run: |
           python3 scripts/build_rope2d.py --csv observation-run/m6b_atwood_res.csv --native-manifest observation-run/experiments.json --routes viewer/m6c-2d-routes.json --style viewer/m6c-2d-style.json --output artifacts/m6c-2d-dark.html
           python3 scripts/build_rope2d.py --csv observation-run/m6b_atwood_res.csv --native-manifest observation-run/experiments.json --routes viewer/m6c-2d-routes.json --style viewer/m6c-2d-style-light.json --output artifacts/m6c-2d-light.html
+          python3 scripts/build_rope2d.py --csv observation-run/moving/m6c_moving_res.csv --native-manifest observation-run/moving/experiments.json --routes viewer/m6c-2d-moving-routes.json --style viewer/m6c-2d-moving-style.json --output artifacts/m6c-2d-moving-dark.html
+          python3 scripts/build_rope2d.py --csv observation-run/moving/m6c_moving_res.csv --native-manifest observation-run/moving/experiments.json --routes viewer/m6c-2d-moving-routes.json --style viewer/m6c-2d-moving-style-light.json --output artifacts/m6c-2d-moving-light.html
       - name: Publish source, native, geometry and HTML
         if: always()
         uses: actions/upload-artifact@v4
@@ -65,6 +82,11 @@ jobs:
             artifacts/m6c-2d-dark.html
             artifacts/m6c-2d-light.html
             artifacts/m6c-physics.json
+            artifacts/m6c-2d-moving-dark.html
+            artifacts/m6c-2d-moving-light.html
+            artifacts/m6c-moving-physics.json
+            artifacts/m6c-moving-observations.json
+            viewer/m6c-2d-*.json
             observation-run/m6b_atwood_res.csv
             observation-run/m6b_atwood_res.mat
             observation-run/m6b_atwood_visual.xml
@@ -74,6 +96,16 @@ jobs:
             observation-run/native-run.log
             observation-run/experiments.json
             observation-run/source/
+            observation-run/moving/m6c_moving_res.csv
+            observation-run/moving/m6c_moving_res.mat
+            observation-run/moving/m6c_moving_visual.xml
+            observation-run/moving/native-toolchain.txt
+            observation-run/moving/run-plan.json
+            observation-run/moving/run_native.mos
+            observation-run/moving/native-run.log
+            observation-run/moving/experiments.json
+            observation-run/moving/observations.json
+            observation-run/moving/source/
 
   browser-2d:
     needs: native-and-geometry
@@ -94,10 +126,14 @@ jobs:
           npx playwright install chromium
       - name: Compare two styles and inspect actual SVG motion
         run: node scripts/check_rope2d.cjs artifacts/m6c-2d-dark.html artifacts/m6c-2d-light.html artifacts/m6c-2d-browser
+      - name: Inspect moving centers, two wraps and native 2-to-1 motion
+        run: node scripts/check_m6c_moving_pulley.cjs artifacts/m6c-2d-moving-dark.html artifacts/m6c-2d-moving-light.html artifacts/m6c-2d-moving-browser
       - name: Preserve browser screenshots and checks
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: m6c-2d-browser-checks
           if-no-files-found: warn
-          path: artifacts/m6c-2d-browser/
+          path: |
+            artifacts/m6c-2d-browser/
+            artifacts/m6c-2d-moving-browser/

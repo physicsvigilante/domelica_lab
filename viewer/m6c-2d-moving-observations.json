@@ -1,0 +1,260 @@
+{
+  "schema": "domelica.observations/v1",
+  "provenance": {
+    "definitionOrigin": "M6C-2D-B authored native observation mapping",
+    "newSimulation": false
+  },
+  "scenes": [
+    {
+      "id": "moving-pulley",
+      "model": "DomelicaLab.Examples.MovingPulley2D",
+      "csv": "m6c_moving_res.csv",
+      "bodies": [
+        {
+          "id": "load",
+          "label": "Load and moving carriage",
+          "objectIds": [
+            "load.sphere"
+          ]
+        },
+        {
+          "id": "counterweight",
+          "label": "Counterweight",
+          "objectIds": [
+            "counterweight.sphere"
+          ]
+        }
+      ],
+      "notes": [
+        "Load and carriage mass is lumped at the moving axle; no wheel rotational inertia.",
+        "A pair of stock MSL IdealGearR2T components represents the lossless 2:1 taut-rope transmission. Joint axes supply the world-direction signs.",
+        "The load receives two strand tensions. Counterweight tension is one strand; both are native connector reactions.",
+        "This is a bounded vertical, taut-rope experiment. Route metadata describes display geometry, not a general physical string constraint."
+      ],
+      "overlays": [
+        {
+          "id": "load-force",
+          "label": "Two rope strands on load",
+          "kind": "force",
+          "unit": "N",
+          "body": "load",
+          "point": {
+            "columns": [
+              "loadPosition[1]",
+              "loadPosition[2]",
+              "loadPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "loadSupportOnBody",
+            "columns": [
+              "loadSupportOnBody[1]",
+              "loadSupportOnBody[2]",
+              "loadSupportOnBody[3]"
+            ]
+          },
+          "signConvention": "World +y is upward; connector forces act ON the named body.",
+          "defaultVisible": true,
+          "color": "#49b8d7",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "loadSupportOnBody[1]",
+              "loadSupportOnBody[2]",
+              "loadSupportOnBody[3]"
+            ]
+          }
+        },
+        {
+          "id": "load-velocity",
+          "label": "Velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "load",
+          "point": {
+            "columns": [
+              "loadPosition[1]",
+              "loadPosition[2]",
+              "loadPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "loadVelocity",
+            "columns": [
+              "loadVelocity[1]",
+              "loadVelocity[2]",
+              "loadVelocity[3]"
+            ]
+          },
+          "signConvention": "Native world vector, with +y upward.",
+          "defaultVisible": false,
+          "color": "#8fd099",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "loadVelocity[1]",
+              "loadVelocity[2]",
+              "loadVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "load-acceleration",
+          "label": "Acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "load",
+          "point": {
+            "columns": [
+              "loadPosition[1]",
+              "loadPosition[2]",
+              "loadPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "loadAcceleration",
+            "columns": [
+              "loadAcceleration[1]",
+              "loadAcceleration[2]",
+              "loadAcceleration[3]"
+            ]
+          },
+          "signConvention": "Native world vector, with +y upward.",
+          "defaultVisible": false,
+          "color": "#e5b86b",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "loadAcceleration[1]",
+              "loadAcceleration[2]",
+              "loadAcceleration[3]"
+            ]
+          }
+        },
+        {
+          "id": "counterweight-force",
+          "label": "Rope on counterweight",
+          "kind": "force",
+          "unit": "N",
+          "body": "counterweight",
+          "point": {
+            "columns": [
+              "counterweightPosition[1]",
+              "counterweightPosition[2]",
+              "counterweightPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "counterweightStringOnBody",
+            "columns": [
+              "counterweightStringOnBody[1]",
+              "counterweightStringOnBody[2]",
+              "counterweightStringOnBody[3]"
+            ]
+          },
+          "signConvention": "World +y is upward; connector forces act ON the named body.",
+          "defaultVisible": true,
+          "color": "#49b8d7",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "counterweightStringOnBody[1]",
+              "counterweightStringOnBody[2]",
+              "counterweightStringOnBody[3]"
+            ]
+          }
+        },
+        {
+          "id": "counterweight-velocity",
+          "label": "Velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "counterweight",
+          "point": {
+            "columns": [
+              "counterweightPosition[1]",
+              "counterweightPosition[2]",
+              "counterweightPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "counterweightVelocity",
+            "columns": [
+              "counterweightVelocity[1]",
+              "counterweightVelocity[2]",
+              "counterweightVelocity[3]"
+            ]
+          },
+          "signConvention": "Native world vector, with +y upward.",
+          "defaultVisible": false,
+          "color": "#8fd099",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "counterweightVelocity[1]",
+              "counterweightVelocity[2]",
+              "counterweightVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "counterweight-acceleration",
+          "label": "Acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "counterweight",
+          "point": {
+            "columns": [
+              "counterweightPosition[1]",
+              "counterweightPosition[2]",
+              "counterweightPosition[3]"
+            ],
+            "label": "Point-mass center",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "counterweightAcceleration",
+            "columns": [
+              "counterweightAcceleration[1]",
+              "counterweightAcceleration[2]",
+              "counterweightAcceleration[3]"
+            ]
+          },
+          "signConvention": "Native world vector, with +y upward.",
+          "defaultVisible": false,
+          "color": "#e5b86b",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "counterweightAcceleration[1]",
+              "counterweightAcceleration[2]",
+              "counterweightAcceleration[3]"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
