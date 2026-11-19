@@ -29,7 +29,7 @@ function readPayload(html) {
   assert.ok(start >= 0 && end > start, "Delivered HTML must contain its own native payload");
   const payload = JSON.parse(html.slice(start + marker.length, end));
   assert.equal(payload.schema, "domelica.observation-lab/v1");
-  assert.ok(payload.scenes.length >= 2, "The shared viewer must exercise multiple arrangements");
+  assert.ok(payload.scenes.length >= 2, "The shared viewer must exercise multiple recordings");
   return payload;
 }
 
@@ -246,11 +246,11 @@ async function main() {
 
       if (scene === payload.scenes[0]) {
         await page.evaluate(i => window.__domelica.seek(i), indices(scene)[1]);
-        await screenshot(page, "cart-forces-desktop.png");
+        await screenshot(page, scene.id + "-forces-desktop.png");
         if (kinds.includes("torque")) {
           await page.getByLabel("Observation quantity", { exact: true }).selectOption("torque");
           await checkSample(page, scene, indices(scene)[1], "torque", true);
-          await screenshot(page, "cart-torque-desktop.png");
+          await screenshot(page, scene.id + "-torque-desktop.png");
         }
       }
     }
@@ -282,7 +282,7 @@ async function main() {
       record(scene.id + ": 360 px controls and force framing", { ...layout, frame: fit });
     }
     await page.evaluate(i => window.__domelica.seek(i), indices(last)[1]);
-    await screenshot(page, "chain-forces-mobile.png");
+    await screenshot(page, last.id + "-forces-mobile.png");
 
     const fallbackContext = await browser.newContext({ viewport: { width: 1000, height: 900 }, deviceScaleFactor: 1, reducedMotion: "reduce", offline: true });
     // Explicit feature fixture: exercise the shipped Canvas fallback independently.
@@ -302,7 +302,7 @@ async function main() {
       await framing(fallback, scene, false); await noOverflow(fallback);
     }
     await fallback.evaluate(i => window.__domelica.seek(i), indices(last)[1]);
-    await screenshot(fallback, "chain-acceleration-canvas.png");
+    await screenshot(fallback, last.id + "-acceleration-canvas.png");
     record("Explicit Canvas XY fallback preserves native vectors, controls and framing", { renderer: report.fallbackRenderer });
     await fallbackContext.close();
     assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.consoleErrors, []); assert.deepEqual(report.unexpectedRequests, []);

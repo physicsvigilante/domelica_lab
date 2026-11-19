@@ -1,0 +1,18 @@
+{
+  "schema": "domelica.compiled-experiments/v1",
+  "model": "DomelicaLab.Examples.CartPendulumSpring3D",
+  "prefix": "cart_compiled",
+  "prototypeManifest": "observation-experiments.json",
+  "prototypeId": "cart-pendulum-spring",
+  "parameters": {
+    "cartMass": {"default": 2.0, "unit": "kg", "minimumExclusive": 0},
+    "bobMass": {"default": 1.0, "unit": "kg", "minimumExclusive": 0},
+    "springStiffness": {"default": 20.0, "unit": "N/m", "minimumExclusive": 0},
+    "initialAngle": {"default": 0.6108652381980153, "unit": "rad", "minimumExclusive": -1.5707963267948966, "maximumExclusive": 1.5707963267948966}
+  },
+  "presets": [
+    {"id": "baseline", "label": "Original parameters", "parameters": {"cartMass": 2.0, "bobMass": 1.0, "springStiffness": 20.0, "initialAngle": 0.6108652381980153}},
+    {"id": "heavier-cart", "label": "Heavier cart", "parameters": {"cartMass": 4.0, "bobMass": 1.0, "springStiffness": 20.0, "initialAngle": 0.6108652381980153}},
+    {"id": "stiffer-spring", "label": "Stiffer spring, changed bob and release", "parameters": {"cartMass": 2.0, "bobMass": 1.25, "springStiffness": 40.0, "initialAngle": 0.4363323129985824}}
+  ]
+}

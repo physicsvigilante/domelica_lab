@@ -67,6 +67,20 @@ recorded playback available when WebGL2 is unavailable. The workflow publishes
 native results and a separate report from actual 3D/fallback browser checks.
 See [the observation lab and manifest runner](docs/M5_OBSERVATION_LAB.md).
 
+### Compile once and change numerical parameters
+
+The **Compiled Parameter Lab** workflow builds the existing cart–pendulum–spring
+assembly once. A separate runtime container without the Modelica compiler, MSL,
+or C/C++ build tools runs three fresh parameter sets and produces
+`artifacts/compiled-parameter-lab.html` with the existing motion and force viewer.
+The experimental Linux package also accepts custom values for cart mass, bob
+mass, spring stiffness and initial release angle before each new run.
+
+The native solver remains OpenModelica-generated code. A small standard-library
+MAT adapter removes the compiler dependency from result export. This is a
+qualified fixed-assembly runtime, with a separate build step for new physical
+arrangements. See [the package, commands and acceptance scope](docs/M5C_COMPILED_RUNS.md).
+
 ## Principles
 
 - **Modelica defines physics and geometry.** Standard-library components supply the physical laws.
