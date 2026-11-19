@@ -70,6 +70,14 @@ const caption=mk("text",{x:22,y:32,fill:style.foreground,"font-size":15,"font-we
 caption.textContent="WORLD XY · dimensions in metres";
 const pulleys=new Map(),axles=new Map(),ropes=new Map(),bodies=new Map(),labels=new Map();
 const pulleyLabels=new Map(),ropeLabels=new Map();
+// Optional schematic supports: the anchor and wheel center are always sampled
+// from the native recording. No support can define a physical position.
+const supports=new Map();
+for(const mark of style.supportMarks||[]){
+ supports.set(mark.id,mk("path",{fill:"none",stroke:style.foreground,
+   "stroke-width":2.8,"stroke-linecap":"round","stroke-linejoin":"round",
+   opacity:.85,"data-support":mark.id,"data-support-kind":mark.kind}));
+}
 // Optional, solver-authoritative rigid attachment polylines, rendered behind
 // wheels/strings. Styling controls stroke only; lengths come from the record.
 const rigidLinks=new Map();
@@ -96,10 +104,14 @@ for(const name of Object.keys(D.frames[0].ropes)){
  label.textContent=name;ropeLabels.set(name,label);
 }
 for(const [name,body] of Object.entries(D.frames[0].bodies)){
- const circle=mk("circle",{r:style.bodyMarkerRadiusPx,fill:style.bodies[name].fill,
-             stroke:style.foreground,"stroke-width":1.4,"data-body":name});
+ const symbol=style.bodySymbols?.[name];
+ const attrs={fill:style.bodies[name].fill,stroke:style.foreground,
+              "stroke-width":1.4,"data-body":name};
+ const shape=symbol?.kind==="box"
+   ? mk("rect",{...attrs,width:symbol.widthPx,height:symbol.heightPx,rx:4})
+   : mk("circle",{...attrs,r:style.bodyMarkerRadiusPx});
  const txt=mk("text",{fill:style.foreground,"font-size":16,"font-weight":600,"data-body-label":name});
- bodies.set(name,circle);labels.set(name,txt);
+ bodies.set(name,shape);labels.set(name,txt);
 }
 // HUD scales to any number of recorded rope constraints and native metrics.
 const readings=document.querySelector(".readings"),sample=document.getElementById("sample");
@@ -118,6 +130,22 @@ const decimal=n=>Number(n).toFixed(2);
 function draw(i){
  index=Math.max(0,Math.min(D.times.length-1,i));
  const frame=D.frames[index];
+ for(const mark of style.supportMarks||[]){
+   const physical=mark.kind==="wall"
+     ? frame.attachments?.[mark.ref] : frame.pulleys[mark.ref]?.center;
+   if(!physical)throw new Error("Missing native support attachment: "+mark.ref);
+   const [x,y]=project(physical),span=mark.sizePx;
+   if(mark.kind==="wall"){
+     const top=y-span/2,bottom=y+span/2;
+     supports.get(mark.id).setAttribute("d",
+       `M ${x} ${top} L ${x} ${bottom} `+
+       [0,1,2,3].map(i=>`M ${x-10} ${top+8+i*(span-16)/3} L ${x} ${top+i*(span-16)/3}`).join(" "));
+   }else if(mark.kind==="ceiling"){
+     const r=frame.pulleys[mark.ref].radius*scale,bar=y-r-16;
+     supports.get(mark.id).setAttribute("d",
+       `M ${x-span/2} ${bar} L ${x+span/2} ${bar} M ${x} ${bar} L ${x} ${y-r}`);
+   }
+ }
  for(const [name,points] of Object.entries(frame.rigidLinks||{})){
    rigidLinks.get(name).setAttribute("points",points.map(p=>project(p).join(",")).join(" "));
  }
@@ -135,13 +163,21 @@ function draw(i){
      tag.setAttribute("x",(a[0]+b[0])/2);tag.setAttribute("y",(a[1]+b[1])/2-10);}
  }
  for(const [name,b] of Object.entries(frame.bodies)){
-   const p=project(b.position),circle=bodies.get(name),text=labels.get(name);
-   circle.setAttribute("cx",p[0]);circle.setAttribute("cy",p[1]);
-   // Put labels outside an axle-mounted body and its wheel, using only geometry.
+   const p=project(b.position),shape=bodies.get(name),text=labels.get(name);
+   const symbol=style.bodySymbols?.[name];
+   if(symbol?.kind==="box"){
+     shape.setAttribute("x",p[0]-symbol.widthPx/2);
+     shape.setAttribute("y",p[1]-symbol.heightPx/2);
+   }else{
+     shape.setAttribute("cx",p[0]);shape.setAttribute("cy",p[1]);
+   }
+   // Labels use display-only pixel extents, not actual physical body sizes.
    const wheelRadius=Math.max(0,...Object.values(frame.pulleys)
      .filter(w=>Math.hypot(w.center[0]-b.position[0],w.center[1]-b.position[1])<1e-8)
      .map(w=>w.radius*scale));
-   const extent=Math.max(style.bodyMarkerRadiusPx,wheelRadius);
+   const horizontalExtent=symbol?.kind==="box"?symbol.widthPx/2:style.bodyMarkerRadiusPx;
+   const verticalExtent=symbol?.kind==="box"?symbol.heightPx/2:style.bodyMarkerRadiusPx;
+   const extent=Math.max(horizontalExtent,wheelRadius);
    text.textContent=b.label+" · "+Number(b.mass).toLocaleString("en-US",{maximumFractionDigits:3})+" kg";
    const width=text.getComputedTextLength();
    let side=p[0]<=W/2?-1:1;
@@ -153,7 +189,7 @@ function draw(i){
    const hasCarrier=Object.values(frame.rigidLinks||{}).some(points=>
      points.some(p0=>Math.hypot(p0[0]-b.position[0],p0[1]-b.position[1])<1e-8));
    text.setAttribute("x",p[0]+side*(extent+12));
-   text.setAttribute("y",p[1]+(hasCarrier?extent+23:5));
+   text.setAttribute("y",p[1]+(hasCarrier?verticalExtent+23:5));
  }
  document.getElementById("clock").textContent=decimal(D.times[index])+" s";
  document.getElementById("sample").textContent="Native sample "+(index+1)+" / "+D.times.length;

@@ -32,6 +32,11 @@ const close=(a,b,tol=1e-6)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Ma
  assert.deepEqual(Object.keys(D.frames[0].pulleys),["P1","P2","P3","P4"]);
  assert.deepEqual(Object.keys(D.frames[0].ropes),["S1","S2"]);
  assert.deepEqual(Object.keys(D.frames[0].bodies),["A","B"]);
+ assert.deepEqual(D.style.bodySymbols,light.payload.style.bodySymbols);
+ assert.deepEqual(D.style.supportMarks,light.payload.style.supportMarks);
+ assert.deepEqual(Object.keys(D.style.bodySymbols),["A","B"]);
+ assert.ok(D.style.supportMarks.length===2);
+ assert.ok(D.style.supportMarks.every(mark=>["wall","ceiling"].includes(mark.kind)));
  assert.deepEqual(Object.keys(D.frames[0].rigidLinks),["P3-to-B"]);
  const baseLink=D.frames[0].rigidLinks["P3-to-B"];
  assert.equal(baseLink.length,3);
@@ -70,11 +75,16 @@ const close=(a,b,tol=1e-6)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Ma
      const [xmin,ymin,xmax,ymax]=D.bounds,mid=[(xmin+xmax)/2,(ymin+ymax)/2];
      const check=(ok,why)=>{if(!ok)throw new Error(why)};
      const close=(a,b,why)=>{if(!Number.isFinite(a)||Math.abs(a-b)>1e-6)throw new Error(why+": "+a+" != "+b)};
-     const xy=e=>[Number(e.getAttribute("cx")),Number(e.getAttribute("cy"))];
+     const xy=e=>e.tagName.toLowerCase()==="rect"
+       ? [Number(e.getAttribute("x"))+Number(e.getAttribute("width"))/2,
+          Number(e.getAttribute("y"))+Number(e.getAttribute("height"))/2]
+       : [Number(e.getAttribute("cx")),Number(e.getAttribute("cy"))];
      const qs=(sel)=>document.querySelector(sel);
      check(document.querySelectorAll("[data-pulley]").length===4,"Four pulley circles");
      check(document.querySelectorAll("[data-axle]").length===4,"Four independent axle glyphs");
      check(document.querySelectorAll("[data-pulley-label]").length===4,"Pulley identities");
+     check(document.querySelectorAll("[data-support]").length===2,"Two schematic support marks");
+     check(document.querySelectorAll("rect[data-body]").length===2,"Both bodies drawn as decorative rectangles");
      check(document.querySelectorAll("[data-rigid-link]").length===1,"One native-owned rigid carriage link");
      check(document.querySelectorAll("[data-rope-label]").length===2,"Two rope identities");
      check(document.querySelectorAll("[data-metric]").length===D.metrics.length-1,"All native metrics visible");
@@ -104,6 +114,28 @@ const close=(a,b,tol=1e-6)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Ma
          close(Math.hypot(nodes[0][0]-nodes[1][0],nodes[0][1]-nodes[1][1]),1,"Rigid vertical carriage span");
          close(Math.hypot(nodes[1][0]-nodes[2][0],nodes[1][1]-nodes[2][1]),1.1,"Rigid horizontal carriage span");
        }
+       // Support marks stay attached to native world geometry, not guessed
+       // pixel positions or invented physical boundary conditions.
+       for(const mark of D.style.supportMarks){
+         const display=qs('[data-support="'+mark.id+'"]');
+         check(display.getAttribute("data-support-kind")===mark.kind,"Support kind");
+         const physical=mark.kind==="wall"
+           ? frame.attachments[mark.ref] : frame.pulleys[mark.ref].center;
+         const [x,y]=project(physical),span=mark.sizePx;
+         const coords=(display.getAttribute("d").match(/[-+]?(?:\d*\.?\d+)(?:e[-+]?\d+)?/gi)||[]).map(Number);
+         if(mark.kind==="wall"){
+           close(coords[0],x,"Native wall attachment X");
+           close(coords[1],y-span/2,"Wall support top");
+           close(coords[2],x,"Wall support main plate X");
+           close(coords[3],y+span/2,"Wall support bottom");
+         }else{
+           const r=frame.pulleys[mark.ref].radius*scale,bar=y-r-16;
+           close(coords[0],x-span/2,"Ceiling span starts");
+           close(coords[1],bar,"Ceiling bar above native pulley");
+           close(coords[2],x+span/2,"Ceiling span ends");
+           close(coords[7],y-r,"Ceiling stem ends at pulley rim");
+         }
+       }
        for(const [name,rope] of Object.entries(frame.ropes)){
          const path=qs('[data-rope="'+name+'"]').getAttribute("points").trim().split(/\s+/)
                     .map(s=>s.split(",").map(Number));
@@ -114,7 +146,11 @@ const close=(a,b,tol=1e-6)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Ma
          check(qs('[data-rope-label="'+name+'"]').textContent===name,"Rope label");
        }
        for(const [name,b] of Object.entries(frame.bodies)){
-         const center=xy(qs('[data-body="'+name+'"]'));
+         const symbol=qs('[data-body="'+name+'"]'),center=xy(symbol);
+         const spec=D.style.bodySymbols[name];
+         check(symbol.tagName.toLowerCase()==="rect","Generic block glyph used for "+name);
+         close(Number(symbol.getAttribute("width")),spec.widthPx,"Decorative block width");
+         close(Number(symbol.getAttribute("height")),spec.heightPx,"Decorative block height");
          project(b.position).forEach((n,i)=>close(center[i],n,"Native block "+name));
          const bounds=qs('[data-body-label="'+name+'"]').getBBox();
          check(bounds.x>=0&&bounds.x+bounds.width<=W&&

@@ -19,5 +19,31 @@
     "B": {
       "fill": "#f3a86c"
     }
-  }
+  },
+  "bodySymbols": {
+    "A": {
+      "kind": "box",
+      "widthPx": 52,
+      "heightPx": 32
+    },
+    "B": {
+      "kind": "box",
+      "widthPx": 98,
+      "heightPx": 42
+    }
+  },
+  "supportMarks": [
+    {
+      "id": "wall-support",
+      "kind": "wall",
+      "ref": "wall",
+      "sizePx": 64
+    },
+    {
+      "id": "ceiling-P4",
+      "kind": "ceiling",
+      "ref": "P4",
+      "sizePx": 76
+    }
+  ]
 }

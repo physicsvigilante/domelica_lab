@@ -8,6 +8,8 @@ on:
       - 'viewer/m6d-*'
       - 'viewer/rope2d.template.html'
       - 'scripts/check_m6d_four_pulleys.py'
+      - 'scripts/build_rope2d.py'
+      - 'scripts/test_m6e_style_symbols.py'
       - 'scripts/check_m6d_four_pulleys.cjs'
       - 'scripts/test_m6d_two_rope_geometry.py'
       - '.github/workflows/m6d-two-rope-four-pulley.yml'
@@ -35,8 +37,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Accepted native/3D source preservation
         run: python3 scripts/check_m4c_reuse.py
-      - name: Fixed/moving/four-pulley geometry unit tests
-        run: python3 -m unittest discover -s scripts -p 'test_*rope*geometry.py' -v
+      - name: Geometry unit tests and fail-closed decorative symbol styles
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_*rope*geometry.py' -v
+          python3 -m unittest discover -s scripts -p 'test_m6e_style_symbols.py' -v
       - name: Prepare pinned MSL 4.1.0
         run: omc scripts/install_msl.mos
       - name: Run four-pulley two-string diagram in native OpenModelica

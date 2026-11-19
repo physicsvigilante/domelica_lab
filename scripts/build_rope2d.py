@@ -65,10 +65,12 @@ def validate_route(route):
                     "Rigid-link XY point requires two native columns")
 
 
-def validate_style(style, body_ids):
+def validate_style(style, body_ids, attachment_ids, pulley_ids):
     require(style.get("schema") == "domelica.rope-style-2d/v1", "Unknown style contract")
-    require(set(style) == {"schema", "background", "foreground", "rope",
-                           "pulley", "bodyMarkerRadiusPx", "bodies"}, "Style cannot supply physical geometry")
+    required = {"schema", "background", "foreground", "rope",
+                "pulley", "bodyMarkerRadiusPx", "bodies"}
+    allowed = required | {"bodySymbols", "supportMarks"}
+    require(required <= set(style) <= allowed, "Style cannot supply physical geometry")
     require(set(style["rope"]) == {"stroke", "widthPx"}, "Invalid rope style")
     require(set(style["pulley"]) == {"fill", "stroke", "strokeWidthPx"}, "Invalid pulley style")
     require(set(style["bodies"]) == set(body_ids), "Style bodies must match physical bodies")
@@ -81,14 +83,44 @@ def validate_style(style, body_ids):
         require(set(item) == {"fill"}, "Body style cannot contain physical geometry")
     for value in [style["rope"]["widthPx"], style["pulley"]["strokeWidthPx"],
                   style["bodyMarkerRadiusPx"]]:
-        require(isinstance(value, (int, float)) and math.isfinite(value) and 0 < value < 50,
+        require(type(value) in (int, float) and math.isfinite(value) and 0 < value < 50,
                 "Invalid decorative pixel width")
+    # Purely decorative glyph dimensions are in screen pixels, never SI metres.
+    # The block remains a point mass, positioned exclusively by native results.
+    body_symbols = style.get("bodySymbols", {})
+    require(isinstance(body_symbols, dict) and set(body_symbols) <= set(body_ids),
+            "Unknown body-symbol owner")
+    for symbol in body_symbols.values():
+        require(isinstance(symbol, dict) and set(symbol) == {"kind", "widthPx", "heightPx"}
+                and symbol["kind"] == "box", "Unsupported body symbol")
+        for name in ("widthPx", "heightPx"):
+            size = symbol[name]
+            require(type(size) in (int, float) and math.isfinite(size) and 12 <= size <= 150,
+                    "Invalid decorative body pixel dimension")
+    support_marks = style.get("supportMarks", [])
+    require(isinstance(support_marks, list) and len(support_marks) <= 16,
+            "Too many decorative support marks")
+    seen = set()
+    for mark in support_marks:
+        require(isinstance(mark, dict) and set(mark) == {"id", "kind", "ref", "sizePx"},
+                "Unsupported support-mark fields")
+        require(isinstance(mark["id"], str) and mark["id"] and mark["id"] not in seen,
+                "Duplicate or empty support-mark ID")
+        seen.add(mark["id"])
+        kind, ref = mark["kind"], mark["ref"]
+        require((kind == "wall" and ref in attachment_ids)
+                or (kind == "ceiling" and ref in pulley_ids),
+                "Support mark must reference a native attachment or pulley")
+        size = mark["sizePx"]
+        require(type(size) in (int, float) and math.isfinite(size) and 16 <= size <= 130,
+                "Invalid decorative support span")
 
 
 def generate(csv_path, native_path, route_path, style_path):
     config, style = read_json(route_path), read_json(style_path)
     validate_route(config)
-    validate_style(style, [b["id"] for b in config["bodies"]])
+    validate_style(style, [b["id"] for b in config["bodies"]],
+                   set(config["attachments"]), set(config["pulleys"]))
     record = read_json(native_path)
     native = record.get("recording", {})
     require(native.get("kind") == "fresh-native-run", "Require a fresh native recording manifest")
@@ -177,7 +209,8 @@ def generate(csv_path, native_path, route_path, style_path):
                     "Native rigid link changed length: " + link["id"])
             links[link["id"]] = points
             bounds.extend(points)
-        frame = {"pulleys": pulleys, "bodies": bodies, "ropes": routes,
+        frame = {"pulleys": pulleys, "attachments": attachments,
+                 "bodies": bodies, "ropes": routes,
                  "metrics": {metric["id"]: number(row, metric["column"])
                              for metric in config["metrics"]}}
         if links:
