@@ -1,0 +1,113 @@
+{
+  "schema": "domelica.geometry-authoring-proof-2d/v1",
+  "upstream": {
+    "repository": "physicsvigilante/domelica_mecha",
+    "commit": "ede82116f3654b6c99043927f3d7a5cb69780801",
+    "authoringCommit": "0b2025f5f97a11da6d4cb24c476c7c21d3967058",
+    "runUrl": "https://github.com/physicsvigilante/domelica_mecha/actions/runs/44538814814",
+    "artifactId": 14535958890,
+    "artifactSHA256": "143ffff8a20767c2da1e09a11bfbb81e8d9619c0375db940c48c72325bdd3a76",
+    "fullProofSHA256": "c089ff6a2b304c4227b75d7aa42cca207b68b8652fb4e35cf74b8e3b034fd753",
+    "resolvedRouteSHA256": "c6a55e5599b31b10484fa9d35d1a59149464ddee2ab372a3ab07726a3bf48f53",
+    "modelicaGeometrySHA256": "8254c3d3da2738ea1f044f136a3f3a526d980fe3df01b7b97827e03c0b9fcc14",
+    "routeAlgorithm": "resolve_string_route_numeric",
+    "geometryAlgorithm": "FLOAT_OPERATIONS local_geometry",
+    "note": "This file is a compact downstream summary of the upstream-produced artifact; full contact points and arc geometry remain in the linked exact-head upstream artifact."
+  },
+  "geometryIntentSHA256": "e3d0a79ccd3c2b5b0cf8631ed647bf5442eba00af4051235c0abd544d2f25394",
+  "reference": {
+    "attachmentPositions": {
+      "anchor": [
+        -1.2080762113533159,
+        1.2905255888325768
+      ],
+      "Arope": [
+        0.48416697508022966,
+        1.7594744111674236
+      ],
+      "Acenter": [
+        0.37416697508022967,
+        1.9500000000000002
+      ],
+      "Caxle": [
+        1.5,
+        2.6
+      ],
+      "B": [
+        4.058460969082653,
+        1.7728718707889795
+      ]
+    },
+    "pulleyCentersAndRadii": {
+      "C": {
+        "center": [
+          1.5,
+          2.6
+        ],
+        "radius": 0.22
+      },
+      "Top": {
+        "center": [
+          3.738460969082653,
+          3.5228718707889795
+        ],
+        "radius": 0.32
+      }
+    },
+    "inclinationDegrees": 30
+  },
+  "routes": [
+    {
+      "id": "S1",
+      "authoredPassageIntent": "right",
+      "resolved": [
+        {
+          "kind": "attachment",
+          "ref": "anchor"
+        },
+        {
+          "kind": "pulley",
+          "ref": "C",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "Arope"
+        }
+      ],
+      "totalReferenceLength_m": 4.991150383789754,
+      "referenceArcSweepRadians": 3.141592653589793,
+      "feasibleCandidates": 2,
+      "uniqueAfterIntent": true,
+      "backend": "numeric"
+    },
+    {
+      "id": "S2",
+      "authoredPassageIntent": "over",
+      "resolved": [
+        {
+          "kind": "attachment",
+          "ref": "Caxle"
+        },
+        {
+          "kind": "pulley",
+          "ref": "Top",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "B"
+        }
+      ],
+      "totalReferenceLength_m": 4.820206432765823,
+      "referenceArcSweepRadians": 2.0943951023931944,
+      "feasibleCandidates": 2,
+      "uniqueAfterIntent": true,
+      "backend": "numeric"
+    }
+  ]
+}

@@ -7,7 +7,7 @@ on:
       - 'DomelicaLab/Examples/**'
       - 'viewer/m6g-*'
       - 'viewer/m6f-routes.json'
-      - 'scripts/author_m6g_geometry.py'
+      - 'scripts/check_m6g_pinned.py'
       - 'scripts/check_m6g_native_binding.py'
       - '.github/workflows/m6g-upstream-geometry.yml'
   workflow_dispatch:
@@ -20,44 +20,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  upstream-geometry-authoring:
+  geometry-proof:
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
-    env:
-      PYTHONPATH: .upstream-domelica-mecha/src
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch exact upstream domelica_mecha as a geometry-authoring tool
-        uses: actions/checkout@v4
-        with:
-          repository: physicsvigilante/domelica_mecha
-          ref: ede82116f3654b6c99043927f3d7a5cb69780801
-          path: .upstream-domelica-mecha
-          persist-credentials: false
-      - name: Verify pinned upstream revision
+      - name: Verify exact outputs from upstream domelica_mecha authoring
         run: |
-          test "$(git -C .upstream-domelica-mecha rev-parse HEAD)" = ede82116f3654b6c99043927f3d7a5cb69780801
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install only upstream geometry's required scalar math dependency
-        run: python -m pip install --disable-pip-version-check 'sympy==1.14.0'
-      - name: Resolve branches, tangents and wrap arcs using real upstream code
-        run: |
-          python scripts/author_m6g_geometry.py \
+          python3 scripts/check_m6g_pinned.py \
             --intent viewer/m6g-geometry-intent.json \
-            --binding viewer/m6f-routes.json \
-            --output-route artifacts/m6g-resolved-routes.json \
-            --proof artifacts/m6g-geometry-proof.json \
-            --check-modelica
-      - name: Publish upstream authored route, witness and provenance
-        uses: actions/upload-artifact@v4
-        with:
-          name: m6g-upstream-geometry
-          path: artifacts/m6g-*.json
+            --routes viewer/m6g-resolved-routes.json \
+            --proof viewer/m6g-upstream-proof.json \
+            --modelica DomelicaLab/Examples/M6FResolvedGeometry.mo
 
   native:
-    needs: upstream-geometry-authoring
+    needs: geometry-proof
     runs-on: ubuntu-latest
     timeout-minutes: 15
     container:
@@ -68,10 +45,6 @@ jobs:
       NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: m6g-upstream-geometry
-          path: artifacts
       - name: Existing accepted model/runner/renderer source preservation
         run: python3 scripts/check_m4c_reuse.py
       - name: Pinned MSL 4.1.0
@@ -81,11 +54,11 @@ jobs:
       - name: Verify physical motion and upstream/native geometric identity
         run: |
           python3 scripts/check_m6f_incline.py --csv m6g-run/m6f_incline_res.csv --report artifacts/m6g-physics.json
-          python3 scripts/check_m6g_native_binding.py --csv m6g-run/m6f_incline_res.csv --proof artifacts/m6g-geometry-proof.json
+          python3 scripts/check_m6g_native_binding.py --csv m6g-run/m6f_incline_res.csv --proof viewer/m6g-upstream-proof.json
       - name: Build offline HTML using resolved route, not hand-picked tangent branches
         run: |
-          python3 scripts/build_rope2d.py --csv m6g-run/m6f_incline_res.csv --native-manifest m6g-run/experiments.json --routes artifacts/m6g-resolved-routes.json --style viewer/m6f-style-dark.json --output artifacts/m6g-incline-dark.html
-          python3 scripts/build_rope2d.py --csv m6g-run/m6f_incline_res.csv --native-manifest m6g-run/experiments.json --routes artifacts/m6g-resolved-routes.json --style viewer/m6f-style-light.json --output artifacts/m6g-incline-light.html
+          python3 scripts/build_rope2d.py --csv m6g-run/m6f_incline_res.csv --native-manifest m6g-run/experiments.json --routes viewer/m6g-resolved-routes.json --style viewer/m6f-style-dark.json --output artifacts/m6g-incline-dark.html
+          python3 scripts/build_rope2d.py --csv m6g-run/m6f_incline_res.csv --native-manifest m6g-run/experiments.json --routes viewer/m6g-resolved-routes.json --style viewer/m6f-style-light.json --output artifacts/m6g-incline-light.html
       - name: Save only new proof/recording/standalone HTML
         if: always()
         uses: actions/upload-artifact@v4
@@ -96,6 +69,8 @@ jobs:
             artifacts/m6g-*.json
             artifacts/m6g-incline-*.html
             m6g-run/
+            viewer/m6g-resolved-routes.json
+            viewer/m6g-upstream-proof.json
 
   browser:
     needs: native

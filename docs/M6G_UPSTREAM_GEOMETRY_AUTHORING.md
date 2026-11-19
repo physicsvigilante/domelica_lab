@@ -52,27 +52,46 @@ The physical shape and ropes remain governed by OpenModelica.
 The upstream resolver does not decide the system's mass, friction,
 force laws, 3D geometry, or change the native equations.
 
-## Qualification boundary
+## How the actual two repositories cooperate
 
-The new CI workflow:
+Upstream authored geometry is performed **inside domelica_mecha**, not by
+copying a whole Python resolver into domelica_lab. The pinned authoring
+source and its own CI are reviewable:
 
-- checks out **exact upstream commit** into an isolated sibling
-  directory and imports its Python package without copying it into
-  domelica_lab;
-- runs its numeric route resolver and exports a route/witness artifact;
-- runs one existing M6F OpenModelica setup with the generated
-  Modelica geometry constants;
-- verifies native first-frame coordinates and both *physical* rope
-  lengths match the upstream numeric geometry witness;
-- reuses the existing standalone dark/light HTML generator and
-  browser smoke test, using the newly **authored** route rather than
-  the old hand-picked branch JSON.
+- Upstream draft PR: https://github.com/physicsvigilante/domelica_mecha/pull/1
+- Exact upstream run: https://github.com/physicsvigilante/domelica_mecha/actions/runs/44538814814
+- Generated artifact: https://github.com/physicsvigilante/domelica_mecha/actions/runs/44538814814/artifacts/14535958890
+- Authoring commit: 0b2025f5f97a11da6d4cb24c476c7c21d3967058
+- Pinned upstream library origin: ede82116f3654b6c99043927f3d7a5cb69780801
 
-The core \`rope2d_geometry.py\`, \`build_rope2d.py\`,
-\`rope2d.template.html\`, native runner and all earlier models are
-untouched. The full upstream source is a **build-time authoring
-dependency only**, not bundled into the standalone HTML or users'
-OpenModelica environment.
+The upstream run **passed** and resolved both ropes uniquely given passage
+intent (both initially had two feasible branches). It produced the exact
+Modelica constants package, a resolved M6F route manifest, a full numerical
+contact/arc proof and their SHA-256 hashes.
+
+A critical access boundary is deliberate: the domelica_lab GitHub Actions
+GITHUB_TOKEN **cannot read the other repository**. An attempted cross-repo
+checkout returned Repository not found. We therefore preserve compact
+upstream-generated, pinned outputs under viewer/m6g-upstream-proof.json and
+viewer/m6g-resolved-routes.json. The complete original upstream proof remains
+available as the upstream workflow artifact at the pinned run above. No
+cross-repo secret, fork or broad access permission is required.
+
+The downstream qualification pipeline:
+
+1. Checks the geometry-authoring input SHA, Modelica package SHA and the
+   matching upstream resolution evidence, then checks both first-frame rope
+   arc lengths with the earlier adapted local numeric kernel.
+2. Runs OpenModelica **once** on the M6F physical topology, with its
+   geometric defaults imported from the pinned generated Modelica package.
+3. Checks native coordinates and actual rope lengths against the upstream
+   reference witness, and runs the existing physics oracle.
+4. Builds dark/light standalone HTML using the now **upstream-resolved**
+   route JSON, not hand-selected tangent/wrap signs.
+5. Runs one focused existing M6F browser smoke check.
+
+The existing native physics runner, the 2D viewer, rope2d_geometry.py and
+earlier mechanical examples remain untouched.
 
 ## Limits
 
