@@ -37,7 +37,8 @@ const pass=x=>{report.checks.push(x);console.log("PASS",x)};
    page.on("console",m=>{if(m.type()==="error")report.errors.push(m.text())});
    page.on("request",r=>{if(r.url()!==url&&!/^(data|blob):/.test(r.url()))report.externalRequests.push(r.url());});
    await page.goto(url,{waitUntil:"load"});
-   await page.waitForFunction(()=>!!window.__rope2d);
+   if(report.errors.length)throw new Error("Browser initialization: "+report.errors.join("; "));
+   await page.waitForFunction(()=>!!window.__rope2d,null,{timeout:5000});
    for(const index of [0,peakIndex,impactIndex,A.times.length-1]){
     const state=await page.evaluate(i=>{window.__rope2d.seek(i);return window.__rope2d.getState()},index);
     assert.equal(state.index,index);

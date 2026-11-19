@@ -156,7 +156,7 @@ function draw(i){
  index=Math.max(0,Math.min(D.times.length-1,i));
  const frame=D.frames[index];
  for(const mark of style.supportMarks||[]){
-   const physical=mark.kind==="wall"
+   const physical=(mark.kind==="wall"||mark.kind==="floor")
      ? frame.attachments?.[mark.ref] : frame.pulleys[mark.ref]?.center;
    if(!physical)throw new Error("Missing native support attachment: "+mark.ref);
    const [x,y]=project(physical),span=mark.sizePx;
