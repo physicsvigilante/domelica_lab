@@ -1,0 +1,156 @@
+{
+  "schema": "domelica.rope-routes-2d/v1",
+  "plane": "xy",
+  "recording": {
+    "experimentId": "incline-two-rope",
+    "model": "DomelicaLab.Examples.InclineMovablePulley2D",
+    "csv": "m6f_incline_res.csv"
+  },
+  "attachments": {
+    "anchor": [
+      "anchorPosition[1]",
+      "anchorPosition[2]"
+    ],
+    "Arope": [
+      "aRopeEndpoint[1]",
+      "aRopeEndpoint[2]"
+    ],
+    "Acenter": [
+      "aPosition[1]",
+      "aPosition[2]"
+    ],
+    "Caxle": [
+      "cPosition[1]",
+      "cPosition[2]"
+    ],
+    "B": [
+      "bPosition[1]",
+      "bPosition[2]"
+    ]
+  },
+  "pulleys": {
+    "C": {
+      "centerColumns": [
+        "cPosition[1]",
+        "cPosition[2]"
+      ],
+      "radiusColumn": "movingRadius"
+    },
+    "Top": {
+      "centerColumns": [
+        "fixedPulleyCenter[1]",
+        "fixedPulleyCenter[2]"
+      ],
+      "radiusColumn": "topRadius"
+    }
+  },
+  "ropes": [
+    {
+      "id": "S1",
+      "nodes": [
+        {
+          "kind": "attachment",
+          "ref": "anchor"
+        },
+        {
+          "kind": "pulley",
+          "ref": "C",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "Arope"
+        }
+      ],
+      "lengthPolicy": "constant",
+      "tolerance": 0.000001
+    },
+    {
+      "id": "S2",
+      "nodes": [
+        {
+          "kind": "attachment",
+          "ref": "Caxle"
+        },
+        {
+          "kind": "pulley",
+          "ref": "Top",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "B"
+        }
+      ],
+      "lengthPolicy": "constant",
+      "tolerance": 0.000001
+    }
+  ],
+  "bodies": [
+    {
+      "id": "A",
+      "at": "Acenter",
+      "label": "Incline A",
+      "massColumn": "massA"
+    },
+    {
+      "id": "B",
+      "at": "B",
+      "label": "Hanging B",
+      "massColumn": "massB"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "aA",
+      "column": "aUpAcceleration",
+      "label": "A upslope acceleration",
+      "unit": "m/s²"
+    },
+    {
+      "id": "aB",
+      "column": "bDownAcceleration",
+      "label": "B downward acceleration",
+      "unit": "m/s²"
+    },
+    {
+      "id": "T1",
+      "column": "tensionS1",
+      "label": "S1 tension",
+      "unit": "N"
+    },
+    {
+      "id": "T2",
+      "column": "tensionS2",
+      "label": "S2 tension",
+      "unit": "N"
+    }
+  ],
+  "rigidLinks": [
+    {
+      "id": "incline-outline",
+      "points": [
+        [
+          "rampOutlineStart[1]",
+          "rampOutlineStart[2]"
+        ],
+        [
+          "rampOutlineEnd[1]",
+          "rampOutlineEnd[2]"
+        ],
+        [
+          "rampOutlineFoot[1]",
+          "rampOutlineFoot[2]"
+        ],
+        [
+          "rampOutlineStart[1]",
+          "rampOutlineStart[2]"
+        ]
+      ]
+    }
+  ]
+}

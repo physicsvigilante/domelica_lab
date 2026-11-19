@@ -1,0 +1,65 @@
+{
+  "schema": "domelica.geometry-authoring-2d/v1",
+  "purpose": "Generate solver-independent reference geometry for the M6F incline without hardcoding tangent branches",
+  "physicalAuthority": "Modelica parameters generated from this geometric intent; no mechanics are solved by the authoring tool",
+  "plane": "xy",
+  "inclinationDegrees": 30,
+  "geometry": {
+    "cInitial": [
+      1.5,
+      2.6
+    ],
+    "movingRadius": 0.22,
+    "topRadius": 0.32,
+    "anchorSeparation": 3,
+    "blockGap": 1.3,
+    "redirectDistance": 2.4,
+    "bInitialLeg": 1.75
+  },
+  "strings": [
+    {
+      "id": "S1",
+      "route": [
+        {
+          "kind": "attachment",
+          "ref": "anchor"
+        },
+        {
+          "kind": "pulley",
+          "ref": "C",
+          "intent": "right"
+        },
+        {
+          "kind": "attachment",
+          "ref": "Arope"
+        }
+      ],
+      "orientedLegs": [
+        "upslope",
+        "downslope"
+      ]
+    },
+    {
+      "id": "S2",
+      "route": [
+        {
+          "kind": "attachment",
+          "ref": "Caxle"
+        },
+        {
+          "kind": "pulley",
+          "ref": "Top",
+          "intent": "over"
+        },
+        {
+          "kind": "attachment",
+          "ref": "B"
+        }
+      ],
+      "orientedLegs": [
+        "upslope",
+        "down"
+      ]
+    }
+  ]
+}
