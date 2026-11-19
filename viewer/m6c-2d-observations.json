@@ -1,0 +1,344 @@
+{
+  "schema": "domelica.observations/v1",
+  "provenance": {
+    "definitionOrigin": "M6C-2D chooses only the M6B Atwood model for a geometry-only presentation test",
+    "newSimulation": false,
+    "note": "Observations retain their existing native ownership and sign definitions"
+  },
+  "scenes": [
+    {
+      "id": "atwood-fixed-pulley",
+      "model": "DomelicaLab.Examples.AtwoodFixedPulley3D",
+      "csv": "m6b_atwood_res.csv",
+      "bodies": [
+        {
+          "id": "light",
+          "label": "Light mass",
+          "objectIds": [
+            "lightBob.sphere"
+          ]
+        },
+        {
+          "id": "heavy",
+          "label": "Heavy mass",
+          "objectIds": [
+            "heavyBob.sphere"
+          ]
+        }
+      ],
+      "notes": [
+        "Problem 68, Mechanics I, Newton's Laws: lighter bob rises 1.4 m in two seconds. Absolute masses 13 kg and 15 kg and display geometry are illustrative choices.",
+        "Oppositely oriented MSL MultiBody Prismatic joints are coupled through one massless MSL Translational Rod(L=0) kinematic constraint. This enforces a taut ideal rope without prescribing a trajectory.",
+        "The pulley is a fixed visual object: there is no modeled wheel rotation or inertia. The rope's straight sections are native time-varying MSL shapes.",
+        "Tension overlays use native joint translational-port flow forces. Weight vectors are derived from saved native mass and uniform gravity parameters.",
+        "This bilateral constraint excludes slack, recontact, friction, contact, impact and pulley rotational dynamics."
+      ],
+      "overlays": [
+        {
+          "id": "light-tension",
+          "label": "Rope → lighter mass",
+          "kind": "force",
+          "unit": "N",
+          "body": "light",
+          "point": {
+            "columns": [
+              "lightPosition[1]",
+              "lightPosition[2]",
+              "lightPosition[3]"
+            ],
+            "label": "Center of light point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "{0,lightSlide.axis.f,0}",
+            "columns": [
+              "lightStringOnBob[1]",
+              "lightStringOnBob[2]",
+              "lightStringOnBob[3]"
+            ]
+          },
+          "signConvention": "Force ON the bob from the ideal taut-string coupling, resolved in world +y; native Prismatic axis connector, not a prescribed force.",
+          "defaultVisible": true,
+          "color": "#49b8d7",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "lightStringOnBob[1]",
+              "lightStringOnBob[2]",
+              "lightStringOnBob[3]"
+            ]
+          }
+        },
+        {
+          "id": "light-weight",
+          "label": "Gravity → light mass",
+          "kind": "force",
+          "unit": "N",
+          "body": "light",
+          "point": {
+            "columns": [
+              "lightPosition[1]",
+              "lightPosition[2]",
+              "lightPosition[3]"
+            ],
+            "label": "Center of light point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "derived",
+            "expression": "lightBob.m * world.g * world.n / length(world.n)",
+            "columns": [
+              "lightBob.m",
+              "world.g",
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          },
+          "signConvention": "Weight force ON the point mass, computed from saved native mass, gravity magnitude and world direction.",
+          "defaultVisible": true,
+          "color": "#d7ae66",
+          "vector": {
+            "op": "uniformGravity",
+            "massColumn": "lightBob.m",
+            "gColumn": "world.g",
+            "directionColumns": [
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          }
+        },
+        {
+          "id": "light-velocity",
+          "label": "light mass velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "light",
+          "point": {
+            "columns": [
+              "lightPosition[1]",
+              "lightPosition[2]",
+              "lightPosition[3]"
+            ],
+            "label": "Center of light point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "lightBob.v_0",
+            "columns": [
+              "lightVelocity[1]",
+              "lightVelocity[2]",
+              "lightVelocity[3]"
+            ]
+          },
+          "signConvention": "World-frame native velocity of the MSL point-mass frame, not a prescribed trajectory.",
+          "defaultVisible": true,
+          "color": "#66bb91",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "lightVelocity[1]",
+              "lightVelocity[2]",
+              "lightVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "light-acceleration",
+          "label": "light mass acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "light",
+          "point": {
+            "columns": [
+              "lightPosition[1]",
+              "lightPosition[2]",
+              "lightPosition[3]"
+            ],
+            "label": "Center of light point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "lightBob.a_0",
+            "columns": [
+              "lightAcceleration[1]",
+              "lightAcceleration[2]",
+              "lightAcceleration[3]"
+            ]
+          },
+          "signConvention": "World-frame native acceleration of the MSL point-mass frame, not a prescribed trajectory.",
+          "defaultVisible": true,
+          "color": "#7da1ea",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "lightAcceleration[1]",
+              "lightAcceleration[2]",
+              "lightAcceleration[3]"
+            ]
+          }
+        },
+        {
+          "id": "heavy-tension",
+          "label": "Rope → heavier mass",
+          "kind": "force",
+          "unit": "N",
+          "body": "heavy",
+          "point": {
+            "columns": [
+              "heavyPosition[1]",
+              "heavyPosition[2]",
+              "heavyPosition[3]"
+            ],
+            "label": "Center of heavy point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "{0,-heavySlide.axis.f,0}",
+            "columns": [
+              "heavyStringOnBob[1]",
+              "heavyStringOnBob[2]",
+              "heavyStringOnBob[3]"
+            ]
+          },
+          "signConvention": "Force ON the bob from the ideal taut-string coupling, resolved in world +y; native Prismatic axis connector, not a prescribed force.",
+          "defaultVisible": true,
+          "color": "#e6a55e",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "heavyStringOnBob[1]",
+              "heavyStringOnBob[2]",
+              "heavyStringOnBob[3]"
+            ]
+          }
+        },
+        {
+          "id": "heavy-weight",
+          "label": "Gravity → heavy mass",
+          "kind": "force",
+          "unit": "N",
+          "body": "heavy",
+          "point": {
+            "columns": [
+              "heavyPosition[1]",
+              "heavyPosition[2]",
+              "heavyPosition[3]"
+            ],
+            "label": "Center of heavy point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "derived",
+            "expression": "heavyBob.m * world.g * world.n / length(world.n)",
+            "columns": [
+              "heavyBob.m",
+              "world.g",
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          },
+          "signConvention": "Weight force ON the point mass, computed from saved native mass, gravity magnitude and world direction.",
+          "defaultVisible": true,
+          "color": "#d7ae66",
+          "vector": {
+            "op": "uniformGravity",
+            "massColumn": "heavyBob.m",
+            "gColumn": "world.g",
+            "directionColumns": [
+              "world.n[1]",
+              "world.n[2]",
+              "world.n[3]"
+            ]
+          }
+        },
+        {
+          "id": "heavy-velocity",
+          "label": "heavy mass velocity",
+          "kind": "velocity",
+          "unit": "m/s",
+          "body": "heavy",
+          "point": {
+            "columns": [
+              "heavyPosition[1]",
+              "heavyPosition[2]",
+              "heavyPosition[3]"
+            ],
+            "label": "Center of heavy point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "heavyBob.v_0",
+            "columns": [
+              "heavyVelocity[1]",
+              "heavyVelocity[2]",
+              "heavyVelocity[3]"
+            ]
+          },
+          "signConvention": "World-frame native velocity of the MSL point-mass frame, not a prescribed trajectory.",
+          "defaultVisible": true,
+          "color": "#ae90df",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "heavyVelocity[1]",
+              "heavyVelocity[2]",
+              "heavyVelocity[3]"
+            ]
+          }
+        },
+        {
+          "id": "heavy-acceleration",
+          "label": "heavy mass acceleration",
+          "kind": "acceleration",
+          "unit": "m/s^2",
+          "body": "heavy",
+          "point": {
+            "columns": [
+              "heavyPosition[1]",
+              "heavyPosition[2]",
+              "heavyPosition[3]"
+            ],
+            "label": "Center of heavy point-mass bob",
+            "reference": "center-of-mass"
+          },
+          "frame": "world",
+          "source": {
+            "mode": "native",
+            "expression": "heavyBob.a_0",
+            "columns": [
+              "heavyAcceleration[1]",
+              "heavyAcceleration[2]",
+              "heavyAcceleration[3]"
+            ]
+          },
+          "signConvention": "World-frame native acceleration of the MSL point-mass frame, not a prescribed trajectory.",
+          "defaultVisible": true,
+          "color": "#ed8885",
+          "vector": {
+            "op": "columns",
+            "columns": [
+              "heavyAcceleration[1]",
+              "heavyAcceleration[2]",
+              "heavyAcceleration[3]"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

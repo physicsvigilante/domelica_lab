@@ -1,0 +1,74 @@
+{
+  "schema": "domelica.rope-routes-2d/v1",
+  "plane": "xy",
+  "recording": {
+    "experimentId": "atwood-fixed-pulley",
+    "model": "DomelicaLab.Examples.AtwoodFixedPulley3D",
+    "csv": "m6b_atwood_res.csv"
+  },
+  "attachments": {
+    "left": [
+      "lightPosition[1]",
+      "lightPosition[2]"
+    ],
+    "right": [
+      "heavyPosition[1]",
+      "heavyPosition[2]"
+    ]
+  },
+  "pulleys": {
+    "P": {
+      "centerColumns": [
+        "pulleyCenter[1]",
+        "pulleyCenter[2]"
+      ],
+      "radiusColumn": "pulleyRadius"
+    }
+  },
+  "ropes": [
+    {
+      "id": "rope",
+      "nodes": [
+        {
+          "kind": "attachment",
+          "ref": "left"
+        },
+        {
+          "kind": "pulley",
+          "ref": "P",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "right"
+        }
+      ],
+      "lengthPolicy": "constant",
+      "tolerance": 0.000001
+    }
+  ],
+  "bodies": [
+    {
+      "id": "light",
+      "at": "left",
+      "label": "Light mass",
+      "massColumn": "lightBob.m"
+    },
+    {
+      "id": "heavy",
+      "at": "right",
+      "label": "Heavy mass",
+      "massColumn": "heavyBob.m"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "tension",
+      "column": "lightTension",
+      "label": "Native rope tension",
+      "unit": "N"
+    }
+  ]
+}

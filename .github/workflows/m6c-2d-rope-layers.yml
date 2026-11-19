@@ -1,0 +1,103 @@
+name: M6C 2D Rope Geometry Layers
+
+on:
+  push:
+    branches: ['experiment/m6c-*']
+    paths:
+      - 'DomelicaLab/**'
+      - 'viewer/m6c-2d-*.json'
+      - 'viewer/rope2d.template.html'
+      - 'scripts/rope2d_geometry.py'
+      - 'scripts/build_rope2d.py'
+      - 'scripts/test_rope2d_geometry.py'
+      - 'scripts/check_rope2d.cjs'
+      - '.github/workflows/m6c-2d-rope-layers.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m6c-rope-2d-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-and-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    container:
+      image: openmodelica/openmodelica:v1.27.1-ompython@sha256:a79649b5b65bc3051b324efa05dbf24af460048d51894447e5e324d52e79c65f
+    env:
+      MODEL_SOURCE_REVISION: ${{ github.sha }}
+      CHECKOUT_REVISION: ${{ github.sha }}
+      NATIVE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preserve accepted existing physics and viewer sources
+        run: python3 scripts/check_m4c_reuse.py
+      - name: Pure geometric unit tests
+        run: python3 -m unittest discover -s scripts -p test_rope2d_geometry.py -v
+      - name: Install pinned native Modelica Standard Library
+        run: omc scripts/install_msl.mos
+      - name: Fresh native Q68 Atwood run through existing runner
+        timeout-minutes: 12
+        run: >-
+          python3 scripts/run_experiments.py run
+          --manifest viewer/m6c-2d-experiments.json
+          --run-dir observation-run --timeout 600
+      - name: Independent Q68 nominal analytical physics checks
+        run: >-
+          python3 scripts/check_m6b_atwood.py
+          --csv observation-run/m6b_atwood_res.csv
+          --report artifacts/m6c-physics.json
+      - name: Generate dark and light 2D HTML from identical native run
+        run: |
+          python3 scripts/build_rope2d.py --csv observation-run/m6b_atwood_res.csv --native-manifest observation-run/experiments.json --routes viewer/m6c-2d-routes.json --style viewer/m6c-2d-style.json --output artifacts/m6c-2d-dark.html
+          python3 scripts/build_rope2d.py --csv observation-run/m6b_atwood_res.csv --native-manifest observation-run/experiments.json --routes viewer/m6c-2d-routes.json --style viewer/m6c-2d-style-light.json --output artifacts/m6c-2d-light.html
+      - name: Publish source, native, geometry and HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m6c-2d-native-and-html
+          if-no-files-found: warn
+          path: |
+            artifacts/m6c-2d-dark.html
+            artifacts/m6c-2d-light.html
+            artifacts/m6c-physics.json
+            observation-run/m6b_atwood_res.csv
+            observation-run/m6b_atwood_res.mat
+            observation-run/m6b_atwood_visual.xml
+            observation-run/native-toolchain.txt
+            observation-run/run-plan.json
+            observation-run/run_native.mos
+            observation-run/native-run.log
+            observation-run/experiments.json
+            observation-run/source/
+
+  browser-2d:
+    needs: native-and-geometry
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: m6c-2d-native-and-html
+          path: .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare Chromium browser
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install chromium
+      - name: Compare two styles and inspect actual SVG motion
+        run: node scripts/check_rope2d.cjs artifacts/m6c-2d-dark.html artifacts/m6c-2d-light.html artifacts/m6c-2d-browser
+      - name: Preserve browser screenshots and checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m6c-2d-browser-checks
+          if-no-files-found: warn
+          path: artifacts/m6c-2d-browser/

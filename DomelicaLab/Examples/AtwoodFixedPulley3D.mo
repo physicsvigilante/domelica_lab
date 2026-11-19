@@ -81,6 +81,9 @@ model AtwoodFixedPulley3D
     color={165,211,217});
 
   // Passive observations, not equations of motion.
+  // Read-only pulley-center geometry exposed for the generic 2D display
+  // adapter. This alias does not add a physical constraint or trajectory.
+  SI.Position pulleyCenter[3]={0,pulleyHeight,0};
   SI.Position lightPosition[3]=lightBob.frame_a.r_0;
   SI.Position heavyPosition[3]=heavyBob.frame_a.r_0;
   SI.Velocity lightVelocity[3]=lightBob.v_0;
