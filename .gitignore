@@ -13,6 +13,8 @@
 /m4c-native-toolchain.txt
 /m4c-native-run.log
 /native-toolchain.txt
+/observation-run/
+/observation-plan/
 
 # Python
 __pycache__/
