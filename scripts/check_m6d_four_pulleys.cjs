@@ -134,6 +134,8 @@ const close=(a,b,tol=1e-6)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Ma
            close(coords[1],bar,"Ceiling bar above native pulley");
            close(coords[2],x+span/2,"Ceiling span ends");
            close(coords[7],y-r,"Ceiling stem ends at pulley rim");
+         const label=qs('[data-pulley-label="'+mark.ref+'"]').getBBox();
+         check(label.y+label.height<bar-2,"Pulley label must clear its ceiling bar");
          }
        }
        for(const [name,rope] of Object.entries(frame.ropes)){
@@ -155,8 +157,18 @@ const close=(a,b,tol=1e-6)=>assert.ok(Number.isFinite(a)&&Number.isFinite(b)&&Ma
          const bounds=qs('[data-body-label="'+name+'"]').getBBox();
          check(bounds.x>=0&&bounds.x+bounds.width<=W&&
                bounds.y>=0&&bounds.y+bounds.height<=H,"Clipped body label "+name);
+         check(bounds.y>=Number(symbol.getAttribute("y"))+spec.heightPx+2,
+               "Box caption must sit below its decorative body glyph");
          if(name==="B")check(bounds.y>project(frame.rigidLinks["P3-to-B"][1])[1]+2,
              "Carriage stroke must not run through block B label");
+         const wallMark=D.style.supportMarks.find(item=>item.kind==="wall");
+         if(name==="A"&&wallMark){
+           const w=project(frame.attachments[wallMark.ref]);
+           const intersects=bounds.x<=w[0]+3&&bounds.x+bounds.width>=w[0]-3
+              &&bounds.y<=w[1]+wallMark.sizePx/2
+              &&bounds.y+bounds.height>=w[1]-wallMark.sizePx/2;
+           check(!intersects,"A label must not overlap its wall support");
+         }
        }
        for(const metric of D.metrics.slice(1)){
          const rendered=qs('[data-metric="'+metric.id+'"]');

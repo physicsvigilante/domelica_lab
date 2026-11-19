@@ -154,7 +154,11 @@ function draw(i){
    e.setAttribute("cx",c[0]);e.setAttribute("cy",c[1]);e.setAttribute("r",p.radius*scale);
    axles.get(name).setAttribute("cx",c[0]);axles.get(name).setAttribute("cy",c[1]);
    const label=pulleyLabels.get(name);
-   label.setAttribute("x",c[0]);label.setAttribute("y",c[1]-p.radius*scale-10);
+   const topSupported=(style.supportMarks||[]).some(mark=>
+     mark.kind==="ceiling" && mark.ref===name);
+   label.setAttribute("x",c[0]);
+   // A ceiling bar is 16 px above the wheel: its label must sit above the bar.
+   label.setAttribute("y",c[1]-p.radius*scale-(topSupported?28:10));
  }
  for(const [name,r] of Object.entries(frame.ropes)){
    const points=r.points.map(p=>project(p).join(",")).join(" ");
@@ -171,25 +175,28 @@ function draw(i){
    }else{
      shape.setAttribute("cx",p[0]);shape.setAttribute("cy",p[1]);
    }
-   // Labels use display-only pixel extents, not actual physical body sizes.
-   const wheelRadius=Math.max(0,...Object.values(frame.pulleys)
-     .filter(w=>Math.hypot(w.center[0]-b.position[0],w.center[1]-b.position[1])<1e-8)
-     .map(w=>w.radius*scale));
-   const horizontalExtent=symbol?.kind==="box"?symbol.widthPx/2:style.bodyMarkerRadiusPx;
-   const verticalExtent=symbol?.kind==="box"?symbol.heightPx/2:style.bodyMarkerRadiusPx;
-   const extent=Math.max(horizontalExtent,wheelRadius);
+   // A decorative box uses a caption beneath its footprint; no physical
+   // body dimension is inferred. Legacy circular glyphs retain prior labels.
    text.textContent=b.label+" · "+Number(b.mass).toLocaleString("en-US",{maximumFractionDigits:3})+" kg";
-   const width=text.getComputedTextLength();
-   let side=p[0]<=W/2?-1:1;
-   if(side>0&&p[0]+extent+12+width>W-12)side=-1;
-   if(side<0&&p[0]-extent-12-width<12)side=1;
-   text.setAttribute("text-anchor",side<0?"end":"start");
-   // Keep captions clear of physical rigid-carrier strokes by moving them
-   // beneath a body attached to a recorded carrier polyline.
-   const hasCarrier=Object.values(frame.rigidLinks||{}).some(points=>
-     points.some(p0=>Math.hypot(p0[0]-b.position[0],p0[1]-b.position[1])<1e-8));
-   text.setAttribute("x",p[0]+side*(extent+12));
-   text.setAttribute("y",p[1]+(hasCarrier?verticalExtent+23:5));
+   if(symbol?.kind==="box"){
+     text.setAttribute("text-anchor","middle");
+     text.setAttribute("x",p[0]);
+     text.setAttribute("y",p[1]+symbol.heightPx/2+22);
+   }else{
+     const wheelRadius=Math.max(0,...Object.values(frame.pulleys)
+       .filter(w=>Math.hypot(w.center[0]-b.position[0],w.center[1]-b.position[1])<1e-8)
+       .map(w=>w.radius*scale));
+     const extent=Math.max(style.bodyMarkerRadiusPx,wheelRadius);
+     const width=text.getComputedTextLength();
+     let side=p[0]<=W/2?-1:1;
+     if(side>0&&p[0]+extent+12+width>W-12)side=-1;
+     if(side<0&&p[0]-extent-12-width<12)side=1;
+     text.setAttribute("text-anchor",side<0?"end":"start");
+     const hasCarrier=Object.values(frame.rigidLinks||{}).some(points=>
+       points.some(p0=>Math.hypot(p0[0]-b.position[0],p0[1]-b.position[1])<1e-8));
+     text.setAttribute("x",p[0]+side*(extent+12));
+     text.setAttribute("y",p[1]+(hasCarrier?style.bodyMarkerRadiusPx+23:5));
+   }
  }
  document.getElementById("clock").textContent=decimal(D.times[index])+" s";
  document.getElementById("sample").textContent="Native sample "+(index+1)+" / "+D.times.length;
