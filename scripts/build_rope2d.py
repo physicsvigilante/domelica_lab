@@ -36,7 +36,8 @@ def validate_route(route):
     require(route.get("plane") == "xy", "Only Modelica world XY plane admitted in first slice")
     core = {"schema", "plane", "recording", "attachments", "pulleys",
             "ropes", "bodies", "metrics"}
-    require(set(route) in (core, core | {"rigidLinks"}), "Unexpected route fields")
+    require(core <= set(route) <= core | {"rigidLinks", "springs"},
+            "Unexpected route fields")
     require(route["ropes"] and route["bodies"] and route["pulleys"], "Empty scene")
     for nodes in (item["nodes"] for item in route["ropes"]):
         for node in nodes:
@@ -63,13 +64,25 @@ def validate_route(route):
         for columns in link["points"]:
             require(len(columns) == 2 and all(isinstance(c, str) and c for c in columns),
                     "Rigid-link XY point requires two native columns")
+    spring_ids = set()
+    for spring in route.get("springs", []):
+        require(set(spring) == {"id", "points", "restLengthColumn"},
+                "Spring route may contain only native endpoints and rest length")
+        require(isinstance(spring["id"], str) and spring["id"] and
+                spring["id"] not in spring_ids, "Duplicate or empty spring ID")
+        spring_ids.add(spring["id"])
+        require(len(spring["points"]) == 2 and
+                all(len(cols) == 2 and all(isinstance(c, str) and c for c in cols)
+                    for cols in spring["points"]), "Spring endpoints require two native XY columns")
+        require(isinstance(spring["restLengthColumn"], str) and spring["restLengthColumn"],
+                "Spring rest length must come from a native column")
 
 
 def validate_style(style, body_ids, attachment_ids, pulley_ids):
     require(style.get("schema") == "domelica.rope-style-2d/v1", "Unknown style contract")
     required = {"schema", "background", "foreground", "rope",
                 "pulley", "bodyMarkerRadiusPx", "bodies"}
-    allowed = required | {"bodySymbols", "supportMarks"}
+    allowed = required | {"bodySymbols", "supportMarks", "spring"}
     require(required <= set(style) <= allowed, "Style cannot supply physical geometry")
     require(set(style["rope"]) == {"stroke", "widthPx"}, "Invalid rope style")
     require(set(style["pulley"]) == {"fill", "stroke", "strokeWidthPx"}, "Invalid pulley style")
@@ -108,12 +121,26 @@ def validate_style(style, body_ids, attachment_ids, pulley_ids):
                 "Duplicate or empty support-mark ID")
         seen.add(mark["id"])
         kind, ref = mark["kind"], mark["ref"]
-        require((kind == "wall" and ref in attachment_ids)
+        require((kind in ("wall", "floor") and ref in attachment_ids)
                 or (kind == "ceiling" and ref in pulley_ids),
                 "Support mark must reference a native attachment or pulley")
         size = mark["sizePx"]
         require(type(size) in (int, float) and math.isfinite(size) and 16 <= size <= 130,
                 "Invalid decorative support span")
+    if "spring" in style:
+        cfg = style["spring"]
+        require(set(cfg) == {"stroke", "widthPx", "turns", "amplitudePx"},
+                "Spring style cannot contain physics parameters")
+        require(isinstance(cfg["stroke"], str) and re.fullmatch(r"#[0-9a-fA-F]{6}", cfg["stroke"]),
+                "Invalid spring color")
+        require(type(cfg["widthPx"]) in (int, float)
+                and math.isfinite(cfg["widthPx"]) and 0 < cfg["widthPx"] <= 10,
+                "Invalid decorative spring width")
+        require(type(cfg["turns"]) == int and 2 <= cfg["turns"] <= 32,
+                "Invalid decorative spring turn count")
+        require(type(cfg["amplitudePx"]) in (int, float)
+                and math.isfinite(cfg["amplitudePx"]) and 2 <= cfg["amplitudePx"] <= 30,
+                "Invalid decorative spring amplitude")
 
 
 def generate(csv_path, native_path, route_path, style_path):
@@ -148,6 +175,10 @@ def generate(csv_path, native_path, route_path, style_path):
     for link in config.get("rigidLinks", []):
         for columns in link["points"]:
             required.update(columns)
+    for spring in config.get("springs", []):
+        for columns in spring["points"]:
+            required.update(columns)
+        required.add(spring["restLengthColumn"])
 
     with Path(csv_path).open(newline="", encoding="utf-8") as stream:
         reader = csv.DictReader(stream)
@@ -209,10 +240,22 @@ def generate(csv_path, native_path, route_path, style_path):
                     "Native rigid link changed length: " + link["id"])
             links[link["id"]] = points
             bounds.extend(points)
+        spring_segments = {}
+        for spring in config.get("springs", []):
+            a, b = [[number(row, col) for col in cols] for cols in spring["points"]]
+            rest = number(row, spring["restLengthColumn"])
+            require(rest > 0 and math.dist(a, b) > 1e-7,
+                    "Degenerate or nonpositive native spring geometry")
+            spring_segments[spring["id"]] = {
+                "start": a, "end": b, "restLength": rest
+            }
+            bounds.extend([a, b])
         frame = {"pulleys": pulleys, "attachments": attachments,
                  "bodies": bodies, "ropes": routes,
                  "metrics": {metric["id"]: number(row, metric["column"])
                              for metric in config["metrics"]}}
+        if spring_segments:
+            frame["springs"] = spring_segments
         if links:
             frame["rigidLinks"] = links
         frames.append(frame)

@@ -70,6 +70,31 @@ const caption=mk("text",{x:22,y:32,fill:style.foreground,"font-size":15,"font-we
 caption.textContent="WORLD XY · dimensions in metres";
 const pulleys=new Map(),axles=new Map(),ropes=new Map(),bodies=new Map(),labels=new Map();
 const pulleyLabels=new Map(),ropeLabels=new Map();
+const springGlyphs=new Map();
+// Spring endpoints come only from native mechanics; the zigzag is decorative.
+for(const id of Object.keys(D.frames[0].springs||{})){
+ const cfg=style.spring||{stroke:style.rope.stroke,widthPx:2,turns:8,amplitudePx:12};
+ springGlyphs.set(id,mk("polyline",{fill:"none",stroke:cfg.stroke,
+   "stroke-width":cfg.widthPx,"stroke-linecap":"round",
+   "stroke-linejoin":"round","data-spring":id}));
+}
+const springStyle=style.spring||{turns:8,amplitudePx:12};
+function coilPoints(a,b){
+ const p=project(a),q=project(b),dx=q[0]-p[0],dy=q[1]-p[1];
+ const length=Math.hypot(dx,dy);
+ if(!(length>1e-6))throw new Error("Native spring endpoints coincide");
+ const ux=dx/length,uy=dy/length,px=-uy,py=ux;
+ const start=.09,end=.91,turns=springStyle.turns;
+ const points=[p,[p[0]+dx*start,p[1]+dy*start]];
+ const count=turns*8;
+ for(let i=1;i<count;i++){
+  const t=start+(end-start)*i/count;
+  const amplitude=springStyle.amplitudePx*Math.sin(2*Math.PI*turns*i/count);
+  points.push([p[0]+dx*t+px*amplitude,p[1]+dy*t+py*amplitude]);
+ }
+ points.push([p[0]+dx*end,p[1]+dy*end],q);
+ return points.map(point=>point.join(",")).join(" ");
+}
 // Optional schematic supports: the anchor and wheel center are always sampled
 // from the native recording. No support can define a physical position.
 const supports=new Map();
@@ -131,7 +156,7 @@ function draw(i){
  index=Math.max(0,Math.min(D.times.length-1,i));
  const frame=D.frames[index];
  for(const mark of style.supportMarks||[]){
-   const physical=mark.kind==="wall"
+   const physical=(mark.kind==="wall"||mark.kind==="floor")
      ? frame.attachments?.[mark.ref] : frame.pulleys[mark.ref]?.center;
    if(!physical)throw new Error("Missing native support attachment: "+mark.ref);
    const [x,y]=project(physical),span=mark.sizePx;
@@ -144,7 +169,18 @@ function draw(i){
      const r=frame.pulleys[mark.ref].radius*scale,bar=y-r-16;
      supports.get(mark.id).setAttribute("d",
        `M ${x-span/2} ${bar} L ${x+span/2} ${bar} M ${x} ${bar} L ${x} ${y-r}`);
+   }else if(mark.kind==="floor"){
+     const left=x-span/2,right=x+span/2;
+     const hatches=[0,1,2,3,4].map(i=>{
+       const sx=left+12+i*(span-24)/4;
+       return `M ${sx} ${y} L ${sx-9} ${y+12}`;
+     }).join(" ");
+     supports.get(mark.id).setAttribute("d",
+       `M ${left} ${y} L ${right} ${y} `+hatches);
    }
+ }
+ for(const [name,physical] of Object.entries(frame.springs||{})){
+   springGlyphs.get(name).setAttribute("points",coilPoints(physical.start,physical.end));
  }
  for(const [name,points] of Object.entries(frame.rigidLinks||{})){
    rigidLinks.get(name).setAttribute("points",points.map(p=>project(p).join(",")).join(" "));
@@ -179,9 +215,23 @@ function draw(i){
    // body dimension is inferred. Legacy circular glyphs retain prior labels.
    text.textContent=b.label+" · "+Number(b.mass).toLocaleString("en-US",{maximumFractionDigits:3})+" kg";
    if(symbol?.kind==="box"){
-     text.setAttribute("text-anchor","middle");
-     text.setAttribute("x",p[0]);
-     text.setAttribute("y",p[1]+symbol.heightPx/2+22);
+     // If a native-anchored floor is immediately beneath this box, place its
+     // caption alongside the body rather than across the contact surface.
+     const nearFloor=(style.supportMarks||[]).some(mark=>{
+       if(mark.kind!=="floor"||!frame.attachments?.[mark.ref])return false;
+       const floor=project(frame.attachments[mark.ref]);
+       return Math.abs(floor[0]-p[0])<mark.sizePx/2+symbol.widthPx/2
+          && Math.abs(floor[1]-(p[1]+symbol.heightPx/2))<45;
+     });
+     if(nearFloor){
+       text.setAttribute("text-anchor","end");
+       text.setAttribute("x",p[0]-symbol.widthPx/2-12);
+       text.setAttribute("y",p[1]+5);
+     }else{
+       text.setAttribute("text-anchor","middle");
+       text.setAttribute("x",p[0]);
+       text.setAttribute("y",p[1]+symbol.heightPx/2+22);
+     }
    }else{
      const wheelRadius=Math.max(0,...Object.values(frame.pulleys)
        .filter(w=>Math.hypot(w.center[0]-b.position[0],w.center[1]-b.position[1])<1e-8)

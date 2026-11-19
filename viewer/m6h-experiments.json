@@ -1,0 +1,65 @@
+{
+  "schema": "domelica.experiments/v1",
+  "modelica": {
+    "package": "DomelicaLab/package.mo",
+    "mslVersion": "4.1.0"
+  },
+  "observationManifest": "m6h-observations.json",
+  "recording": {
+    "kind": "planned-fresh-native-run",
+    "note": "8 kg A hard-floor restitution=0; 4.5 kg B; k=20 N/m illustrative; 10s"
+  },
+  "experiments": [
+    {
+      "id": "spring-floor-liftoff",
+      "prefix": "m6h_spring_floor",
+      "model": "DomelicaLab.Examples.SpringPulleyFloorLiftOff2D",
+      "title": "Spring and fixed pulley — lift-off with inelastic floor",
+      "shortTitle": "Spring pulley lift-off",
+      "description": "A=8kg on hard inelastic floor, B=4.5kg hanging over ideal pulley. Spring k=20N/m initially unstretched is illustrative. MSL MassWithStopAndFriction handles lift-off, sticking and zero-velocity hard impacts without rebound; MSL Spring and lossless transmission calculate coupled motion.",
+      "camera": {
+        "yaw": 0,
+        "pitch": 0
+      },
+      "series": [
+        {
+          "name": "aLift",
+          "label": "A lift above floor",
+          "unit": "m"
+        },
+        {
+          "name": "bDrop",
+          "label": "B downward displacement",
+          "unit": "m"
+        },
+        {
+          "name": "springExtension",
+          "label": "Spring extension",
+          "unit": "m"
+        },
+        {
+          "name": "ropeTension",
+          "label": "Rope tension",
+          "unit": "N"
+        },
+        {
+          "name": "floorNormal",
+          "label": "Floor normal",
+          "unit": "N"
+        },
+        {
+          "name": "totalEnergy",
+          "label": "Mechanical energy (drops at impacts)",
+          "unit": "J"
+        }
+      ],
+      "simulation": {
+        "startTime": 0,
+        "stopTime": 10,
+        "numberOfIntervals": 1000,
+        "tolerance": 1e-8,
+        "method": "dassl"
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "domelica.observations/v1",
+  "provenance": {
+    "definitionOrigin": "M6H 10s spring pulley and inelastic hard floor",
+    "newSimulation": false
+  },
+  "scenes": [
+    {
+      "id": "spring-floor-liftoff",
+      "model": "DomelicaLab.Examples.SpringPulleyFloorLiftOff2D",
+      "csv": "m6h_spring_floor_res.csv",
+      "bodies": [
+        {
+          "id": "A",
+          "label": "8kg A with MSL hard stop",
+          "objectIds": []
+        },
+        {
+          "id": "B",
+          "label": "4.5kg B",
+          "objectIds": []
+        }
+      ],
+      "notes": [
+        "Ground impacts are handled natively by MSL MassWithStopAndFriction.reinit(v,0); no bounce impulse.",
+        "Spring stiffness 20N/m and dimensions are illustrative assumptions.",
+        "Rope and spring visuals follow OpenModelica native positions, not prescribed browser formulas."
+      ],
+      "overlays": []
+    }
+  ]
+}
