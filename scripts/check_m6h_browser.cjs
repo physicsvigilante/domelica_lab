@@ -22,7 +22,8 @@ assert.ok(A.times.length>=995 && A.times.at(-1)>=9.999);
 const rises=A.frames.map(f=>f.metrics.aLift);
 const peakIndex=rises.indexOf(Math.max(...rises));
 assert.ok(rises[peakIndex]>.08);
-const impactIndex=rises.findIndex((x,i)=>i>peakIndex&&x<1e-4);
+const impactIndex=rises.findIndex((x,i)=>i>peakIndex&&x<1e-4
+  && A.frames[i].metrics.normal>1);
 assert.ok(impactIndex>peakIndex);
 assert.ok(A.maxRopeLengthDrift_m.rope<1e-5);
 const report={passed:false,samples:A.times.length,peakIndex,impactIndex,checks:[],errors:[],externalRequests:[]};

@@ -215,9 +215,23 @@ function draw(i){
    // body dimension is inferred. Legacy circular glyphs retain prior labels.
    text.textContent=b.label+" · "+Number(b.mass).toLocaleString("en-US",{maximumFractionDigits:3})+" kg";
    if(symbol?.kind==="box"){
-     text.setAttribute("text-anchor","middle");
-     text.setAttribute("x",p[0]);
-     text.setAttribute("y",p[1]+symbol.heightPx/2+22);
+     // If a native-anchored floor is immediately beneath this box, place its
+     // caption alongside the body rather than across the contact surface.
+     const nearFloor=(style.supportMarks||[]).some(mark=>{
+       if(mark.kind!=="floor"||!frame.attachments?.[mark.ref])return false;
+       const floor=project(frame.attachments[mark.ref]);
+       return Math.abs(floor[0]-p[0])<mark.sizePx/2+symbol.widthPx/2
+          && Math.abs(floor[1]-(p[1]+symbol.heightPx/2))<45;
+     });
+     if(nearFloor){
+       text.setAttribute("text-anchor","end");
+       text.setAttribute("x",p[0]-symbol.widthPx/2-12);
+       text.setAttribute("y",p[1]+5);
+     }else{
+       text.setAttribute("text-anchor","middle");
+       text.setAttribute("x",p[0]);
+       text.setAttribute("y",p[1]+symbol.heightPx/2+22);
+     }
    }else{
      const wheelRadius=Math.max(0,...Object.values(frame.pulleys)
        .filter(w=>Math.hypot(w.center[0]-b.position[0],w.center[1]-b.position[1])<1e-8)
