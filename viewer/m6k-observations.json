@@ -1,0 +1,31 @@
+{
+  "schema": "domelica.observations/v1",
+  "provenance": {
+    "definitionOrigin": "M6K native mechanics with mecha geometry",
+    "newSimulation": false
+  },
+  "scenes": [
+    {
+      "id": "seven-pulley-two-ropes",
+      "model": "DomelicaLab.Examples.SevenPulleyTwoRopes2D",
+      "csv": "m6k_seven_pulley_res.csv",
+      "bodies": [
+        {
+          "id": "A",
+          "label": "illustrative 2kg",
+          "objectIds": []
+        },
+        {
+          "id": "B",
+          "label": "illustrative 7kg",
+          "objectIds": []
+        }
+      ],
+      "notes": [
+        "Mecha M6J radii and tangent layout; five native masses and two ideal taut rope constraints; browser only displays CSV",
+        "A=2kg B=7kg small moving carriages=0.5kg each P=4kg; these values are illustrative."
+      ],
+      "overlays": []
+    }
+  ]
+}
