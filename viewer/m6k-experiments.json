@@ -1,0 +1,75 @@
+{
+  "schema": "domelica.experiments/v1",
+  "modelica": {
+    "package": "DomelicaLab/package.mo",
+    "mslVersion": "4.1.0"
+  },
+  "observationManifest": "m6k-observations.json",
+  "recording": {
+    "kind": "planned-fresh-native-run",
+    "note": "Illustrative masses A=2 B=7 X=Y=0.5 P=4, g=10. Mecha M6J radii 1/2/2.5; two native ideal rope constraints."
+  },
+  "experiments": [
+    {
+      "id": "seven-pulley-two-ropes",
+      "prefix": "m6k_seven_pulley",
+      "model": "DomelicaLab.Examples.SevenPulleyTwoRopes2D",
+      "title": "Seven pulleys and two taut ropes — gravity-driven motion",
+      "shortTitle": "Seven pulley motion",
+      "description": "Two independent ideal ropes and five translating mass assemblies. The figure leaves all masses undefined: illustrative A=2 B=7 X=Y=0.5 P=4kg. Pulley geometry is pinned to mecha M6J solved vertical reference geometry.",
+      "camera": {
+        "yaw": 0,
+        "pitch": 0
+      },
+      "series": [
+        {
+          "name": "qA",
+          "label": "A upward travel",
+          "unit": "m"
+        },
+        {
+          "name": "qB",
+          "label": "B upward travel",
+          "unit": "m"
+        },
+        {
+          "name": "qX",
+          "label": "X pulley upward travel",
+          "unit": "m"
+        },
+        {
+          "name": "qY",
+          "label": "Y pulley upward travel",
+          "unit": "m"
+        },
+        {
+          "name": "qP",
+          "label": "P pulley upward travel",
+          "unit": "m"
+        },
+        {
+          "name": "tensionMain",
+          "label": "Main rope tension",
+          "unit": "N"
+        },
+        {
+          "name": "tensionInner",
+          "label": "Inner rope tension",
+          "unit": "N"
+        },
+        {
+          "name": "totalEnergy",
+          "label": "Mechanical energy",
+          "unit": "J"
+        }
+      ],
+      "simulation": {
+        "startTime": 0,
+        "stopTime": 1,
+        "numberOfIntervals": 200,
+        "tolerance": 1e-9,
+        "method": "dassl"
+      }
+    }
+  ]
+}

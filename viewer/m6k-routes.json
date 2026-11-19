@@ -1,0 +1,240 @@
+{
+  "schema": "domelica.rope-routes-2d/v1",
+  "plane": "xy",
+  "recording": {
+    "experimentId": "seven-pulley-two-ropes",
+    "model": "DomelicaLab.Examples.SevenPulleyTwoRopes2D",
+    "csv": "m6k_seven_pulley_res.csv"
+  },
+  "attachments": {
+    "P_axle": [
+      "pAxle[1]",
+      "pAxle[2]"
+    ],
+    "X_axle": [
+      "xAxle[1]",
+      "xAxle[2]"
+    ],
+    "Y_axle": [
+      "yAxle[1]",
+      "yAxle[2]"
+    ],
+    "A_end": [
+      "aBlock[1]",
+      "aBlock[2]"
+    ],
+    "B_block": [
+      "bBlock[1]",
+      "bBlock[2]"
+    ],
+    "B_center": [
+      "bCenter[1]",
+      "bCenter[2]"
+    ]
+  },
+  "pulleys": {
+    "F1": {
+      "centerColumns": [
+        "f1Center[1]",
+        "f1Center[2]"
+      ],
+      "radiusColumn": "radiusSmall"
+    },
+    "F2": {
+      "centerColumns": [
+        "f2Center[1]",
+        "f2Center[2]"
+      ],
+      "radiusColumn": "radiusSmall"
+    },
+    "F3": {
+      "centerColumns": [
+        "f3Center[1]",
+        "f3Center[2]"
+      ],
+      "radiusColumn": "radiusSmall"
+    },
+    "X": {
+      "centerColumns": [
+        "xCenter[1]",
+        "xCenter[2]"
+      ],
+      "radiusColumn": "radiusSmall"
+    },
+    "Y": {
+      "centerColumns": [
+        "yCenter[1]",
+        "yCenter[2]"
+      ],
+      "radiusColumn": "radiusSmall"
+    },
+    "P": {
+      "centerColumns": [
+        "pCenter[1]",
+        "pCenter[2]"
+      ],
+      "radiusColumn": "radiusP"
+    },
+    "BigB": {
+      "centerColumns": [
+        "bCenter[1]",
+        "bCenter[2]"
+      ],
+      "radiusColumn": "radiusBigB"
+    }
+  },
+  "ropes": [
+    {
+      "id": "main",
+      "nodes": [
+        {
+          "kind": "attachment",
+          "ref": "P_axle"
+        },
+        {
+          "kind": "pulley",
+          "ref": "BigB",
+          "incomingSide": 1,
+          "outgoingSide": 1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "pulley",
+          "ref": "F1",
+          "incomingSide": -1,
+          "outgoingSide": 1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "pulley",
+          "ref": "X",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "counterclockwise"
+        },
+        {
+          "kind": "pulley",
+          "ref": "F2",
+          "incomingSide": -1,
+          "outgoingSide": 1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "pulley",
+          "ref": "Y",
+          "incomingSide": 1,
+          "outgoingSide": -1,
+          "wrap": "counterclockwise"
+        },
+        {
+          "kind": "pulley",
+          "ref": "F3",
+          "incomingSide": -1,
+          "outgoingSide": -1,
+          "wrap": "clockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "A_end"
+        }
+      ],
+      "lengthPolicy": "constant",
+      "tolerance": 0.000001
+    },
+    {
+      "id": "inner",
+      "nodes": [
+        {
+          "kind": "attachment",
+          "ref": "X_axle"
+        },
+        {
+          "kind": "pulley",
+          "ref": "P",
+          "incomingSide": -1,
+          "outgoingSide": 1,
+          "wrap": "counterclockwise"
+        },
+        {
+          "kind": "attachment",
+          "ref": "Y_axle"
+        }
+      ],
+      "lengthPolicy": "constant",
+      "tolerance": 0.000001
+    }
+  ],
+  "bodies": [
+    {
+      "id": "A",
+      "at": "A_end",
+      "label": "A • 2 kg",
+      "massColumn": "massA"
+    },
+    {
+      "id": "B",
+      "at": "B_block",
+      "label": "B • 7 kg",
+      "massColumn": "massB"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "A",
+      "column": "qA",
+      "label": "A up",
+      "unit": "m"
+    },
+    {
+      "id": "B",
+      "column": "qB",
+      "label": "B up",
+      "unit": "m"
+    },
+    {
+      "id": "P",
+      "column": "qP",
+      "label": "P up",
+      "unit": "m"
+    },
+    {
+      "id": "X",
+      "column": "qX",
+      "label": "X up",
+      "unit": "m"
+    },
+    {
+      "id": "Y",
+      "column": "qY",
+      "label": "Y up",
+      "unit": "m"
+    },
+    {
+      "id": "T1",
+      "column": "tensionMain",
+      "label": "Main tension",
+      "unit": "N"
+    },
+    {
+      "id": "T2",
+      "column": "tensionInner",
+      "label": "Inner tension",
+      "unit": "N"
+    }
+  ],
+  "rigidLinks": [
+    {
+      "id": "B-hanger",
+      "points": [
+        [
+          "bCenter[1]",
+          "bCenter[2]"
+        ],
+        [
+          "bBlock[1]",
+          "bBlock[2]"
+        ]
+      ]
+    }
+  ]
+}
