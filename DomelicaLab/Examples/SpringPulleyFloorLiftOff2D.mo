@@ -65,8 +65,8 @@ model SpringPulleyFloorLiftOff2D
     "Upward tension on A from spring";
   SI.Force ropeTension=springForce
     "Ideal massless rope tension";
-  SI.Force floorNormal=aFloor.f
-    "Hard-stop reaction (zero in free flight)";
+  SI.Force floorNormal=-aFloor.f
+    "Upward normal on A; opposite MSL hard-stop internal friction reaction";
   Boolean onFloor=aFloor.stopped == -1
     "Native hard-stop geometric status, not a browser threshold";
   SI.Length routedRopeLength=(pulleyY-ropeLeftPosition[2])
